@@ -1,56 +1,104 @@
-# Welcome to your Expo app 👋
+# Kanakana
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Kanakana is a beginner-focused hiragana-reading app built for the Nerdy / Varsity Tutors language-learning prompt. It teaches the 46 basic modern hiragana through short, cumulative introductions and independently schedules every learner’s `learning item × skill` state with FSRS.
 
-## Get started
+V1 implements one skill: `kana_reading` — see a glyph and type its romaji. The architecture intentionally leaves audio, handwriting, games, katakana, kanji, and vocabulary as future teaching modules or skill definitions rather than hard-coding them into “cards.”
 
-1. Install dependencies
+## Product flow
 
-   ```bash
-   npm install
-   ```
+1. Two-screen beginner onboarding explains the promise and starts immediately with vowels.
+2. A lesson introduces a small subset, checks recall, adds more kana, then mixes prior items.
+3. Incorrect answers and **Show answer** return after intervening prompts until recalled correctly.
+4. Future due reviews mix rows and schedule each kana independently.
+5. The session summary reports introduced, strengthened, and returning-soon items—without scores or streaks.
+6. Home always offers one primary **Continue** action: due reviews first, then the next row.
 
-2. Start the app
+## Run locally
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Requirements: Node 22.13+ and Expo Go for physical-device testing. Xcode is not required.
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env.local
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Scan the Expo QR code with Expo Go, or press `w` for the web app.
 
-### Other setup steps
+Production-style web:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm run export:web
+npm run serve:web
+```
 
-## Learn more
+Open `http://127.0.0.1:8081`. The local server supports direct reloads of Expo Router paths such as `/practice`.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Local Supabase
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Docker must be running.
 
-## Join the community
+```bash
+npx supabase start
+npm run smoke:supabase
+```
 
-Join our community of developers creating universal apps.
+Use the local API URL and publishable key printed by `npx supabase status` in `.env.local`. Never place the service-role key in an Expo environment variable.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The smoke verifies anonymous auth, the 46-item published manifest, one accepted review, idempotent replay, RLS isolation between two guests, and that raw typed input is not retained.
+
+## Quality gates
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run check:edge
+npm run export:web
+```
+
+## Hosted Supabase setup
+
+1. Create a dedicated Supabase project and enable anonymous sign-ins.
+2. Authenticate and link the local repository:
+
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref YOUR_PROJECT_REF
+   ```
+
+3. Deploy schema, curriculum, and function:
+
+   ```bash
+   npx supabase db push
+   npx supabase functions deploy submit-reviews
+   ```
+
+4. Put only the project URL and publishable key in `.env.local`.
+5. Run `npm run smoke:supabase` with `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` set to the hosted project values.
+
+## Demo tools
+
+Set `EXPO_PUBLIC_DEMO_TOOLS=true` before bundling, then long-press the Kanakana wordmark.
+
+- **Fresh guest** clears local learning data, signs out, and creates a new anonymous identity.
+- **Seed returning learner** creates a new guest, generates deterministic historical review behavior, and syncs mixed mastery/due states.
+- **Sync now** flushes the outbox and reports accepted/pending counts.
+- **Diagnostics** exposes guest ID, manifest, storage adapter, outbox size, last sync, and cloud status.
+
+Unset the flag for the ordinary learner build.
+
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow, trust boundaries, module rendering, and future kanji compatibility. See [docs/DEMO.md](docs/DEMO.md) for the in-person rehearsal.
+
+## Current verification
+
+- Expo SDK 57 / React Native 0.86 / Expo Router
+- Native SQLite and browser `localStorage` behind one repository contract
+- FSRS v6 scheduling through `ts-fsrs`
+- Local-first outbox with server-canonical reconciliation
+- Supabase migrations apply cleanly from an empty local database
+- Deno Edge Function type-checks
+- Unit, type, lint, production web export, mobile-width browser flow, deep-link reload, and local Supabase smoke pass
+- iOS Expo Go and hosted Supabase/EAS remain the authenticated release steps
