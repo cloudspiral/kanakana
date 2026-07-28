@@ -36,6 +36,14 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "demoTools": false,
+      "router": {},
+      "eas": {
+        "projectId": "5274c688-6186-45f2-b298-3160b3f535dc"
+      }
+    },
+    "owner": "yddokabs-team"
   }
 }
