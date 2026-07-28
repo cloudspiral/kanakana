@@ -27,12 +27,12 @@ export function Button({
       accessibilityRole="button"
       disabled={disabled || loading}
       {...props}
-      style={({ pressed }) => [
+      style={(state) => [
         styles.base,
         styles[variant],
-        pressed && styles.pressed,
+        state.pressed && styles.pressed,
         (disabled || loading) && styles.disabled,
-        typeof style === 'function' ? style({ pressed }) : style,
+        typeof style === 'function' ? style(state) : style,
       ]}>
       {loading ? (
         <ActivityIndicator
