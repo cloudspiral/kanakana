@@ -54,7 +54,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "export:web": "expo export --platform web",
+    "export:web": "expo export --clear --platform web",
     "serve:web": "node scripts/serve-web.mjs",
     "smoke:supabase": "node --env-file-if-exists=.env.local scripts/smoke-supabase.mjs",
     "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/submit-reviews/index.ts",
