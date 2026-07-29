@@ -43,9 +43,9 @@ export default function SettingsRoute() {
           <Switch
             accessibilityLabel="Haptic feedback"
             onValueChange={(value) => void app.setHaptics(value)}
-            trackColor={{ false: Colors.border, true: '#AAB9F5' }}
+            trackColor={{ false: Colors.rule, true: '#AAB9F5' }}
             thumbColor={
-              app.snapshot.settings.hapticsEnabled ? Colors.blue : Colors.white
+              app.snapshot.settings.hapticsEnabled ? Colors.ink : Colors.card
             }
             value={app.snapshot.settings.hapticsEnabled}
           />
@@ -73,15 +73,18 @@ export default function SettingsRoute() {
         </AppText>
         {confirmingReset ? (
           <View style={styles.confirm}>
-            <AppText color={Colors.red}>
+            <AppText color={Colors.accent}>
               Reset all introduced kana, review history, and active practice on
               this device?
             </AppText>
-            <Button label="Reset progress" onPress={reset} variant="danger" />
+            {/* Paper & Ink has no danger colour. The destructive affordance is
+                carried by the accent-coloured confirm copy above and the
+                two-step flow; revisit in the settings design pass. */}
+            <Button label="Reset progress" onPress={reset} variant="secondary" />
             <Button
               label="Cancel"
               onPress={() => setConfirmingReset(false)}
-              variant="quiet"
+              variant="link"
             />
           </View>
         ) : (
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.rule,
   },
   confirm: {
     gap: Spacing.sm,

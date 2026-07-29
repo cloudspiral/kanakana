@@ -14,27 +14,27 @@ import { learnerStateKey } from '@/domain/types';
 
 const statusStyles = {
   'Not started': {
-    background: Colors.white,
-    border: Colors.border,
+    background: Colors.card,
+    border: Colors.rule,
     text: Colors.inkMuted,
     marker: '○',
   },
   Learning: {
-    background: Colors.paleBlue,
+    background: Colors.accentSoft,
     border: '#C8D4FF',
-    text: Colors.blue,
+    text: Colors.ink,
     marker: '◐',
   },
   Strong: {
-    background: Colors.greenPale,
+    background: Colors.wellFill,
     border: '#B9E5D6',
-    text: Colors.green,
+    text: Colors.ink,
     marker: '●',
   },
   Due: {
-    background: Colors.palePink,
+    background: Colors.accentSoft,
     border: '#F4C5DE',
-    text: Colors.red,
+    text: Colors.accent,
     marker: '↻',
   },
 } as const;
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.sm,
+    borderRadius: Radius.rect,
     borderWidth: 1,
   },
   emptyCell: {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     aspectRatio: 0.82,
   },
   cellGlyph: {
-    fontFamily: Fonts.japanese,
+    fontFamily: Fonts.kanaLight,
     fontSize: 24,
     lineHeight: 30,
   },

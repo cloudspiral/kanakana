@@ -93,7 +93,7 @@ function Onboarding() {
           </Surface>
           <View style={styles.onboardingActions}>
             <Button label="Begin with vowels" onPress={begin} />
-            <Button label="Back" onPress={() => setPage(0)} variant="quiet" />
+            <Button label="Back" onPress={() => setPage(0)} variant="link" />
           </View>
         </View>
       )}
@@ -192,7 +192,7 @@ function Home() {
       <View style={styles.snapshotHeader}>
         <AppText variant="heading">Your hiragana</AppText>
         <Pressable onPress={() => router.push('/progress')}>
-          <AppText color={Colors.blue}>View grid</AppText>
+          <AppText color={Colors.ink}>View grid</AppText>
         </Pressable>
       </View>
       <Surface style={styles.snapshotCard}>
@@ -232,11 +232,11 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.rule,
   },
   dotActive: {
     width: 22,
-    backgroundColor: Colors.blue,
+    backgroundColor: Colors.ink,
   },
   onboardingBody: {
     flex: 1,
@@ -248,12 +248,12 @@ const styles = StyleSheet.create({
     height: 270,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.lg,
+    borderRadius: Radius.rect,
     overflow: 'hidden',
   },
   heroKana: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
+    color: Colors.card,
+    fontFamily: Fonts.kanaLight,
     fontSize: 136,
     lineHeight: 160,
   },
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     height: 58,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
+    borderRadius: Radius.rect,
     backgroundColor: 'rgba(255,255,255,0.12)',
     borderColor: 'rgba(255,255,255,0.2)',
     borderWidth: 1,
@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '8deg' }],
   },
   orbitKana: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
+    color: Colors.card,
+    fontFamily: Fonts.kanaLight,
     fontSize: 30,
   },
   pinkGlow: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xxs,
   },
   vowelGlyph: {
-    fontFamily: Fonts.japanese,
+    fontFamily: Fonts.kanaLight,
     fontSize: 38,
     lineHeight: 50,
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   continueCard: {
-    borderRadius: Radius.lg,
+    borderRadius: Radius.rect,
     padding: Spacing.lg,
     gap: Spacing.lg,
     overflow: 'hidden',
@@ -330,14 +330,14 @@ const styles = StyleSheet.create({
   },
   continueEyebrow: {
     color: '#B9C5F9',
-    fontFamily: Fonts.headingSemi,
+    fontFamily: Fonts.sansMedium,
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 1.1,
   },
   continueTitle: {
-    color: Colors.white,
-    fontFamily: Fonts.heading,
+    color: Colors.card,
+    fontFamily: Fonts.serif,
     fontSize: 24,
     lineHeight: 32,
     marginTop: Spacing.xxs,
@@ -347,12 +347,12 @@ const styles = StyleSheet.create({
     height: 58,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
+    borderRadius: Radius.rect,
     backgroundColor: 'rgba(255,255,255,0.11)',
   },
   continueKanaText: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
+    color: Colors.card,
+    fontFamily: Fonts.kanaLight,
     fontSize: 28,
   },
   continueDescription: {
@@ -365,17 +365,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: Radius.md,
-    backgroundColor: Colors.white,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
     paddingHorizontal: Spacing.lg,
   },
   continueButtonText: {
-    color: Colors.blue,
-    fontFamily: Fonts.headingSemi,
+    color: Colors.ink,
+    fontFamily: Fonts.sansMedium,
   },
   arrow: {
-    color: Colors.pink,
-    fontFamily: Fonts.heading,
+    color: Colors.accent,
+    fontFamily: Fonts.serif,
     fontSize: 22,
   },
   disabled: {
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   metricDivider: {
     width: 1,
     height: 44,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.rule,
   },
   progressTrack: {
     width: '100%',
@@ -408,12 +408,12 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     overflow: 'hidden',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.paleBlue,
+    backgroundColor: Colors.accentSoft,
   },
   progressFill: {
     height: '100%',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.blue,
+    backgroundColor: Colors.ink,
   },
   offlineNote: {
     textAlign: 'center',

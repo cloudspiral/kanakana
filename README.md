@@ -92,6 +92,21 @@ Unset the flag for the ordinary learner build.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow, trust boundaries, module rendering, and future kanji compatibility. See [docs/DEMO.md](docs/DEMO.md) for the in-person rehearsal.
 
+## Design
+
+The "Paper & Ink" visual system and the `kana_writing` skill are specified in [docs/design/README.md](docs/design/README.md), with rationale in [docs/design/stroke-check-notes.md](docs/design/stroke-check-notes.md). Tokens live in [src/constants/theme.ts](src/constants/theme.ts) — the palette is deliberately small, there are no shadows, and every rectangle is 5px.
+
+The kana faces are subset from Noto Sans JP to the kana ranges, because the full faces are 5.2 MB each:
+
+```bash
+npm run fonts:subset
+```
+
+## Credits
+
+- **KanjiVG** stroke-order data (`assets/kanjivg/`) — © Ulrich Apel, released under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Used unmodified as the source for stroke paths.
+- **Instrument Serif**, **DM Sans**, and **Noto Sans JP** — SIL Open Font License 1.1.
+
 ## Current verification
 
 - Expo SDK 54 / React Native 0.81 / Expo Router

@@ -5,9 +5,24 @@ import {
   type TextStyle,
 } from 'react-native';
 
-import { Colors, Fonts } from '@/constants/theme';
+import { Colors, Glyph, Type } from '@/constants/theme';
 
-type Variant = 'hero' | 'title' | 'heading' | 'body' | 'caption' | 'eyebrow';
+type Variant =
+  | 'display'
+  | 'screenTitle'
+  | 'sectionTitle'
+  | 'kicker'
+  | 'navLabel'
+  | 'meterLabel'
+  | 'body'
+  | 'bodySmall'
+  | 'button'
+  /** @deprecated Pre-redesign names. Removed as each screen gets its Paper & Ink pass. */
+  | 'hero'
+  | 'title'
+  | 'heading'
+  | 'caption'
+  | 'eyebrow';
 
 interface AppTextProps extends TextProps {
   variant?: Variant;
@@ -33,43 +48,53 @@ export function AppText({
   );
 }
 
+type GlyphSize = keyof typeof Glyph;
+
+interface KanaProps extends TextProps {
+  size?: GlyphSize;
+  color?: string;
+}
+
+/**
+ * A kana glyph. Separate from AppText because the design carries hierarchy here
+ * through font weight (Noto Sans JP 200 vs 300), not only size.
+ */
+export function Kana({ size = 'inline', color, style, ...props }: KanaProps) {
+  return (
+    <Text
+      {...props}
+      style={[glyphStyles[size], color ? { color } : styles.base, style]}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   base: {
     color: Colors.ink,
-    fontFamily: Fonts.body,
+    fontFamily: Type.body.fontFamily,
   },
-  hero: {
-    fontFamily: Fonts.heading,
-    fontSize: 38,
-    lineHeight: 46,
-    letterSpacing: -1.3,
-  },
-  title: {
-    fontFamily: Fonts.heading,
-    fontSize: 30,
-    lineHeight: 38,
-    letterSpacing: -0.8,
-  },
-  heading: {
-    fontFamily: Fonts.headingSemi,
-    fontSize: 20,
-    lineHeight: 27,
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 25,
-  },
-  caption: {
-    color: Colors.inkMuted,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  eyebrow: {
-    color: Colors.blue,
-    fontFamily: Fonts.headingSemi,
-    fontSize: 12,
-    lineHeight: 16,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
+
+  display: { ...Type.display, ...{ letterSpacing: -0.4 } },
+  screenTitle: Type.screenTitle,
+  sectionTitle: Type.sectionTitle,
+  kicker: Type.kicker,
+  navLabel: Type.navLabel,
+  meterLabel: Type.meterLabel,
+  body: Type.body,
+  bodySmall: Type.bodySmall,
+  button: Type.button,
+
+  // Deprecated aliases, kept only so unmigrated screens still compile.
+  hero: Type.display,
+  title: Type.screenTitle,
+  heading: Type.sectionTitle,
+  caption: Type.bodySmall,
+  eyebrow: Type.kicker,
+});
+
+const glyphStyles = StyleSheet.create({
+  hero: { color: Colors.ink, ...Glyph.hero },
+  tracingModel: { color: Colors.ink, ...Glyph.tracingModel },
+  gridCell: { color: Colors.ink, ...Glyph.gridCell },
+  inline: { color: Colors.ink, ...Glyph.inline },
 });

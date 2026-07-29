@@ -200,7 +200,7 @@ function FeedbackView({
     <View style={styles.feedback}>
       <AppText
         variant="eyebrow"
-        color={feedback.correct ? Colors.green : Colors.pink}>
+        color={feedback.correct ? Colors.ink : Colors.accent}>
         {feedback.correct ? 'Correct' : 'Let’s bring this back'}
       </AppText>
       <Surface
@@ -212,7 +212,7 @@ function FeedbackView({
         <AppText style={styles.feedbackGlyph}>
           {feedback.item.content.glyph}
         </AppText>
-        <AppText variant="title" color={feedback.correct ? Colors.green : Colors.red}>
+        <AppText variant="title" color={feedback.correct ? Colors.ink : Colors.accent}>
           {feedback.primaryAnswer}
         </AppText>
       </Surface>
@@ -249,9 +249,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.card,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.rule,
   },
   closeText: {
     color: Colors.inkMuted,
@@ -263,12 +263,12 @@ const styles = StyleSheet.create({
     height: 9,
     overflow: 'hidden',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.rule,
   },
   progressFill: {
     height: '100%',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.blue,
+    backgroundColor: Colors.ink,
   },
   feedback: {
     flex: 1,
@@ -282,15 +282,15 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   correctCard: {
-    backgroundColor: Colors.greenPale,
+    backgroundColor: Colors.wellFill,
     borderColor: '#B9E5D6',
   },
   againCard: {
-    backgroundColor: Colors.redPale,
+    backgroundColor: Colors.accentSoft,
     borderColor: '#F4CBD5',
   },
   feedbackGlyph: {
-    fontFamily: Fonts.japanese,
+    fontFamily: Fonts.kanaLight,
     fontSize: 132,
     lineHeight: 158,
   },

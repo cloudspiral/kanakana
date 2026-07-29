@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { AppText } from './Typography';
+import { AppText, Kana } from './Typography';
 import { appConfig } from '@/constants/config';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MinTouch, Radius, Spacing } from '@/constants/theme';
 
 export function Wordmark() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export function Wordmark() {
       }}
       style={styles.wrap}>
       <View style={styles.mark}>
-        <AppText style={styles.markText}>か</AppText>
+        <Kana style={styles.markText}>か</Kana>
       </View>
       <AppText style={styles.word}>Kanakana</AppText>
     </Pressable>
@@ -33,27 +33,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     flexDirection: 'row',
-    gap: Spacing.sm,
-    minHeight: 48,
+    gap: Spacing.xs,
+    minHeight: MinTouch,
   },
   mark: {
-    width: 38,
-    height: 38,
+    width: 30,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.sm,
+    borderRadius: Radius.tile,
     backgroundColor: Colors.ink,
   },
   markText: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
-    fontSize: 22,
-    lineHeight: 27,
+    color: Colors.card,
+    fontSize: 17,
+    lineHeight: 21,
   },
   word: {
     color: Colors.ink,
-    fontFamily: Fonts.heading,
-    fontSize: 20,
-    letterSpacing: -0.5,
+    fontFamily: Fonts.serif,
+    fontSize: 22,
+    lineHeight: 26,
   },
 });

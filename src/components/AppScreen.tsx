@@ -63,7 +63,7 @@ export function AppScreen({
 const styles = StyleSheet.create({
   canvas: {
     flex: 1,
-    backgroundColor: Colors.canvas,
+    backgroundColor: Colors.paper,
   },
   safe: {
     flex: 1,
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.gutter,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xxl,
   },

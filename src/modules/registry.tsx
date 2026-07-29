@@ -112,7 +112,7 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
           disabled={disabled}
           label="Show answer"
           onPress={onReveal}
-          variant="quiet"
+          variant="link"
         />
       </View>
     );
@@ -148,19 +148,19 @@ export function SessionSummaryRenderer({
       <View style={styles.outcomeList}>
         {introduced > 0 && (
           <Outcome
-            color={Colors.blue}
+            color={Colors.ink}
             count={introduced}
             label="introduced"
           />
         )}
         <Outcome
-          color={Colors.green}
+          color={Colors.ink}
           count={strengthened}
           label="strengthened"
         />
         {returning > 0 && (
           <Outcome
-            color={Colors.pink}
+            color={Colors.accent}
             count={returning}
             label="returning soon"
           />
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   glyph: {
-    fontFamily: Fonts.japanese,
+    fontFamily: Fonts.kanaLight,
     fontSize: 128,
     lineHeight: 154,
   },
@@ -236,11 +236,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.paleBlue,
+    backgroundColor: Colors.accentSoft,
   },
   sound: {
-    color: Colors.blue,
-    fontFamily: Fonts.headingSemi,
+    color: Colors.ink,
+    fontFamily: Fonts.sansMedium,
     fontSize: 22,
   },
   questionCard: {
@@ -252,18 +252,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   questionGlyph: {
-    fontFamily: Fonts.japanese,
+    fontFamily: Fonts.kanaLight,
     fontSize: 144,
     lineHeight: 170,
   },
   input: {
     minHeight: 60,
-    borderRadius: Radius.md,
+    borderRadius: Radius.rect,
     borderWidth: 2,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    borderColor: Colors.rule,
+    backgroundColor: Colors.card,
     color: Colors.ink,
-    fontFamily: Fonts.headingSemi,
+    fontFamily: Fonts.sansMedium,
     fontSize: 22,
     paddingHorizontal: Spacing.lg,
     textAlign: 'center',
@@ -280,11 +280,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
     borderRadius: Radius.pill,
-    backgroundColor: Colors.greenPale,
+    backgroundColor: Colors.wellFill,
   },
   summaryMarkText: {
-    color: Colors.green,
-    fontFamily: Fonts.heading,
+    color: Colors.ink,
+    fontFamily: Fonts.serif,
     fontSize: 34,
   },
   outcomeList: {
