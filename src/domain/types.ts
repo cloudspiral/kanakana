@@ -155,6 +155,8 @@ export interface LearnerSettings {
    * learner turns it off when they are ready to write from memory.
    */
   tracingGuideEnabled: boolean;
+  /** Play the recorded pronunciation when a character appears or is tapped. */
+  soundEnabled: boolean;
 }
 
 export interface SyncMetadata {

@@ -18,6 +18,7 @@ import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/the
 import { useApp } from '@/context/AppContext';
 import { getItem } from '@/domain/curriculum';
 import { currentStep } from '@/domain/session';
+import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
 import type { AnswerClassification, LearningItem } from '@/domain/types';
 import {
   KanaIntroductionRenderer,
@@ -45,6 +46,7 @@ export default function PracticeRoute() {
   const [submitting, setSubmitting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const { width } = useWindowDimensions();
+  const soundOn = app.snapshot.settings.soundEnabled;
 
   const session = app.activeSession;
   const step = currentStep(session);
@@ -65,6 +67,21 @@ export default function PracticeRoute() {
     );
     return () => subscription.remove();
   }, []);
+
+  // Warm the clips for the rest of the session so the first tap has no delay.
+  // The ref keeps this to once per session: `session` itself changes on every
+  // answer, and re-preloading the same glyphs each time would be wasteful.
+  const preloadedSession = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session || preloadedSession.current === session.id) {
+      return;
+    }
+    preloadedSession.current = session.id;
+    const glyphs = session.steps
+      .map((sessionStep) => getItem(app.manifest, sessionStep.itemId).content.glyph)
+      .filter((glyph, index, all) => all.indexOf(glyph) === index);
+    void preloadKana(glyphs);
+  }, [app.manifest, session]);
 
   useEffect(() => {
     if (step?.kind === 'assessment' && !feedback) {
@@ -185,6 +202,8 @@ export default function PracticeRoute() {
           }
           item={item}
           square={square}
+          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
+          onHear={() => void playKana(item.content.glyph)}
           onContinue={() => void meetThenDraw()}
         />
       ) : (
@@ -194,6 +213,8 @@ export default function PracticeRoute() {
           disabled={submitting}
           item={item}
           square={square}
+          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
+          onHear={() => void playKana(item.content.glyph)}
           onAnswerChange={setAnswer}
           onReveal={() => void submit(true)}
           onSubmit={() => void submit(false)}

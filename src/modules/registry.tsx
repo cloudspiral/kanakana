@@ -1,9 +1,10 @@
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Pill } from '@/components/Buttons';
 import { GuideSquare } from '@/components/GuideSquare';
 import { SoundBars } from '@/components/SoundBars';
+import { StrokeOrderDiagram } from '@/components/StrokeOrderDiagram';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { strokeNoteFor } from '@/domain/kanaContent';
@@ -22,7 +23,7 @@ interface IntroductionProps {
   canHear?: boolean;
 }
 
-/** Design screen 4 — Meet. */
+/** Design screen 4 — Meet. See it, hear it, then see the order it is built in. */
 export function KanaIntroductionRenderer({
   item,
   square,
@@ -30,7 +31,10 @@ export function KanaIntroductionRenderer({
   onHear,
   canHear = false,
 }: IntroductionProps) {
-  const strokes = strokeCount(item.content.glyph);
+  const glyph = item.content.glyph;
+  const strokes = strokeCount(glyph);
+  const [showOrder, setShowOrder] = useState(false);
+
   return (
     <View style={styles.renderer}>
       <AppText variant="kicker" style={styles.center}>
@@ -41,24 +45,30 @@ export function KanaIntroductionRenderer({
         size={square}
         style={styles.center}
         chip={{ label: item.content.primaryAnswer, tone: 'ink', corner: 'bottomRight' }}>
-        <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
-          {item.content.glyph}
-        </Kana>
+        {showOrder ? (
+          <StrokeOrderDiagram glyph={glyph} size={square} />
+        ) : (
+          <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+            {glyph}
+          </Kana>
+        )}
       </GuideSquare>
 
       <View style={styles.pills}>
         {canHear ? (
           <Pill label="Hear it" icon={<SoundBars />} onPress={onHear} />
         ) : null}
-        <View style={styles.strokePill}>
-          <AppText style={styles.strokePillLabel}>
-            {strokes === 1 ? '1 stroke' : `${strokes} strokes`}
-          </AppText>
-        </View>
+        <Pill
+          label={strokes === 1 ? '1 stroke' : `${strokes} strokes`}
+          active={showOrder}
+          onPress={() => setShowOrder((current) => !current)}
+        />
       </View>
 
       <AppText variant="bodySmall" style={styles.note}>
-        {strokeNoteFor(item.content.glyph, strokes)}
+        {showOrder
+          ? 'Each number marks where that stroke begins.'
+          : strokeNoteFor(glyph, strokes)}
       </AppText>
 
       <Button label="Now draw it" arrow onPress={onContinue} />

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
 import { BottomNav } from '@/components/BottomNav';
@@ -64,10 +64,13 @@ export default function SettingsRoute() {
       <AppText variant="kicker">You</AppText>
       <AppText style={styles.title}>A quiet place to practise</AppText>
 
-      {/* The design also specifies a "Play sounds" row. Audio does not exist
-          yet, so that row arrives with the feature rather than as a control
-          that toggles nothing. */}
       <View style={styles.card}>
+        <SettingRow
+          title="Play sounds"
+          body="Hear each character when it appears."
+          value={app.snapshot.settings.soundEnabled}
+          onToggle={(next) => void app.updateSettings({ soundEnabled: next })}
+        />
         <SettingRow
           title="Haptic feedback"
           body="A subtle confirmation after each answer, on devices that support it."
@@ -117,6 +120,19 @@ export default function SettingsRoute() {
           </AppText>
         </Pressable>
       )}
+
+      {/* A visible credit and a link back is the condition Kaori sensei asked
+          for in granting these recordings. See
+          assets/audio/kana/ATTRIBUTION.md — do not remove this. */}
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => void Linking.openURL('https://linkupnippon.com/table-of-hiragana/')}
+        style={styles.creditRow}>
+        <AppText style={styles.creditLabel}>
+          Pronunciation recorded by Kaori sensei
+        </AppText>
+        <AppText style={styles.creditLink}>linkupnippon.com</AppText>
+      </Pressable>
 
       <AppText style={styles.footer}>
         Kanakana · hiragana · katakana coming
@@ -234,6 +250,26 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
   },
 
+  creditRow: {
+    marginTop: Spacing.stack,
+    paddingHorizontal: Spacing.card,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+    gap: 2,
+  },
+  creditLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: Colors.ink,
+  },
+  creditLink: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.accent,
+  },
   footer: {
     textAlign: 'center',
     fontSize: 12,

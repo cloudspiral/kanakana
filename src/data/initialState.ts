@@ -29,6 +29,7 @@ export function createInitialSnapshot(): LearnerSnapshot {
     settings: {
       hapticsEnabled: true,
       tracingGuideEnabled: true,
+      soundEnabled: true,
     },
     skillStates: {},
     reviewOutbox: [],
