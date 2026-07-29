@@ -220,7 +220,7 @@ export function judgeStroke({
   let actualStroke: number | undefined;
 
   if (bestIndex !== expectedIndex) {
-    note = `That is stroke ${bestIndex + 1}. Japanese builds this character in order — stroke ${expectedIndex + 1} comes first.`;
+    note = `That is stroke ${bestIndex + 1}. Japanese builds this kana in order — stroke ${expectedIndex + 1} comes first.`;
     reason = 'outOfOrder';
     slip = true;
     actualStroke = bestIndex + 1;

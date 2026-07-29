@@ -51,7 +51,7 @@ export default function CharacterRoute() {
   if (!item) {
     return (
       <AppScreen scroll={false} contentStyle={styles.missing}>
-        <AppText variant="sectionTitle">That character is not in this set.</AppText>
+        <AppText variant="sectionTitle">That kana is not in this set.</AppText>
         <Button label="Back to your kana" onPress={() => router.back()} />
       </AppScreen>
     );

@@ -1,10 +1,9 @@
 /**
- * Hand-authored teaching copy lifted verbatim from the design prototype
- * (`docs/design/prototypes/Kanakana Prototype.dc.html`).
+ * Hand-authored teaching copy from the design prototype.
  *
- * These are final design strings, not placeholders — every table below is
- * reproduced character for character from the prototype. Reword only with the
- * design author, never in passing.
+ * Reproduced verbatim except that "character" now reads "kana", which the app
+ * uses throughout. Any other rewording should go through the design author.
+ * Source: `docs/design/prototypes/Kanakana Prototype.dc.html`.
  *
  * Everything is keyed by the kana glyph itself, matching `content.glyph` on the
  * learning items in `./curriculum`. The prototype keyed these tables by romaji;
@@ -77,7 +76,7 @@ export type StrokeVerdictTable = Readonly<Record<StrokeVerdictId, StrokeVerdict>
  */
 export const MEET_HINTS: KanaStrokeNoteTable = {
   'あ': 'Three strokes. The last one curves back like a ribbon — that loop is what tells あ apart from お.',
-  'い': 'Two short strokes, both falling left to right. The shortest character in the set.',
+  'い': 'Two short strokes, both falling left to right. The shortest kana in the set.',
   'う': 'A small tick, then one long curve. Keep the top stroke detached.',
   'え': 'A tick, then a shape like a folded flag. Compare it to ん later.',
   'お': 'Almost あ, but the loop opens the other way and it gains a flick on the right.',
@@ -499,7 +498,7 @@ export const RESULTS: StrokeVerdictTable = {
     label: 'Shape is there, order needs work',
     accent: '#8A6A1F',
     copy:
-      'Japanese builds each character in a fixed sequence, and readers can see when it is off. Watch the dot — it marks where each stroke begins.',
+      'Japanese builds each kana in a fixed sequence, and readers can see when it is off. Watch the dot — it marks where each stroke begins.',
   },
   guided: {
     label: 'Guided through it',
@@ -511,6 +510,6 @@ export const RESULTS: StrokeVerdictTable = {
     label: 'Stopped part-way',
     accent: '#8A6A1F',
     copy:
-      'Only some of the strokes were drawn, so there is nothing to judge yet. Finish the character to see how it went — or move on and come back to it.',
+      'Only some of the strokes were drawn, so there is nothing to judge yet. Finish the kana to see how it went — or move on and come back to it.',
   },
 };

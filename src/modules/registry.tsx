@@ -48,7 +48,7 @@ export function KanaIntroductionRenderer({
   return (
     <View style={styles.renderer}>
       <AppText variant="kicker" style={styles.center}>
-        New character
+        New kana
       </AppText>
 
       <GuideSquare

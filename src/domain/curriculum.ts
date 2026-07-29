@@ -170,21 +170,19 @@ function createModule(
   };
 }
 
+/**
+ * A lesson meets every kana in the row, then checks the whole row.
+ *
+ * An earlier shape introduced two, tested those two, then introduced the rest —
+ * which asked for か again immediately after meeting き, before the row had
+ * settled at all. Meeting the set first gives each one a moment to sit before
+ * any of them is asked for.
+ */
 function createUnit(row: RowSeed, order: number): CurriculumUnit {
-  const splitIndex = Math.min(2, row.kana.length);
-  const first = row.kana.slice(0, splitIndex);
-  const rest = row.kana.slice(splitIndex);
   const modules: TeachingModuleDefinition[] = [
-    createModule(row, 'intro-1', 'kana-introduction-v1', first),
-    createModule(row, 'check-1', 'kana-reading-input-v1', first),
+    createModule(row, 'intro', 'kana-introduction-v1', row.kana),
+    createModule(row, 'check-all', 'kana-reading-input-v1', row.kana),
   ];
-
-  if (rest.length > 0) {
-    modules.push(
-      createModule(row, 'intro-2', 'kana-introduction-v1', rest),
-      createModule(row, 'check-all', 'kana-reading-input-v1', row.kana),
-    );
-  }
 
   modules.push({
     id: `${row.id}-summary`,
@@ -224,8 +222,10 @@ const items: LearningItem[] = GOJUON_ROWS.flatMap((row) =>
 
 const rawBundledManifest: CurriculumManifest = {
   id: 'kanakana-hiragana-beginner',
-  version: 1,
-  publishedAt: '2026-07-28T00:00:00.000Z',
+  // Bumped for the lesson reshape: a cached v1 would otherwise keep serving the
+  // old introduce-two-then-test order to anyone who already had one.
+  version: 2,
+  publishedAt: '2026-07-29T00:00:00.000Z',
   items,
   skills: [
     {

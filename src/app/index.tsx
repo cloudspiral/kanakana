@@ -219,7 +219,7 @@ function Home() {
     : due.length
       ? {
           kicker: 'Review first',
-          title: `${due.length} ${due.length === 1 ? 'character' : 'characters'}, about ${Math.max(2, Math.round(due.length * 0.6))} minutes`,
+          title: `${due.length} kana, about ${Math.max(2, Math.round(due.length * 0.6))} minutes`,
           cta: 'Begin review',
           preview: due,
         }
@@ -232,7 +232,7 @@ function Home() {
           }
         : {
             kicker: 'All met',
-            title: 'Every character is in your ink',
+            title: 'Every kana is in your ink',
             cta: 'Review when something returns',
             preview: app.manifest.items.slice(0, 4),
           };

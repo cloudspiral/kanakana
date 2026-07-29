@@ -67,7 +67,7 @@ export default function SettingsRoute() {
       <View style={styles.card}>
         <SettingRow
           title="Play sounds"
-          body="Hear each character when it appears."
+          body="Hear each kana when it appears."
           value={app.snapshot.settings.soundEnabled}
           onToggle={(next) => void app.updateSettings({ soundEnabled: next })}
         />
@@ -79,17 +79,17 @@ export default function SettingsRoute() {
         />
         <SettingRow
           title="Tracing guide"
-          body="Show the faint character underneath while you draw. Turn it off when you're ready to write from memory."
+          body="Show the faint kana underneath while you draw. Turn it off when you're ready to write from memory."
           value={app.snapshot.settings.tracingGuideEnabled}
           onToggle={(next) => void app.updateSettings({ tracingGuideEnabled: next })}
         />
         <View style={styles.explainer}>
           <AppText style={styles.rowTitle}>How this works</AppText>
           <AppText style={styles.explainerBody}>
-            Every character carries its own schedule, and reading and writing are
+            Every kana carries its own schedule, and reading and writing are
             tracked separately — you can recognise ら long before you can write
-            it. Rows only group first meetings; after that each character comes
-            back on its own clock.
+            it. Rows only group first meetings; after that each kana comes back
+            on its own clock.
           </AppText>
         </View>
       </View>

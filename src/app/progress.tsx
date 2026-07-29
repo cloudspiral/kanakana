@@ -34,11 +34,11 @@ export default function ProgressRoute() {
     <AppScreen bottomNav={<BottomNav />}>
       <AppText variant="kicker">Your kana</AppText>
       <AppText style={styles.title}>
-        {introduced} of {app.manifest.items.length} characters
+        {introduced} of {app.manifest.items.length} kana
       </AppText>
       <AppText variant="bodySmall" style={styles.intro}>
         These forty-six will carry every Japanese word you ever read. The darker
-        a character, the better you know it. Tap one to see where you two stand.
+        a kana, the better you know it. Tap one to see where you two stand.
       </AppText>
 
       {/* The legend is required — ink density is meaningless without it. */}
