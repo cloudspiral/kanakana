@@ -94,7 +94,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow, trust boundaries
 
 ## Current verification
 
-- Expo SDK 57 / React Native 0.86 / Expo Router
+- Expo SDK 54 / React Native 0.81 / Expo Router
 - Native SQLite and browser `localStorage` behind one repository contract
 - FSRS v6 scheduling through `ts-fsrs`
 - Local-first outbox with server-canonical reconciliation
