@@ -251,6 +251,17 @@ export const BUNDLED_MANIFEST = validateSupportedModules(
   curriculumManifestSchema.parse(rawBundledManifest),
 ) as CurriculumManifest;
 
+/**
+ * The row's name without the word "row" — "K row" becomes "K".
+ *
+ * Callers put it in copy that already supplies the noun ("the K row"), so the
+ * stored label would otherwise double it up. The grid on the Kana page needs
+ * the bare form too, where "K row" simply does not fit the column.
+ */
+export function bareRowLabel(shortTitle: string): string {
+  return shortTitle.replace(/\s+row$/i, '').replace(/^final\s+/i, '');
+}
+
 export function getItem(manifest: CurriculumManifest, id: string): LearningItem {
   const item = manifest.items.find((candidate) => candidate.id === id);
   if (!item) {

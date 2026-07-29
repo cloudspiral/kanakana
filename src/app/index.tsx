@@ -12,6 +12,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { inkColor } from '@/domain/ink';
+import { bareRowLabel } from '@/domain/curriculum';
 import { dueTargets, weakItems } from '@/domain/scheduler';
 import { learnerStateKey, type CurriculumUnit, type LearningItem } from '@/domain/types';
 
@@ -187,7 +188,10 @@ function Home() {
 
   const nextUnit = app.manifest.units.find((unit) => unit.id === app.nextUnitId);
   const nextRowItems = nextUnit ? unitItems(nextUnit, app.manifest.items) : [];
-  const nextRowLabel = nextRowItems[0]?.content.rowLabel ?? nextUnit?.shortTitle ?? '';
+  // Bare, because the copy below already supplies the word "row".
+  const nextRowLabel = bareRowLabel(
+    nextRowItems[0]?.content.rowLabel ?? nextUnit?.shortTitle ?? '',
+  );
 
   const hasActiveSession = Boolean(app.activeSession);
   const weekday = new Date()
@@ -202,7 +206,7 @@ function Home() {
     ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
     : nextUnit
       ? `Ready for the ${nextRowLabel} row.`
-      : 'Every shape is in your ink.';
+      : 'Every kana is in your ink.';
 
   // Mirrors startContinue(): due reviews first, then the next row.
   const primary = hasActiveSession
@@ -222,7 +226,7 @@ function Home() {
       : nextUnit
         ? {
             kicker: 'Next row',
-            title: `Meet ${nextRowItems.length} new ${nextRowItems.length === 1 ? 'shape' : 'shapes'} in the ${nextRowLabel} row`,
+            title: `Meet ${nextRowItems.length} new kana in the ${nextRowLabel} row`,
             cta: 'Start the lesson',
             preview: nextRowItems,
           }
@@ -357,8 +361,8 @@ function Home() {
           <AppText style={styles.brushTitle}>Brush practice</AppText>
           <AppText style={styles.brushLine}>
             {brushGlyph
-              ? `Draw a shape you've met · 2 min`
-              : 'Unlocks once you’ve met your first shapes'}
+              ? `Draw a kana you've met · 2 min`
+              : 'Unlocks once you’ve met your first kana'}
           </AppText>
         </View>
         <AppText style={styles.brushArrow} aria-hidden>

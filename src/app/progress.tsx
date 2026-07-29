@@ -8,7 +8,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { GOJUON_ROWS } from '@/domain/curriculum';
+import { bareRowLabel, GOJUON_ROWS } from '@/domain/curriculum';
 import { inkColor } from '@/domain/ink';
 import { learnerStateKey } from '@/domain/types';
 
@@ -18,14 +18,6 @@ const COLUMN_LABELS = ['A', 'I', 'U', 'E', 'O'];
 /** Ink at the two ends of the range, for the legend swatches. */
 const LEGEND_NEW = 'rgba(27, 26, 23, 0.16)';
 const LEGEND_KNOWN = 'rgba(27, 26, 23, 0.95)';
-
-/**
- * The grid labels rows by consonant alone, as the design does — "K row" in a
- * 38px column wraps, and the "row" is already obvious from the layout.
- */
-function rowLabel(shortTitle: string): string {
-  return shortTitle.replace(/\s+row$/i, '').replace(/^final\s+/i, '');
-}
 
 export default function ProgressRoute() {
   const app = useApp();
@@ -73,7 +65,7 @@ export default function ProgressRoute() {
         {GOJUON_ROWS.map((row) => (
           <View key={row.id} style={styles.row}>
             <AppText numberOfLines={1} style={styles.rowLabel}>
-              {rowLabel(row.shortTitle)}
+              {bareRowLabel(row.shortTitle)}
             </AppText>
             <View style={styles.rowCells}>
               {COLUMNS.map((column) => {
