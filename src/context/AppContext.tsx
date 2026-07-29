@@ -23,7 +23,7 @@ import {
   classifyAnswer,
   isCorrectClassification,
 } from '@/domain/answers';
-import { applyReview, dueItems } from '@/domain/scheduler';
+import { applyReview, dueItems, weakItems } from '@/domain/scheduler';
 import {
   buildLessonSession,
   buildReviewSession,
@@ -61,6 +61,8 @@ interface AppContextValue {
   repositoryDiagnostics: RepositoryDiagnostics | null;
   completeOnboarding(): Promise<void>;
   startContinue(): Promise<'practice' | 'complete'>;
+  /** Massed practice on trouble spots. Distinct from the due queue. */
+  startWeakSpots(): Promise<'practice' | 'complete'>;
   startUnit(unitId: string): Promise<void>;
   advanceIntroduction(): Promise<boolean>;
   answerCurrent(
@@ -271,6 +273,26 @@ export function AppProvider({ children }: PropsWithChildren) {
     await startUnit(upcoming.id);
     return 'practice';
   }, [persist, startUnit]);
+
+  const startWeakSpots = useCallback(async (): Promise<'practice' | 'complete'> => {
+    const current = snapshotRef.current;
+    if (current.activeSession) {
+      return 'practice';
+    }
+    const currentManifest = getPinnedManifest(current);
+    const weak = weakItems(currentManifest.items, current.skillStates);
+    if (weak.length === 0) {
+      return 'complete';
+    }
+    // Safe to offer at any time: the early-review rule means answering ahead of
+    // schedule can only rescue an interval, never inflate it.
+    await persist({
+      ...current,
+      activeSession: buildReviewSession(currentManifest, weak),
+      lastSummary: null,
+    });
+    return 'practice';
+  }, [persist]);
 
   const finishIfComplete = useCallback(
     async (session: ActivePracticeSession, current: LearnerSnapshot) => {
@@ -605,6 +627,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     repositoryDiagnostics,
     completeOnboarding,
     startContinue,
+    startWeakSpots,
     startUnit,
     advanceIntroduction,
     answerCurrent,

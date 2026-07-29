@@ -11,6 +11,7 @@ import {
   classificationIsCorrect,
   classifyReviewAnswer,
   FSRS_CONFIG,
+  settleEarlyReview,
 } from '../_shared/review-policy.ts';
 
 const corsHeaders = {
@@ -88,6 +89,27 @@ function toCard(state?: StateRow): Card {
     state: state.state,
     last_review: state.last_review ? new Date(state.last_review) : undefined,
   };
+}
+
+/**
+ * Canonical scheduling for one review.
+ *
+ * The early-review rule is applied here, not only on the client: this function
+ * is the source of truth and its result overwrites whatever the client
+ * computed, so leaving it out here would silently undo the rule on every sync.
+ * It is shared with src/domain/scheduler.ts so both sides cannot drift.
+ */
+function schedule(
+  previous: StateRow | undefined,
+  reviewedAt: Date,
+  rating: Rating.Again | Rating.Good,
+): Card {
+  const before = toCard(previous);
+  const next = scheduler.next(before, reviewedAt, rating).card;
+  if (!previous || rating === Rating.Again) {
+    return next;
+  }
+  return settleEarlyReview(before, next, reviewedAt);
 }
 
 function statePayload(card: Card) {
@@ -243,11 +265,7 @@ Deno.serve(async (request) => {
         scheduleAt = new Date(previous.last_review);
       }
 
-      let nextCard = scheduler.next(
-        toCard(previous),
-        scheduleAt,
-        rating,
-      ).card;
+      let nextCard = schedule(previous, scheduleAt, rating);
       const safeEvent = {
         eventId: event.eventId,
         sessionId: event.sessionId,
@@ -283,11 +301,7 @@ Deno.serve(async (request) => {
           new Date(previous.last_review).getTime() > scheduleAt.getTime()
             ? new Date(previous.last_review)
             : scheduleAt;
-        nextCard = scheduler.next(
-          toCard(previous),
-          rebasedAt,
-          rating,
-        ).card;
+        nextCard = schedule(previous, rebasedAt, rating);
         commit = await client.rpc('commit_review_event', {
           p_event: safeEvent,
           p_state: statePayload(nextCard),

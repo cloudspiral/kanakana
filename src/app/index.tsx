@@ -12,7 +12,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { inkColor } from '@/domain/ink';
-import { dueItems } from '@/domain/scheduler';
+import { dueItems, weakItems } from '@/domain/scheduler';
 import { learnerStateKey, type CurriculumUnit, type LearningItem } from '@/domain/types';
 
 export default function HomeRoute() {
@@ -239,6 +239,22 @@ function Home() {
     Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
   )?.content.glyph;
 
+  const weak = useMemo(
+    () => weakItems(app.manifest.items, app.snapshot.skillStates),
+    [app.manifest.items, app.snapshot.skillStates],
+  );
+  const weakLine = [
+    ...weak.slice(0, 4).map((item) => item.content.glyph),
+    ...(weak.length > 4 ? [`+${weak.length - 4}`] : []),
+  ].join(' ');
+
+  async function startWeak() {
+    const result = await app.startWeakSpots();
+    if (result === 'practice') {
+      router.push('/practice');
+    }
+  }
+
   async function startPrimary() {
     const result = await app.startContinue();
     if (result === 'practice') {
@@ -301,6 +317,28 @@ function Home() {
           )}
         </Pressable>
       </View>
+
+      {/* Deliberately not the due queue — massed practice on the ones that keep
+          slipping. Hidden entirely when there is nothing shaky. */}
+      {weak.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void startWeak()}
+          style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
+          <View style={styles.weakTile}>
+            <AppText style={styles.weakCount}>{weak.length}</AppText>
+          </View>
+          <View style={styles.brushCopy}>
+            <AppText style={styles.brushTitle}>Weak spots</AppText>
+            <AppText style={styles.brushLine}>
+              The ones you keep missing · {weakLine}
+            </AppText>
+          </View>
+          <AppText style={styles.brushArrow} aria-hidden>
+            →
+          </AppText>
+        </Pressable>
+      ) : null}
 
       {/* Brush practice. Falls through to the lesson when nothing has been met
           yet, rather than opening an empty drawing session. */}
@@ -578,6 +616,22 @@ const styles = StyleSheet.create({
   },
   brushRowPressed: {
     backgroundColor: Colors.wellFill,
+  },
+  weakTile: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.paper,
+  },
+  weakCount: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    lineHeight: 17,
+    color: Colors.accent,
   },
   brushTile: {
     width: 38,

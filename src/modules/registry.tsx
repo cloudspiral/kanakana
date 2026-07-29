@@ -1,49 +1,67 @@
-import {
-  forwardRef,
-  type ReactNode,
-} from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { forwardRef, type ReactNode } from 'react';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button } from '@/components/Buttons';
-import { Surface } from '@/components/Surface';
-import { AppText } from '@/components/Typography';
+import { Button, Pill } from '@/components/Buttons';
+import { GuideSquare } from '@/components/GuideSquare';
+import { SoundBars } from '@/components/SoundBars';
+import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { strokeNoteFor } from '@/domain/kanaContent';
+import { strokeCount } from '@/domain/strokes';
 import type { LearningItem, ModuleType, SessionOutcomes } from '@/domain/types';
+
+/** The design's square. Screens scale it down on narrower devices. */
+export const PRACTICE_SQUARE = 262;
 
 interface IntroductionProps {
   item: LearningItem;
   heading: string;
+  square: number;
   onContinue(): void;
+  onHear?: () => void;
+  canHear?: boolean;
 }
 
+/** Design screen 4 — Meet. */
 export function KanaIntroductionRenderer({
   item,
-  heading,
+  square,
   onContinue,
+  onHear,
+  canHear = false,
 }: IntroductionProps) {
+  const strokes = strokeCount(item.content.glyph);
   return (
     <View style={styles.renderer}>
-      <AppText variant="eyebrow">New kana</AppText>
-      <AppText variant="heading" style={styles.center}>
-        {heading}
+      <AppText variant="kicker" style={styles.center}>
+        New character
       </AppText>
-      <Surface
-        accessible
-        accessibilityLabel={`${item.content.glyph}, ${item.content.primaryAnswer}`}
-        style={styles.kanaCard}>
-        <AppText style={styles.glyph}>{item.content.glyph}</AppText>
-        <View style={styles.soundPill}>
-          <AppText style={styles.sound}>{item.content.primaryAnswer}</AppText>
+
+      <GuideSquare
+        size={square}
+        style={styles.center}
+        chip={{ label: item.content.primaryAnswer, tone: 'ink', corner: 'bottomRight' }}>
+        <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+          {item.content.glyph}
+        </Kana>
+      </GuideSquare>
+
+      <View style={styles.pills}>
+        {canHear ? (
+          <Pill label="Hear it" icon={<SoundBars />} onPress={onHear} />
+        ) : null}
+        <View style={styles.strokePill}>
+          <AppText style={styles.strokePillLabel}>
+            {strokes === 1 ? '1 stroke' : `${strokes} strokes`}
+          </AppText>
         </View>
-      </Surface>
-      <AppText color={Colors.inkMuted} style={styles.center}>
-        Notice the shape, then connect it to its sound.
+      </View>
+
+      <AppText variant="bodySmall" style={styles.note}>
+        {strokeNoteFor(item.content.glyph, strokes)}
       </AppText>
-      <Button label="I’ve got it" onPress={onContinue} />
+
+      <Button label="Now draw it" arrow onPress={onContinue} />
     </View>
   );
 }
@@ -52,68 +70,94 @@ interface ReadingProps {
   item: LearningItem;
   answer: string;
   prompt: string;
+  square: number;
   disabled?: boolean;
   onAnswerChange(answer: string): void;
   onSubmit(): void;
   onReveal(): void;
+  onHear?: () => void;
+  canHear?: boolean;
 }
 
+/** Design screen 6 — Recall. */
 export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
   function KanaReadingInputRenderer(
     {
       item,
       answer,
       prompt,
+      square,
       disabled,
       onAnswerChange,
       onSubmit,
       onReveal,
+      onHear,
+      canHear = false,
     },
     ref,
   ) {
+    const filled = answer.trim().length > 0;
     return (
       <View style={styles.renderer}>
-        <AppText variant="eyebrow">Recall</AppText>
-        <AppText variant="heading" style={styles.center}>
+        <AppText variant="meterLabel" style={styles.center}>
           {prompt}
         </AppText>
-        <Surface
-          accessible
-          accessibilityLabel={`Hiragana ${item.content.glyph}`}
-          style={styles.questionCard}>
-          <AppText style={styles.questionGlyph}>{item.content.glyph}</AppText>
-        </Surface>
-        <TextInput
-          ref={ref}
-          accessibilityLabel="Type the romaji"
-          autoCapitalize="none"
-          autoComplete="off"
-          autoCorrect={false}
-          blurOnSubmit={false}
-          editable={!disabled}
-          enterKeyHint="done"
-          inputMode="text"
-          onChangeText={onAnswerChange}
-          onSubmitEditing={onSubmit}
-          placeholder="Type the romaji"
-          placeholderTextColor="#8A93A9"
-          returnKeyType="done"
-          selectTextOnFocus
-          spellCheck={false}
-          style={styles.input}
-          value={answer}
-        />
-        <Button
-          disabled={!answer.trim() || disabled}
-          label="Check answer"
-          onPress={onSubmit}
-        />
-        <Button
-          disabled={disabled}
-          label="Show answer"
-          onPress={onReveal}
-          variant="link"
-        />
+
+        <GuideSquare size={square} style={styles.center}>
+          <Kana
+            size="hero"
+            style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+            {item.content.glyph}
+          </Kana>
+          {canHear ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Hear ${item.content.primaryAnswer}`}
+              onPress={onHear}
+              style={styles.hearCorner}>
+              <SoundBars color={Colors.paper} />
+              <AppText style={styles.hearCornerLabel}>Hear it</AppText>
+            </Pressable>
+          ) : null}
+        </GuideSquare>
+
+        <View style={styles.field}>
+          <TextInput
+            ref={ref}
+            accessibilityLabel="Type the romaji"
+            autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            editable={!disabled}
+            enterKeyHint="done"
+            inputMode="text"
+            onChangeText={onAnswerChange}
+            onSubmitEditing={onSubmit}
+            placeholder="type the sound"
+            placeholderTextColor={Colors.inkMuted}
+            returnKeyType="done"
+            spellCheck={false}
+            style={[styles.input, filled ? styles.inputFilled : styles.inputEmpty]}
+            value={answer}
+          />
+          <AppText style={styles.fieldHelp}>
+            Romaji · shi, chi, tsu and fu accept either spelling
+          </AppText>
+        </View>
+
+        <View style={styles.actions}>
+          <Button
+            disabled={!filled || disabled}
+            label="Check"
+            onPress={onSubmit}
+          />
+          <Button
+            disabled={disabled}
+            label="Show me the answer"
+            onPress={onReveal}
+            variant="link"
+          />
+        </View>
       </View>
     );
   },
@@ -125,69 +169,42 @@ interface SummaryProps {
   actions: ReactNode;
 }
 
-export function SessionSummaryRenderer({
-  outcomes,
-  kind,
-  actions,
-}: SummaryProps) {
-  const introduced = uniqueCount(outcomes.introducedItemIds);
-  const strengthened = uniqueCount(outcomes.strengthenedItemIds);
-  const returning = uniqueCount(outcomes.againItemIds);
+/** Design screen 8 — session summary. Only non-zero rows are listed. */
+export function SessionSummaryRenderer({ outcomes, kind, actions }: SummaryProps) {
+  const rows = [
+    { label: 'introduced', count: uniqueCount(outcomes.introducedItemIds) },
+    { label: 'strengthened', count: uniqueCount(outcomes.strengthenedItemIds) },
+    { label: 'returning soon', count: uniqueCount(outcomes.againItemIds) },
+  ].filter((row) => row.count > 0);
+
   return (
     <View style={styles.summary}>
-      <View style={styles.summaryMark}>
-        <AppText style={styles.summaryMarkText}>✓</AppText>
+      <View style={styles.summaryTile}>
+        <AppText style={styles.summaryTick}>✓</AppText>
       </View>
-      <AppText variant="title" style={styles.center}>
-        {kind === 'lesson' ? 'A new row is underway' : 'Reviews complete'}
+      <AppText style={styles.summaryTitle}>
+        {kind === 'lesson' ? 'A new row is underway' : 'Reviews done'}
       </AppText>
-      <AppText color={Colors.inkMuted} style={styles.center}>
+      <AppText variant="bodySmall">
         Your next practice is already being scheduled from what you recalled
         today.
       </AppText>
-      <View style={styles.outcomeList}>
-        {introduced > 0 && (
-          <Outcome
-            color={Colors.ink}
-            count={introduced}
-            label="introduced"
-          />
-        )}
-        <Outcome
-          color={Colors.ink}
-          count={strengthened}
-          label="strengthened"
-        />
-        {returning > 0 && (
-          <Outcome
-            color={Colors.accent}
-            count={returning}
-            label="returning soon"
-          />
-        )}
-      </View>
-      <View style={styles.actions}>{actions}</View>
-    </View>
-  );
-}
 
-function Outcome({
-  color,
-  count,
-  label,
-}: {
-  color: string;
-  count: number;
-  label: string;
-}) {
-  return (
-    <Surface style={styles.outcome}>
-      <View style={[styles.outcomeDot, { backgroundColor: color }]} />
-      <AppText variant="heading">{count}</AppText>
-      <AppText variant="caption" style={styles.outcomeLabel}>
-        {label}
-      </AppText>
-    </Surface>
+      {rows.length > 0 ? (
+        <View style={styles.outcomeCard}>
+          {rows.map((row, index) => (
+            <View
+              key={row.label}
+              style={[styles.outcomeRow, index > 0 && styles.outcomeRowDivided]}>
+              <AppText style={styles.outcomeCount}>{row.count}</AppText>
+              <AppText variant="bodySmall">{row.label}</AppText>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      <View style={styles.summaryActions}>{actions}</View>
+    </View>
   );
 }
 
@@ -213,102 +230,133 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: Spacing.lg,
-    paddingVertical: Spacing.lg,
   },
   center: {
+    alignSelf: 'center',
     textAlign: 'center',
   },
-  kanaCard: {
+  pills: {
+    flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 360,
-    minHeight: 300,
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: 10,
   },
-  glyph: {
-    fontFamily: Fonts.kanaLight,
-    fontSize: 128,
-    lineHeight: 154,
-  },
-  soundPill: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.accentSoft,
-  },
-  sound: {
-    color: Colors.ink,
-    fontFamily: Fonts.sansMedium,
-    fontSize: 22,
-  },
-  questionCard: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 360,
-    minHeight: 260,
-    justifyContent: 'center',
-  },
-  questionGlyph: {
-    fontFamily: Fonts.kanaLight,
-    fontSize: 144,
-    lineHeight: 170,
-  },
-  input: {
-    minHeight: 60,
-    borderRadius: Radius.rect,
-    borderWidth: 2,
-    borderColor: Colors.rule,
-    backgroundColor: Colors.card,
-    color: Colors.ink,
-    fontFamily: Fonts.sansMedium,
-    fontSize: 22,
-    paddingHorizontal: Spacing.lg,
-    textAlign: 'center',
-  },
-  summary: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: Spacing.lg,
-  },
-  summaryMark: {
-    width: 72,
-    height: 72,
-    alignItems: 'center',
-    alignSelf: 'center',
-    justifyContent: 'center',
+  strokePill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
     borderRadius: Radius.pill,
     backgroundColor: Colors.wellFill,
   },
-  summaryMarkText: {
-    color: Colors.ink,
-    fontFamily: Fonts.serif,
-    fontSize: 34,
+  strokePillLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.inkMuted,
   },
-  outcomeList: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  outcome: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: Spacing.md,
-    gap: Spacing.xxs,
-  },
-  outcomeDot: {
-    width: 9,
-    height: 9,
-    borderRadius: Radius.pill,
-  },
-  outcomeLabel: {
+  note: {
     textAlign: 'center',
+    paddingHorizontal: 10,
+  },
+
+  hearCorner: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    backgroundColor: Colors.ink,
+  },
+  hearCornerLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    color: Colors.paper,
+  },
+
+  field: {
+    gap: Spacing.xs,
+  },
+  input: {
+    fontFamily: Fonts.serif,
+    fontSize: 30,
+    lineHeight: 36,
+    color: Colors.ink,
+    paddingBottom: 9,
+    paddingTop: 0,
+    borderBottomWidth: 2,
+  },
+  inputEmpty: {
+    borderBottomColor: Colors.fieldRule,
+  },
+  inputFilled: {
+    borderBottomColor: Colors.ink,
+  },
+  fieldHelp: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.inkMuted,
   },
   actions: {
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
+    gap: 10,
+  },
+
+  summary: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: Spacing.md,
+  },
+  summaryTile: {
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  summaryTick: {
+    fontFamily: Fonts.serif,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Colors.ink,
+  },
+  summaryTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 34,
+    lineHeight: 38,
+    color: Colors.ink,
+  },
+  outcomeCard: {
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  outcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 10,
+    paddingHorizontal: Spacing.card,
+    paddingVertical: 14,
+  },
+  outcomeRowDivided: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.ruleSoft,
+  },
+  outcomeCount: {
+    fontFamily: Fonts.serif,
+    fontSize: 24,
+    lineHeight: 28,
+    color: Colors.ink,
+    minWidth: 28,
+  },
+  summaryActions: {
+    gap: 10,
+    marginTop: Spacing.xs,
   },
 });
