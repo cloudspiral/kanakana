@@ -1,0 +1,45 @@
+name: Mirror to GitLab
+
+# Pushes every branch and tag from this repo to the GitLab mirror at
+# labs.gauntletai.com/mattduque/kanakana. GitHub is the source of truth:
+# the mirror is force-pushed and pruned, so anything committed only on
+# GitLab will be overwritten.
+#
+# Requires a repository secret named GITLAB_MIRROR_TOKEN holding a GitLab
+# project or personal access token with the `write_repository` scope.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  delete:
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-gitlab
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    # Skip silently on forks, which will not have the secret.
+    if: github.repository == 'cloudspiral/kanakana'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Push branches and tags to GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          if [ -z "$GITLAB_TOKEN" ]; then
+            echo "GITLAB_MIRROR_TOKEN is not set; skipping mirror." >&2
+            exit 1
+          fi
+          git remote add gitlab \
+            "https://oauth2:${GITLAB_TOKEN}@labs.gauntletai.com/mattduque/kanakana.git"
+          git push --force --prune gitlab \
+            'refs/remotes/origin/*:refs/heads/*' \
+            'refs/tags/*:refs/tags/*'
