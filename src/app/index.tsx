@@ -235,6 +235,10 @@ function Home() {
 
   const caughtUp = !hasActiveSession && !due.length && !nextUnit;
 
+  const brushGlyph = app.manifest.items.find((item) =>
+    Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
+  )?.content.glyph;
+
   async function startPrimary() {
     const result = await app.startContinue();
     if (result === 'practice') {
@@ -297,6 +301,32 @@ function Home() {
           )}
         </Pressable>
       </View>
+
+      {/* Brush practice. Falls through to the lesson when nothing has been met
+          yet, rather than opening an empty drawing session. */}
+      <Pressable
+        accessibilityRole="button"
+        onPress={() =>
+          brushGlyph
+            ? router.push({ pathname: '/trace', params: { glyph: brushGlyph } })
+            : startPrimary()
+        }
+        style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
+        <View style={styles.brushTile}>
+          <Kana style={styles.brushGlyph}>{brushGlyph ?? 'あ'}</Kana>
+        </View>
+        <View style={styles.brushCopy}>
+          <AppText style={styles.brushTitle}>Brush practice</AppText>
+          <AppText style={styles.brushLine}>
+            {brushGlyph
+              ? `Draw a shape you've met · 2 min`
+              : 'Unlocks once you’ve met your first shapes'}
+          </AppText>
+        </View>
+        <AppText style={styles.brushArrow} aria-hidden>
+          →
+        </AppText>
+      </Pressable>
 
       <View style={styles.divider} />
 
@@ -532,6 +562,56 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     color: Colors.peach,
+  },
+
+  brushRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: Spacing.stack,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  brushRowPressed: {
+    backgroundColor: Colors.wellFill,
+  },
+  brushTile: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.accentSoft,
+  },
+  brushGlyph: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: 'rgba(188, 62, 39, 0.45)',
+  },
+  brushCopy: {
+    flex: 1,
+  },
+  brushTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  brushLine: {
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: Colors.inkMuted,
+    marginTop: 1,
+  },
+  brushArrow: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: Colors.inkMuted,
   },
 
   divider: {

@@ -36,6 +36,7 @@ import {
   type ActivePracticeSession,
   type AnswerClassification,
   type CurriculumManifest,
+  type LearnerSettings,
   type LearnerSnapshot,
   type LearningItem,
   type RepositoryDiagnostics,
@@ -68,7 +69,7 @@ interface AppContextValue {
     revealed?: boolean,
   ): Promise<AnswerResult>;
   closeSummary(): Promise<void>;
-  setHaptics(enabled: boolean): Promise<void>;
+  updateSettings(partial: Partial<LearnerSettings>): Promise<void>;
   resetProgress(): Promise<void>;
   freshGuest(): Promise<void>;
   seedReturningLearner(): Promise<void>;
@@ -453,12 +454,12 @@ export function AppProvider({ children }: PropsWithChildren) {
     await persist({ ...snapshotRef.current, lastSummary: null });
   }, [persist]);
 
-  const setHaptics = useCallback(
-    async (enabled: boolean) => {
+  const updateSettings = useCallback(
+    async (partial: Partial<LearnerSettings>) => {
       const current = snapshotRef.current;
       await persist({
         ...current,
-        settings: { ...current.settings, hapticsEnabled: enabled },
+        settings: { ...current.settings, ...partial },
       });
     },
     [persist],
@@ -608,7 +609,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     advanceIntroduction,
     answerCurrent,
     closeSummary,
-    setHaptics,
+    updateSettings,
     resetProgress,
     freshGuest,
     seedReturningLearner,

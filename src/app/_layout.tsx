@@ -43,6 +43,9 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: Colors.paper } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="practice" options={{ gestureEnabled: false }} />
+        {/* Drawing must own the gesture — a back-swipe mid-stroke would be a
+            constant misfire. */}
+        <Stack.Screen name="trace" options={{ gestureEnabled: false }} />
         <Stack.Screen name="summary" options={{ gestureEnabled: false }} />
         <Stack.Screen name="progress" />
         <Stack.Screen name="settings" />

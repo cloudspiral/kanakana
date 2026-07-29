@@ -64,15 +64,21 @@ export default function SettingsRoute() {
       <AppText variant="kicker">You</AppText>
       <AppText style={styles.title}>A quiet place to practise</AppText>
 
-      {/* The design also specifies "Play sounds" and "Tracing guide" rows. Audio
-          and the trace canvas do not exist yet, so those rows arrive with the
-          features rather than as controls that toggle nothing. */}
+      {/* The design also specifies a "Play sounds" row. Audio does not exist
+          yet, so that row arrives with the feature rather than as a control
+          that toggles nothing. */}
       <View style={styles.card}>
         <SettingRow
           title="Haptic feedback"
           body="A subtle confirmation after each answer, on devices that support it."
           value={app.snapshot.settings.hapticsEnabled}
-          onToggle={(next) => void app.setHaptics(next)}
+          onToggle={(next) => void app.updateSettings({ hapticsEnabled: next })}
+        />
+        <SettingRow
+          title="Tracing guide"
+          body="Show the faint character underneath while you draw. Turn it off when you're ready to write from memory."
+          value={app.snapshot.settings.tracingGuideEnabled}
+          onToggle={(next) => void app.updateSettings({ tracingGuideEnabled: next })}
         />
         <View style={styles.explainer}>
           <AppText style={styles.rowTitle}>How this works</AppText>

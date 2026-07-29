@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-import { createInitialSnapshot } from './initialState';
+import { createInitialSnapshot, hydrateSnapshot } from './initialState';
 import type {
   LearnerSnapshot,
   LearningRepository,
@@ -48,10 +48,9 @@ class SQLiteLearningRepository implements LearningRepository {
     const row = await database.getFirstAsync<SnapshotRow>(
       'SELECT payload FROM learner_snapshot WHERE singleton_id = 1',
     );
-    const initial = createInitialSnapshot();
     const snapshot = row
-      ? ({ ...initial, ...JSON.parse(row.payload) } as LearnerSnapshot)
-      : initial;
+      ? hydrateSnapshot(JSON.parse(row.payload))
+      : createInitialSnapshot();
     const outboxRows = await database.getAllAsync<OutboxRow>(
       'SELECT payload FROM review_outbox ORDER BY created_at ASC',
     );
