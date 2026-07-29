@@ -11,6 +11,7 @@ import {
   classificationIsCorrect,
   classifyReviewAnswer,
   FSRS_CONFIG,
+  settleEarlyReview,
 } from '../_shared/review-policy.ts';
 
 const corsHeaders = {
@@ -88,6 +89,27 @@ function toCard(state?: StateRow): Card {
     state: state.state,
     last_review: state.last_review ? new Date(state.last_review) : undefined,
   };
+}
+
+/**
+ * Canonical scheduling for one review.
+ *
+ * The early-review rule is applied here, not only on the client: this function
+ * is the source of truth and its result overwrites whatever the client
+ * computed, so leaving it out here would silently undo the rule on every sync.
+ * It is shared with src/domain/scheduler.ts so both sides cannot drift.
+ */
+function schedule(
+  previous: StateRow | undefined,
+  reviewedAt: Date,
+  rating: Rating.Again | Rating.Good,
+): Card {
+  const before = toCard(previous);
+  const next = scheduler.next(before, reviewedAt, rating).card;
+  if (!previous || rating === Rating.Again) {
+    return next;
+  }
+  return settleEarlyReview(before, next, reviewedAt);
 }
 
 function statePayload(card: Card) {
@@ -224,12 +246,31 @@ Deno.serve(async (request) => {
 
     for (const event of body.events) {
       const item = itemMap.get(event.itemId)!;
-      const classification = classifyReviewAnswer(
-        item.content.primaryAnswer,
-        item.content.acceptedAnswers,
-        event.answer,
-        event.classification === 'revealed',
-      );
+
+      /**
+       * Reading is re-graded here from the raw answer, so a client cannot claim
+       * a correct answer it did not give.
+       *
+       * Writing cannot be: the evidence is a stroke path, graded against
+       * KanjiVG geometry on the device, and the design deliberately leaves that
+       * client-side — it is UX, and shipping raw drawings to the server would
+       * widen what we collect for no benefit. The learner also has the final
+       * say on a close call by design, which is not a judgement the server
+       * could reproduce.
+       *
+       * So for kana_writing we trust the client's verdict. The blast radius is
+       * bounded: a learner can only mis-schedule their own writing practice.
+       * Reading, streaks and anything else stay independently verified.
+       */
+      const isWriting = event.skillId === 'kana_writing';
+      const classification = isWriting
+        ? event.classification
+        : classifyReviewAnswer(
+            item.content.primaryAnswer,
+            item.content.acceptedAnswers,
+            event.answer,
+            event.classification === 'revealed',
+          );
       const correct = classificationIsCorrect(classification);
       const rating = correct ? Rating.Good : Rating.Again;
       const key = stateKey(event.itemId, event.skillId);
@@ -243,11 +284,7 @@ Deno.serve(async (request) => {
         scheduleAt = new Date(previous.last_review);
       }
 
-      let nextCard = scheduler.next(
-        toCard(previous),
-        scheduleAt,
-        rating,
-      ).card;
+      let nextCard = schedule(previous, scheduleAt, rating);
       const safeEvent = {
         eventId: event.eventId,
         sessionId: event.sessionId,
@@ -283,11 +320,7 @@ Deno.serve(async (request) => {
           new Date(previous.last_review).getTime() > scheduleAt.getTime()
             ? new Date(previous.last_review)
             : scheduleAt;
-        nextCard = scheduler.next(
-          toCard(previous),
-          rebasedAt,
-          rating,
-        ).card;
+        nextCard = schedule(previous, rebasedAt, rating);
         commit = await client.rpc('commit_review_event', {
           p_event: safeEvent,
           p_state: statePayload(nextCard),

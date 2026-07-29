@@ -1,26 +1,32 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   AccessibilityInfo,
   Pressable,
   StyleSheet,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AppScreen } from '@/components/AppScreen';
-import { Button } from '@/components/Buttons';
+import { Button, Pill } from '@/components/Buttons';
+import { GuideSquare } from '@/components/GuideSquare';
+import { KanaWritingInput } from '@/components/KanaWritingInput';
+import { SoundBars } from '@/components/SoundBars';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { Surface } from '@/components/Surface';
-import { AppText } from '@/components/Typography';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { AppText, Kana } from '@/components/Typography';
+import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getItem } from '@/domain/curriculum';
-import { currentStep, sessionProgress } from '@/domain/session';
+import { isNearMiss } from '@/domain/answers';
+import { currentStep } from '@/domain/session';
+import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
 import type { AnswerClassification, LearningItem } from '@/domain/types';
 import {
   KanaIntroductionRenderer,
   KanaReadingInputRenderer,
+  PRACTICE_SQUARE,
 } from '@/modules/registry';
 
 interface Feedback {
@@ -29,6 +35,9 @@ interface Feedback {
   primaryAnswer: string;
   item: LearningItem;
   sessionComplete: boolean;
+  revealed: boolean;
+  responseMs: number;
+  answer: string;
 }
 
 export default function PracticeRoute() {
@@ -40,6 +49,18 @@ export default function PracticeRoute() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  /**
+   * The character to keep showing while the drawing screen slides in.
+   *
+   * The introduction has to be marked seen before we navigate, or coming back
+   * would land on the character just met. But that advance re-renders this
+   * screen underneath the opening trace screen, so you catch the old one
+   * changing behind the animation. Holding the outgoing view keeps the
+   * background still until the detour is over.
+   */
+  const [heldItem, setHeldItem] = useState<LearningItem | null>(null);
+  const { width } = useWindowDimensions();
+  const soundOn = app.snapshot.settings.soundEnabled;
 
   const session = app.activeSession;
   const step = currentStep(session);
@@ -61,6 +82,30 @@ export default function PracticeRoute() {
     return () => subscription.remove();
   }, []);
 
+  // Warm the clips for the rest of the session so the first tap has no delay.
+  // The ref keeps this to once per session: `session` itself changes on every
+  // answer, and re-preloading the same glyphs each time would be wasteful.
+  const preloadedSession = useRef<string | null>(null);
+  useEffect(() => {
+    if (!session || preloadedSession.current === session.id) {
+      return;
+    }
+    preloadedSession.current = session.id;
+    const glyphs = session.steps
+      .map((sessionStep) => getItem(app.manifest, sessionStep.itemId).content.glyph)
+      .filter((glyph, index, all) => all.indexOf(glyph) === index);
+    void preloadKana(glyphs);
+  }, [app.manifest, session]);
+
+  // Back from the drawing detour and fully visible again — release the held
+  // view. Doing it on focus rather than on navigation means the swap happens
+  // after the trace screen has finished dismissing, not during it.
+  useFocusEffect(
+    useCallback(() => {
+      setHeldItem(null);
+    }, []),
+  );
+
   useEffect(() => {
     if (step?.kind === 'assessment' && !feedback) {
       questionStartedAt.current = Date.now();
@@ -76,14 +121,16 @@ export default function PracticeRoute() {
   if (!session || !step || !item) {
     return (
       <AppScreen scroll={false} contentStyle={styles.centered}>
-        <AppText variant="heading">This practice is complete.</AppText>
-        <Button
-          label="See summary"
-          onPress={() => router.replace('/summary')}
-        />
+        <AppText variant="sectionTitle">This practice is complete.</AppText>
+        <Button label="See summary" arrow onPress={() => router.replace('/summary')} />
       </AppScreen>
     );
   }
+
+  const square = Math.min(
+    PRACTICE_SQUARE,
+    Math.min(width, MaxContentWidth) - Spacing.gutter * 2,
+  );
 
   async function submit(revealed = false) {
     if (submitting || (!revealed && !answer.trim()) || !item) {
@@ -91,18 +138,79 @@ export default function PracticeRoute() {
     }
     setSubmitting(true);
     try {
-      const result = await app.answerCurrent(
-        answer,
-        Math.max(0, Date.now() - (questionStartedAt.current ?? Date.now())),
-        revealed,
+      const responseMs = Math.max(
+        0,
+        Date.now() - (questionStartedAt.current ?? Date.now()),
       );
-      const nextFeedback: Feedback = { ...result, item };
+      const result = await app.answerCurrent(answer, responseMs, revealed);
+      const nextFeedback: Feedback = { ...result, item, revealed, responseMs, answer };
       setFeedback(nextFeedback);
+      // A correct answer needs no decision, so it clears itself. A miss waits —
+      // it carries the "draw it once" offer.
       if (result.correct) {
-        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 650);
+        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 900);
       }
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  /**
+   * Meet → Trace → Recall. The introduction is marked seen before the detour so
+   * that returning from the drawing lands on the next step rather than back on
+   * the character just met.
+   */
+  async function meetThenDraw() {
+    if (!item) {
+      return;
+    }
+    const glyph = item.content.glyph;
+    setHeldItem(item);
+    const complete = await app.advanceIntroduction();
+    if (complete) {
+      setHeldItem(null);
+      router.replace('/summary');
+      return;
+    }
+    router.push({ pathname: '/trace', params: { glyph } });
+  }
+
+  /** A writing prompt is graded from strokes plus the learner's own call. */
+  async function submitWriting(correct: boolean) {
+    if (submitting || !item) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const responseMs = Math.max(
+        0,
+        Date.now() - (questionStartedAt.current ?? Date.now()),
+      );
+      const result = await app.answerWriting(correct, responseMs);
+      const nextFeedback: Feedback = {
+        ...result,
+        item,
+        revealed: false,
+        responseMs,
+        answer: '',
+      };
+      setFeedback(nextFeedback);
+      if (result.correct) {
+        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 900);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** "I typed it wrong — I knew this." Reverts the miss exactly. */
+  async function undoTypo() {
+    const result = await app.undoLastMiss();
+    setFeedback(null);
+    setAnswer('');
+    questionStartedAt.current = Date.now();
+    if (result?.sessionComplete) {
+      router.replace('/summary');
     }
   }
 
@@ -118,44 +226,46 @@ export default function PracticeRoute() {
     }
   }
 
-  async function advanceIntroduction() {
-    const complete = await app.advanceIntroduction();
-    if (complete) {
-      router.replace('/summary');
-    }
-  }
-
-  const progress = sessionProgress(session);
-
   return (
-    <AppScreen
-      keyboardAvoiding
-      scroll={false}
-      contentStyle={styles.practiceContent}>
-      <View style={styles.practiceHeader}>
+    <AppScreen keyboardAvoiding scroll={false} contentStyle={styles.content}>
+      <View style={styles.header}>
         <Pressable
           accessibilityLabel="Leave practice"
           accessibilityRole="button"
           onPress={() => router.replace('/')}
           style={styles.close}>
-          <AppText style={styles.closeText}>×</AppText>
+          <AppText style={styles.closeMark}>×</AppText>
         </Pressable>
+        {/* One segment per session step: past ink, current accent, future pale. */}
         <View
-          accessibilityLabel={`${Math.round(progress * 100)} percent complete`}
+          accessibilityLabel={`Step ${session.currentIndex + 1} of ${session.steps.length}`}
           accessibilityRole="progressbar"
-          style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          style={styles.ticks}>
+          {session.steps.map((sessionStep, index) => (
+            <View
+              key={sessionStep.id}
+              style={[
+                styles.tick,
+                index < session.currentIndex
+                  ? styles.tickPast
+                  : index === session.currentIndex
+                    ? styles.tickCurrent
+                    : styles.tickFuture,
+              ]}
+            />
+          ))}
         </View>
-        <AppText variant="caption">
-          {Math.min(session.currentIndex + 1, session.steps.length)}/
-          {session.steps.length}
-        </AppText>
       </View>
 
-      {feedback ? (
-        <FeedbackView
-          feedback={feedback}
-          onContinue={() => advanceAfterFeedback()}
+      {heldItem ? (
+        // Frozen copy of the character just met. Interaction is disabled: the
+        // drawing screen owns the interaction until it is dismissed.
+        <KanaIntroductionRenderer
+          heading=""
+          item={heldItem}
+          square={square}
+          canHear={false}
+          onContinue={() => {}}
         />
       ) : step.kind === 'introduction' ? (
         <KanaIntroductionRenderer
@@ -165,7 +275,19 @@ export default function PracticeRoute() {
               : 'Meet this kana'
           }
           item={item}
-          onContinue={advanceIntroduction}
+          square={square}
+          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
+          onHear={() => void playKana(item.content.glyph)}
+          onContinue={() => void meetThenDraw()}
+        />
+      ) : step.moduleType === 'kana-writing-input-v1' ? (
+        <KanaWritingInput
+          key={step.id}
+          item={item}
+          square={square}
+          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
+          onHear={() => void playKana(item.content.glyph)}
+          onDecide={(correct) => void submitWriting(correct)}
         />
       ) : (
         <KanaReadingInputRenderer
@@ -173,59 +295,124 @@ export default function PracticeRoute() {
           answer={answer}
           disabled={submitting}
           item={item}
+          square={square}
           onAnswerChange={setAnswer}
           onReveal={() => void submit(true)}
           onSubmit={() => void submit(false)}
           prompt={
             step.isRecheck
-              ? 'One more time—what sound is this?'
+              ? 'One more time'
               : typeof module?.content.prompt === 'string'
                 ? module.content.prompt
-                : 'What sound does this make?'
+                : 'What sound is this?'
           }
         />
       )}
+
+      {feedback ? (
+        <FeedbackOverlay
+          feedback={feedback}
+          square={square}
+          canHear={soundOn && isKanaAudioAvailable(feedback.item.content.glyph)}
+          onHear={() => void playKana(feedback.item.content.glyph)}
+          canUndoTypo={
+            !feedback.correct &&
+            !feedback.revealed &&
+            isNearMiss(feedback.item, feedback.answer)
+          }
+          onUndoTypo={() => void undoTypo()}
+          onContinue={() => advanceAfterFeedback()}
+        />
+      ) : null}
     </AppScreen>
   );
 }
 
-function FeedbackView({
+/** Design screen 7 — full-bleed feedback. */
+function FeedbackOverlay({
   feedback,
+  square,
+  canHear,
+  onHear,
+  canUndoTypo,
+  onUndoTypo,
   onContinue,
 }: {
   feedback: Feedback;
+  square: number;
+  canHear: boolean;
+  onHear(): void;
+  canUndoTypo: boolean;
+  onUndoTypo(): void;
   onContinue(): void;
 }) {
+  const accent = feedback.correct ? Colors.ink : Colors.accent;
+  const kicker = feedback.correct ? 'Yes' : feedback.revealed ? 'Here it is' : 'Not yet';
   return (
-    <View style={styles.feedback}>
-      <AppText
-        variant="eyebrow"
-        color={feedback.correct ? Colors.green : Colors.pink}>
-        {feedback.correct ? 'Correct' : 'Let’s bring this back'}
+    <View style={styles.overlay}>
+      <AppText variant="kicker" color={accent} style={styles.overlayKicker}>
+        {kicker}
       </AppText>
-      <Surface
-        accessibilityLabel={`${feedback.item.content.glyph} is ${feedback.primaryAnswer}`}
-        style={[
-          styles.feedbackCard,
-          feedback.correct ? styles.correctCard : styles.againCard,
-        ]}>
-        <AppText style={styles.feedbackGlyph}>
+
+      <GuideSquare
+        size={square}
+        guides={false}
+        borderColor={accent}
+        borderWidth={1.5}
+        style={styles.overlaySquare}>
+        <Kana style={{ fontFamily: Fonts.kanaThin, fontSize: square * 0.57, lineHeight: square * 0.62 }}>
           {feedback.item.content.glyph}
-        </AppText>
-        <AppText variant="title" color={feedback.correct ? Colors.green : Colors.red}>
+        </Kana>
+        <AppText style={[styles.overlayRomaji, { color: accent }]}>
           {feedback.primaryAnswer}
         </AppText>
-      </Surface>
-      <AppText color={Colors.inkMuted} style={styles.feedbackCopy}>
+      </GuideSquare>
+
+      {canHear ? (
+        <Pill
+          label="Hear it"
+          icon={<SoundBars />}
+          onPress={onHear}
+          style={styles.overlayHear}
+        />
+      ) : null}
+
+      <AppText variant="bodySmall" style={styles.overlayCopy}>
         {feedback.correct
           ? feedback.classification === 'accepted_alias'
-            ? 'That spelling works. We’ll display the standard Hepburn form.'
-            : 'That connection just got a little stronger.'
-          : 'You’ll see it again after a few other prompts.'}
+            ? 'That spelling works — we show the standard Hepburn form.'
+            : 'That link just got a little stronger.'
+          : 'No harm done — it comes back in a few prompts.'}
       </AppText>
-      {!feedback.correct && (
-        <Button label="Continue" onPress={onContinue} />
-      )}
+
+      {feedback.correct && feedback.responseMs > 0 ? (
+        <AppText style={styles.overlaySpeed}>
+          read in {(feedback.responseMs / 1000).toFixed(1)}s
+        </AppText>
+      ) : null}
+
+      {/* No "draw it to fix the shape" here. Drawing is assessed by its own
+          review prompt, and the tracing surface is reached by meeting a
+          character or by choosing to practise one — not as a detour out of a
+          reading miss. */}
+      {!feedback.correct ? (
+        <View style={styles.overlayActions}>
+          {canUndoTypo ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onUndoTypo}
+              style={styles.typoRow}>
+              <AppText style={styles.typoLabel}>
+                I typed it wrong — I knew this
+              </AppText>
+              <AppText style={styles.typoLabel} aria-hidden>
+                ↺
+              </AppText>
+            </Pressable>
+          ) : null}
+          <Button label="Keep going" variant="link" onPress={onContinue} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -235,66 +422,94 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.lg,
   },
-  practiceContent: {
-    paddingBottom: Spacing.lg,
+  content: {
+    flex: 1,
+    paddingBottom: Spacing.gutter,
   },
-  practiceHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 14,
+    minHeight: 44,
   },
   close: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
+    width: 20,
+    alignItems: 'flex-start',
     justifyContent: 'center',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    minHeight: 44,
   },
-  closeText: {
+  closeMark: {
+    fontSize: 26,
+    lineHeight: 30,
     color: Colors.inkMuted,
-    fontSize: 28,
-    lineHeight: 31,
   },
-  progressTrack: {
+  ticks: {
     flex: 1,
-    height: 9,
-    overflow: 'hidden',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.border,
+    flexDirection: 'row',
+    gap: 3,
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.blue,
-  },
-  feedback: {
+  tick: {
     flex: 1,
+    height: 3,
+  },
+  tickPast: { backgroundColor: Colors.ink },
+  tickCurrent: { backgroundColor: Colors.accent },
+  tickFuture: { backgroundColor: Colors.segmentFuture },
+
+  overlay: {
+    // Absolute children position from the border box, so the screen gutter does
+    // not apply here — the overlay carries its own.
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.paper,
     justifyContent: 'center',
+    paddingHorizontal: Spacing.gutter,
     gap: Spacing.lg,
   },
-  feedbackCard: {
-    minHeight: 310,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-  },
-  correctCard: {
-    backgroundColor: Colors.greenPale,
-    borderColor: '#B9E5D6',
-  },
-  againCard: {
-    backgroundColor: Colors.redPale,
-    borderColor: '#F4CBD5',
-  },
-  feedbackGlyph: {
-    fontFamily: Fonts.japanese,
-    fontSize: 132,
-    lineHeight: 158,
-  },
-  feedbackCopy: {
+  overlayKicker: {
     textAlign: 'center',
+  },
+  overlaySquare: {
+    alignSelf: 'center',
+    gap: 6,
+  },
+  overlayRomaji: {
+    fontFamily: Fonts.serif,
+    fontSize: 30,
+    lineHeight: 34,
+  },
+  overlayHear: {
+    alignSelf: 'center',
+  },
+  overlayCopy: {
+    textAlign: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  overlaySpeed: {
+    textAlign: 'center',
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.7,
+    color: Colors.inkMuted,
+    marginTop: -Spacing.sm,
+  },
+  overlayActions: {
+    gap: 10,
+  },
+  typoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderWidth: 1,
+    borderColor: Colors.fieldBorder,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  typoLabel: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.inkMuted,
   },
 });

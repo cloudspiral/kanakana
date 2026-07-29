@@ -22,8 +22,15 @@ import {
 import {
   classifyAnswer,
   isCorrectClassification,
+  isNearMiss,
 } from '@/domain/answers';
-import { applyReview, dueItems } from '@/domain/scheduler';
+import {
+  applyReview,
+  dueItems,
+  dueTargets,
+  weakItems,
+  WRITING_SKILL,
+} from '@/domain/scheduler';
 import {
   buildLessonSession,
   buildReviewSession,
@@ -36,6 +43,7 @@ import {
   type ActivePracticeSession,
   type AnswerClassification,
   type CurriculumManifest,
+  type LearnerSettings,
   type LearnerSnapshot,
   type LearningItem,
   type RepositoryDiagnostics,
@@ -60,6 +68,8 @@ interface AppContextValue {
   repositoryDiagnostics: RepositoryDiagnostics | null;
   completeOnboarding(): Promise<void>;
   startContinue(): Promise<'practice' | 'complete'>;
+  /** Massed practice on trouble spots. Distinct from the due queue. */
+  startWeakSpots(): Promise<'practice' | 'complete'>;
   startUnit(unitId: string): Promise<void>;
   advanceIntroduction(): Promise<boolean>;
   answerCurrent(
@@ -67,8 +77,23 @@ interface AppContextValue {
     responseMs: number,
     revealed?: boolean,
   ): Promise<AnswerResult>;
+  /**
+   * Grade the current writing prompt. Correctness is decided on the client from
+   * stroke geometry (and the learner's own call), not from a typed answer.
+   */
+  answerWriting(correct: boolean, responseMs: number): Promise<AnswerResult>;
+  /**
+   * Seed the writing schedule from the no-stakes practice trace after an
+   * introduction. Only ever recorded as a success, so practising cannot hurt.
+   */
+  recordWritingPractice(itemId: string): Promise<void>;
+  /**
+   * Revert the last miss and count it as recalled. Offered only for a one-edit
+   * slip, and never after the answer was revealed.
+   */
+  undoLastMiss(): Promise<AnswerResult | null>;
   closeSummary(): Promise<void>;
-  setHaptics(enabled: boolean): Promise<void>;
+  updateSettings(partial: Partial<LearnerSettings>): Promise<void>;
   resetProgress(): Promise<void>;
   freshGuest(): Promise<void>;
   seedReturningLearner(): Promise<void>;
@@ -97,6 +122,12 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [ready, setReady] = useState(false);
   const [repositoryDiagnostics, setRepositoryDiagnostics] =
     useState<RepositoryDiagnostics | null>(null);
+  /** The last near-miss, kept only long enough to offer the typo override. */
+  const lastAttempt = useRef<{
+    snapshot: LearnerSnapshot;
+    answer: string;
+    responseMs: number;
+  } | null>(null);
 
   const persist = useCallback(async (next: LearnerSnapshot) => {
     snapshotRef.current = next;
@@ -251,7 +282,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       return 'practice';
     }
     const currentManifest = getPinnedManifest(current);
-    const currentDue = dueItems(currentManifest.items, current.skillStates);
+    const currentDue = dueTargets(currentManifest.items, current.skillStates);
     if (currentDue.length > 0) {
       await persist({
         ...current,
@@ -270,6 +301,29 @@ export function AppProvider({ children }: PropsWithChildren) {
     await startUnit(upcoming.id);
     return 'practice';
   }, [persist, startUnit]);
+
+  const startWeakSpots = useCallback(async (): Promise<'practice' | 'complete'> => {
+    const current = snapshotRef.current;
+    if (current.activeSession) {
+      return 'practice';
+    }
+    const currentManifest = getPinnedManifest(current);
+    const weak = weakItems(currentManifest.items, current.skillStates);
+    if (weak.length === 0) {
+      return 'complete';
+    }
+    // Safe to offer at any time: the early-review rule means answering ahead of
+    // schedule can only rescue an interval, never inflate it.
+    await persist({
+      ...current,
+      activeSession: buildReviewSession(
+        currentManifest,
+        weak.map((item) => ({ item, skillId: 'kana_reading' as const })),
+      ),
+      lastSummary: null,
+    });
+    return 'practice';
+  }, [persist]);
 
   const finishIfComplete = useCallback(
     async (session: ActivePracticeSession, current: LearnerSnapshot) => {
@@ -351,8 +405,15 @@ export function AppProvider({ children }: PropsWithChildren) {
       answer: string,
       responseMs: number,
       revealed = false,
+      forceCorrect = false,
     ): Promise<AnswerResult> => {
       const current = snapshotRef.current;
+      // Snapshotting the whole pre-answer state is what makes the typo revert
+      // exact: strength, interval, lapses and the session tallies all come back
+      // together, rather than being unwound field by field.
+      if (!forceCorrect) {
+        lastAttempt.current = null;
+      }
       const session = current.activeSession;
       const activeStep = currentStep(session);
       if (!session || !activeStep || activeStep.kind !== 'assessment') {
@@ -360,10 +421,12 @@ export function AppProvider({ children }: PropsWithChildren) {
       }
 
       const item = getItem(getPinnedManifest(current), activeStep.itemId);
-      const classification = revealed
-        ? ('revealed' as const)
-        : classifyAnswer(item, answer);
-      const correct = isCorrectClassification(classification);
+      const classification = forceCorrect
+        ? ('exact' as const)
+        : revealed
+          ? ('revealed' as const)
+          : classifyAnswer(item, answer);
+      const correct = forceCorrect || isCorrectClassification(classification);
       const rating: Rating.Good | Rating.Again = correct
         ? Rating.Good
         : Rating.Again;
@@ -424,6 +487,14 @@ export function AppProvider({ children }: PropsWithChildren) {
         reviewOutbox: [...current.reviewOutbox, event],
       };
 
+      if (!correct && !revealed && isNearMiss(item, answer)) {
+        lastAttempt.current = {
+          snapshot: current,
+          answer,
+          responseMs,
+        };
+      }
+
       const sessionComplete = await finishIfComplete(nextSession, next);
       if (
         !sessionComplete &&
@@ -449,16 +520,146 @@ export function AppProvider({ children }: PropsWithChildren) {
     [finishIfComplete, syncNow],
   );
 
+  const answerWriting = useCallback(
+    async (correct: boolean, responseMs: number): Promise<AnswerResult> => {
+      const current = snapshotRef.current;
+      const session = current.activeSession;
+      const activeStep = currentStep(session);
+      if (!session || !activeStep || activeStep.kind !== 'assessment') {
+        throw new Error('There is no active writing prompt.');
+      }
+      const item = getItem(getPinnedManifest(current), activeStep.itemId);
+      const rating: Rating.Again | Rating.Good = correct
+        ? Rating.Good
+        : Rating.Again;
+      const reviewedAt = new Date();
+      const stateKey = learnerStateKey(activeStep.itemId, activeStep.skillId);
+      const previousState = current.skillStates[stateKey];
+      const nextState = applyReview(
+        previousState,
+        activeStep.itemId,
+        activeStep.skillId,
+        rating,
+        reviewedAt,
+      );
+
+      let nextSession: ActivePracticeSession = {
+        ...session,
+        currentIndex: session.currentIndex + 1,
+        updatedAt: reviewedAt.toISOString(),
+        outcomes: {
+          ...session.outcomes,
+          strengthenedItemIds: correct
+            ? unique([...session.outcomes.strengthenedItemIds, activeStep.itemId])
+            : session.outcomes.strengthenedItemIds,
+          againItemIds: correct
+            ? session.outcomes.againItemIds
+            : unique([...session.outcomes.againItemIds, activeStep.itemId]),
+          correctAttempts: session.outcomes.correctAttempts + (correct ? 1 : 0),
+          totalAttempts: session.outcomes.totalAttempts + 1,
+        },
+      };
+      if (!correct) {
+        nextSession = insertRecheck(nextSession, activeStep);
+      }
+
+      const next: LearnerSnapshot = {
+        ...current,
+        skillStates: { ...current.skillStates, [stateKey]: nextState },
+        reviewOutbox: [
+          ...current.reviewOutbox,
+          {
+            eventId: activeStep.id,
+            sessionId: session.id,
+            itemId: activeStep.itemId,
+            skillId: activeStep.skillId,
+            // No typed answer exists for a drawing; the glyph identifies what
+            // was asked and the database never stores raw input anyway.
+            answer: item.content.glyph,
+            classification: correct ? ('exact' as const) : ('incorrect' as const),
+            rating,
+            responseMs,
+            exerciseVersion: activeStep.moduleSchemaVersion,
+            reviewedAt: reviewedAt.toISOString(),
+            expectedStateVersion: previousState?.version ?? 0,
+          },
+        ],
+      };
+
+      const sessionComplete = await finishIfComplete(nextSession, next);
+      return {
+        correct,
+        classification: correct ? 'exact' : 'incorrect',
+        primaryAnswer: item.content.primaryAnswer,
+        sessionComplete,
+      };
+    },
+    [finishIfComplete],
+  );
+
+  const recordWritingPractice = useCallback(
+    async (itemId: string) => {
+      const current = snapshotRef.current;
+      const stateKey = learnerStateKey(itemId, WRITING_SKILL);
+      // Practice is no-stakes: it can start the writing schedule but never
+      // damage one, so an existing state is left alone.
+      if (current.skillStates[stateKey]) {
+        return;
+      }
+      const reviewedAt = new Date();
+      const nextState = applyReview(
+        undefined,
+        itemId,
+        WRITING_SKILL,
+        Rating.Good,
+        reviewedAt,
+      );
+      await persist({
+        ...current,
+        skillStates: { ...current.skillStates, [stateKey]: nextState },
+        reviewOutbox: [
+          ...current.reviewOutbox,
+          {
+            eventId: Crypto.randomUUID(),
+            sessionId: current.activeSession?.id ?? 'practice',
+            itemId,
+            skillId: WRITING_SKILL,
+            answer: '',
+            classification: 'exact' as const,
+            rating: Rating.Good,
+            responseMs: 0,
+            exerciseVersion: 1,
+            reviewedAt: reviewedAt.toISOString(),
+            expectedStateVersion: 0,
+          },
+        ],
+      });
+    },
+    [persist],
+  );
+
+  const undoLastMiss = useCallback(async (): Promise<AnswerResult | null> => {
+    const attempt = lastAttempt.current;
+    if (!attempt) {
+      return null;
+    }
+    lastAttempt.current = null;
+    // Restore the exact pre-answer state, then replay the same answer as a
+    // success so every downstream consequence is recomputed rather than patched.
+    await persist(attempt.snapshot);
+    return answerCurrent(attempt.answer, attempt.responseMs, false, true);
+  }, [answerCurrent, persist]);
+
   const closeSummary = useCallback(async () => {
     await persist({ ...snapshotRef.current, lastSummary: null });
   }, [persist]);
 
-  const setHaptics = useCallback(
-    async (enabled: boolean) => {
+  const updateSettings = useCallback(
+    async (partial: Partial<LearnerSettings>) => {
       const current = snapshotRef.current;
       await persist({
         ...current,
-        settings: { ...current.settings, hapticsEnabled: enabled },
+        settings: { ...current.settings, ...partial },
       });
     },
     [persist],
@@ -604,11 +805,15 @@ export function AppProvider({ children }: PropsWithChildren) {
     repositoryDiagnostics,
     completeOnboarding,
     startContinue,
+    startWeakSpots,
     startUnit,
     advanceIntroduction,
     answerCurrent,
+    answerWriting,
+    recordWritingPractice,
+    undoLastMiss,
     closeSummary,
-    setHaptics,
+    updateSettings,
     resetProgress,
     freshGuest,
     seedReturningLearner,

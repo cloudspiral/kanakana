@@ -67,7 +67,7 @@ export default function DemoRoute() {
           <AppText variant="eyebrow">Demo mode</AppText>
           <AppText variant="title">Presenter tools</AppText>
         </View>
-        <Button label="Close" onPress={() => router.back()} variant="quiet" />
+        <Button label="Close" onPress={() => router.back()} variant="link" />
       </View>
 
       <Surface style={styles.section}>
@@ -112,7 +112,7 @@ export default function DemoRoute() {
           label="Sync now"
           onPress={() => void syncFromPanel()}
         />
-        {message && <AppText color={Colors.blue}>{message}</AppText>}
+        {message && <AppText color={Colors.ink}>{message}</AppText>}
       </Surface>
 
       <Surface style={styles.section}>
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   diagnostic: {
     gap: Spacing.xxs,
     paddingBottom: Spacing.sm,
-    borderBottomColor: Colors.border,
+    borderBottomColor: Colors.rule,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   diagnosticValue: {

@@ -1,17 +1,26 @@
 # Kanakana
 
-Kanakana is a beginner-focused hiragana-reading app built for the Nerdy / Varsity Tutors language-learning prompt. It teaches the 46 basic modern hiragana through short, cumulative introductions and independently schedules every learner’s `learning item × skill` state with FSRS.
+Japanese is one of the most popular languages being learned by foreigners today,
+and that journey begins at the same basic step for everyone: the kana. Instead
+of an alphabet, Japanese has a syllabary, a group of sounds that you must become
+deeply acquainted with and will form the basis of all further learning you do in
+the language.
 
-V1 implements one skill: `kana_reading` — see a glyph and type its romaji. The architecture intentionally leaves audio, handwriting, games, katakana, kanji, and vocabulary as future teaching modules or skill definitions rather than hard-coding them into “cards.”
+There are many different online and offline resources for learning the kana
+today, but there are none that have the right combination of writing practice,
+native voice samples, SRS scheduling, and elegant, simple user flow. I built
+Kanakana to meet this need and be the kana-learning app I would've wanted back
+when I first learned it instead of just watching YouTube videos and practicing
+with sheets of paper.
 
-## Product flow
+Kanakana has a very simple onboarding process and is designed to be welcoming to
+brand new users, but still rigorous enough that they master
+the kana as much as they would with any other method.
 
-1. Two-screen beginner onboarding explains the promise and starts immediately with vowels.
-2. A lesson introduces a small subset, checks recall, adds more kana, then mixes prior items.
-3. Incorrect answers and **Show answer** return after intervening prompts until recalled correctly.
-4. Future due reviews mix rows and schedule each kana independently.
-5. The session summary reports introduced, strengthened, and returning-soon items—without scores or streaks.
-6. Home always offers one primary **Continue** action: due reviews first, then the next row.
+It teaches the 46 basic modern hiragana through short, cumulative introductions
+and independently schedules reviews for each of their associated skills
+(reading and writing) in accordance with modern SRS scheduling best
+practices.
 
 ## Run locally
 
@@ -92,13 +101,18 @@ Unset the flag for the ordinary learner build.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow, trust boundaries, module rendering, and future kanji compatibility. See [docs/DEMO.md](docs/DEMO.md) for the in-person rehearsal.
 
-## Current verification
+## Design
 
-- Expo SDK 54 / React Native 0.81 / Expo Router
-- Native SQLite and browser `localStorage` behind one repository contract
-- FSRS v6 scheduling through `ts-fsrs`
-- Local-first outbox with server-canonical reconciliation
-- Supabase migrations apply cleanly from an empty local database
-- Deno Edge Function type-checks
-- Unit, type, lint, production web export, mobile-width browser flow, deep-link reload, and local Supabase smoke pass
-- iOS Expo Go and hosted Supabase/EAS remain the authenticated release steps
+The "Paper & Ink" visual system and the `kana_writing` skill are specified in [docs/design/README.md](docs/design/README.md), with rationale in [docs/design/stroke-check-notes.md](docs/design/stroke-check-notes.md). Tokens live in [src/constants/theme.ts](src/constants/theme.ts) — the palette is deliberately small, there are no shadows, and every rectangle is 5px.
+
+The kana faces are subset from Noto Sans JP to the kana ranges, because the full faces are 5.2 MB each:
+
+```bash
+npm run fonts:subset
+```
+
+## Credits
+
+- **KanjiVG** stroke-order data (`assets/kanjivg/`) — © Ulrich Apel, released under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/). Used unmodified as the source for stroke paths.
+- **Pronunciation recordings** (`assets/audio/kana/`) — recorded by Kaori sensei and published at [linkupnippon.com](https://linkupnippon.com/table-of-hiragana/). Used with her permission, whose condition is a visible credit and a link back; the app carries both on the You screen. See [assets/audio/kana/ATTRIBUTION.md](assets/audio/kana/ATTRIBUTION.md).
+- **Instrument Serif**, **DM Sans**, and **Noto Sans JP** — SIL Open Font License 1.1.

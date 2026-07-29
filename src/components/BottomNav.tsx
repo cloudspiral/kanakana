@@ -3,12 +3,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from './Typography';
-import { Colors, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, MaxContentWidth, MinTouch, Spacing } from '@/constants/theme';
 
 const destinations = [
-  { path: '/', label: 'Home', icon: '⌂' },
-  { path: '/progress', label: 'Progress', icon: '◫' },
-  { path: '/settings', label: 'Settings', icon: '⚙' },
+  { path: '/', label: 'Today' },
+  { path: '/progress', label: 'Kana' },
+  { path: '/settings', label: 'You' },
 ] as const;
 
 export function BottomNav() {
@@ -31,17 +31,14 @@ export function BottomNav() {
               accessibilityLabel={destination.label}
               key={destination.path}
               onPress={() => router.replace(destination.path)}
-              style={[styles.item, selected && styles.selected]}>
+              style={styles.item}>
               <AppText
-                style={[styles.icon, selected && styles.selectedText]}
-                aria-hidden>
-                {destination.icon}
-              </AppText>
-              <AppText
-                variant="caption"
-                style={[styles.label, selected && styles.selectedText]}>
+                variant="navLabel"
+                style={selected ? styles.labelSelected : styles.label}>
                 {destination.label}
               </AppText>
+              {/* 16x2 accent underline is the only active marker — no pill, no fill. */}
+              <View style={selected ? styles.underline : styles.underlineHidden} />
             </Pressable>
           );
         })}
@@ -53,10 +50,10 @@ export function BottomNav() {
 const styles = StyleSheet.create({
   shell: {
     width: '100%',
-    backgroundColor: Colors.canvas,
-    borderTopColor: Colors.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.paper,
+    borderTopColor: Colors.rule,
+    borderTopWidth: 1,
+    paddingHorizontal: Spacing.gutter,
     paddingTop: Spacing.sm,
   },
   nav: {
@@ -64,29 +61,28 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     flexDirection: 'row',
-    gap: Spacing.xs,
   },
   item: {
     flex: 1,
-    minHeight: 54,
+    minHeight: MinTouch,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
-  },
-  selected: {
-    backgroundColor: Colors.paleBlue,
-  },
-  icon: {
-    color: Colors.inkMuted,
-    fontSize: 20,
-    lineHeight: 22,
+    gap: 6,
   },
   label: {
-    fontSize: 11,
-    lineHeight: 15,
+    color: Colors.inkMuted,
   },
-  selectedText: {
-    color: Colors.blue,
-    fontFamily: 'Poppins_600SemiBold',
+  labelSelected: {
+    color: Colors.ink,
+  },
+  underline: {
+    width: 16,
+    height: 2,
+    backgroundColor: Colors.accent,
+  },
+  underlineHidden: {
+    width: 16,
+    height: 2,
+    backgroundColor: 'transparent',
   },
 });

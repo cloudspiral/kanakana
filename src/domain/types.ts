@@ -5,6 +5,7 @@ export type SkillId = 'kana_reading' | (string & {});
 export type ModuleType =
   | 'kana-introduction-v1'
   | 'kana-reading-input-v1'
+  | 'kana-writing-input-v1'
   | 'session-summary-v1'
   | (string & {});
 
@@ -150,6 +151,13 @@ export interface ActivePracticeSession {
 
 export interface LearnerSettings {
   hapticsEnabled: boolean;
+  /**
+   * Show the faint character underneath while tracing. On by default; the
+   * learner turns it off when they are ready to write from memory.
+   */
+  tracingGuideEnabled: boolean;
+  /** Play the recorded pronunciation when a character appears or is tapped. */
+  soundEnabled: boolean;
 }
 
 export interface SyncMetadata {

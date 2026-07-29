@@ -1,49 +1,87 @@
-import {
-  forwardRef,
-  type ReactNode,
-} from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { forwardRef, useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button } from '@/components/Buttons';
-import { Surface } from '@/components/Surface';
-import { AppText } from '@/components/Typography';
+import { Button, Pill } from '@/components/Buttons';
+import { GuideSquare } from '@/components/GuideSquare';
+import { SoundBars } from '@/components/SoundBars';
+import { StrokeOrderDiagram } from '@/components/StrokeOrderDiagram';
+import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
+import { strokeNoteFor } from '@/domain/kanaContent';
+import { strokeCount } from '@/domain/strokes';
 import type { LearningItem, ModuleType, SessionOutcomes } from '@/domain/types';
+import type { TextStyle } from 'react-native';
+
+/**
+ * The field is a serif line on a rule, so the browser's default focus ring
+ * boxes it and fights the design. Native has no equivalent, hence web only.
+ */
+const NO_WEB_OUTLINE =
+  Platform.OS === 'web'
+    ? ({ outlineStyle: 'none' } as unknown as TextStyle)
+    : null;
+
+/** The design's square. Screens scale it down on narrower devices. */
+export const PRACTICE_SQUARE = 262;
 
 interface IntroductionProps {
   item: LearningItem;
   heading: string;
+  square: number;
   onContinue(): void;
+  onHear?: () => void;
+  canHear?: boolean;
 }
 
+/** Design screen 4 — Meet. See it, hear it, then see the order it is built in. */
 export function KanaIntroductionRenderer({
   item,
-  heading,
+  square,
   onContinue,
+  onHear,
+  canHear = false,
 }: IntroductionProps) {
+  const glyph = item.content.glyph;
+  const strokes = strokeCount(glyph);
+  const [showOrder, setShowOrder] = useState(false);
+
   return (
     <View style={styles.renderer}>
-      <AppText variant="eyebrow">New kana</AppText>
-      <AppText variant="heading" style={styles.center}>
-        {heading}
+      <AppText variant="kicker" style={styles.center}>
+        New character
       </AppText>
-      <Surface
-        accessible
-        accessibilityLabel={`${item.content.glyph}, ${item.content.primaryAnswer}`}
-        style={styles.kanaCard}>
-        <AppText style={styles.glyph}>{item.content.glyph}</AppText>
-        <View style={styles.soundPill}>
-          <AppText style={styles.sound}>{item.content.primaryAnswer}</AppText>
-        </View>
-      </Surface>
-      <AppText color={Colors.inkMuted} style={styles.center}>
-        Notice the shape, then connect it to its sound.
+
+      <GuideSquare
+        size={square}
+        style={styles.center}
+        chip={{ label: item.content.primaryAnswer, tone: 'ink', corner: 'bottomRight' }}>
+        {showOrder ? (
+          <StrokeOrderDiagram glyph={glyph} size={square} />
+        ) : (
+          <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+            {glyph}
+          </Kana>
+        )}
+      </GuideSquare>
+
+      <View style={styles.pills}>
+        {canHear ? (
+          <Pill label="Hear it" icon={<SoundBars />} onPress={onHear} />
+        ) : null}
+        <Pill
+          label={strokes === 1 ? '1 stroke' : `${strokes} strokes`}
+          active={showOrder}
+          onPress={() => setShowOrder((current) => !current)}
+        />
+      </View>
+
+      <AppText variant="bodySmall" style={styles.note}>
+        {showOrder
+          ? 'Each number marks where that stroke begins.'
+          : strokeNoteFor(glyph, strokes)}
       </AppText>
-      <Button label="I’ve got it" onPress={onContinue} />
+
+      <Button label="Now draw it" arrow onPress={onContinue} />
     </View>
   );
 }
@@ -52,18 +90,21 @@ interface ReadingProps {
   item: LearningItem;
   answer: string;
   prompt: string;
+  square: number;
   disabled?: boolean;
   onAnswerChange(answer: string): void;
   onSubmit(): void;
   onReveal(): void;
 }
 
+/** Design screen 6 — Recall. */
 export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
   function KanaReadingInputRenderer(
     {
       item,
       answer,
       prompt,
+      square,
       disabled,
       onAnswerChange,
       onSubmit,
@@ -71,49 +112,62 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
     },
     ref,
   ) {
+    const filled = answer.trim().length > 0;
     return (
       <View style={styles.renderer}>
-        <AppText variant="eyebrow">Recall</AppText>
-        <AppText variant="heading" style={styles.center}>
+        <AppText variant="meterLabel" style={styles.center}>
           {prompt}
         </AppText>
-        <Surface
-          accessible
-          accessibilityLabel={`Hiragana ${item.content.glyph}`}
-          style={styles.questionCard}>
-          <AppText style={styles.questionGlyph}>{item.content.glyph}</AppText>
-        </Surface>
-        <TextInput
-          ref={ref}
-          accessibilityLabel="Type the romaji"
-          autoCapitalize="none"
-          autoComplete="off"
-          autoCorrect={false}
-          blurOnSubmit={false}
-          editable={!disabled}
-          enterKeyHint="done"
-          inputMode="text"
-          onChangeText={onAnswerChange}
-          onSubmitEditing={onSubmit}
-          placeholder="Type the romaji"
-          placeholderTextColor="#8A93A9"
-          returnKeyType="done"
-          selectTextOnFocus
-          spellCheck={false}
-          style={styles.input}
-          value={answer}
-        />
-        <Button
-          disabled={!answer.trim() || disabled}
-          label="Check answer"
-          onPress={onSubmit}
-        />
-        <Button
-          disabled={disabled}
-          label="Show answer"
-          onPress={onReveal}
-          variant="quiet"
-        />
+
+        {/* Deliberately no "Hear it" here: the sound IS the answer, so offering
+            it before the learner commits is just a slower Show me the answer.
+            It appears on the feedback screen instead. */}
+        <GuideSquare size={square} style={styles.center}>
+          <Kana
+            size="hero"
+            style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+            {item.content.glyph}
+          </Kana>
+        </GuideSquare>
+
+        <View style={styles.field}>
+          <TextInput
+            ref={ref}
+            accessibilityLabel="Type the romaji"
+            autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect={false}
+            editable={!disabled}
+            enterKeyHint="done"
+            inputMode="text"
+            onChangeText={onAnswerChange}
+            onSubmitEditing={onSubmit}
+            placeholder="type the sound"
+            placeholderTextColor={Colors.inkMuted}
+            returnKeyType="done"
+            spellCheck={false}
+            style={[
+              styles.input,
+              filled ? styles.inputFilled : styles.inputEmpty,
+              NO_WEB_OUTLINE,
+            ]}
+            value={answer}
+          />
+        </View>
+
+        <View style={styles.actions}>
+          <Button
+            disabled={!filled || disabled}
+            label="Check"
+            onPress={onSubmit}
+          />
+          <Button
+            disabled={disabled}
+            label="Show me the answer"
+            onPress={onReveal}
+            variant="link"
+          />
+        </View>
       </View>
     );
   },
@@ -125,69 +179,42 @@ interface SummaryProps {
   actions: ReactNode;
 }
 
-export function SessionSummaryRenderer({
-  outcomes,
-  kind,
-  actions,
-}: SummaryProps) {
-  const introduced = uniqueCount(outcomes.introducedItemIds);
-  const strengthened = uniqueCount(outcomes.strengthenedItemIds);
-  const returning = uniqueCount(outcomes.againItemIds);
+/** Design screen 8 — session summary. Only non-zero rows are listed. */
+export function SessionSummaryRenderer({ outcomes, kind, actions }: SummaryProps) {
+  const rows = [
+    { label: 'introduced', count: uniqueCount(outcomes.introducedItemIds) },
+    { label: 'strengthened', count: uniqueCount(outcomes.strengthenedItemIds) },
+    { label: 'returning soon', count: uniqueCount(outcomes.againItemIds) },
+  ].filter((row) => row.count > 0);
+
   return (
     <View style={styles.summary}>
-      <View style={styles.summaryMark}>
-        <AppText style={styles.summaryMarkText}>✓</AppText>
+      <View style={styles.summaryTile}>
+        <AppText style={styles.summaryTick}>✓</AppText>
       </View>
-      <AppText variant="title" style={styles.center}>
-        {kind === 'lesson' ? 'A new row is underway' : 'Reviews complete'}
+      <AppText style={styles.summaryTitle}>
+        {kind === 'lesson' ? 'A new row is underway' : 'Reviews done'}
       </AppText>
-      <AppText color={Colors.inkMuted} style={styles.center}>
+      <AppText variant="bodySmall">
         Your next practice is already being scheduled from what you recalled
         today.
       </AppText>
-      <View style={styles.outcomeList}>
-        {introduced > 0 && (
-          <Outcome
-            color={Colors.blue}
-            count={introduced}
-            label="introduced"
-          />
-        )}
-        <Outcome
-          color={Colors.green}
-          count={strengthened}
-          label="strengthened"
-        />
-        {returning > 0 && (
-          <Outcome
-            color={Colors.pink}
-            count={returning}
-            label="returning soon"
-          />
-        )}
-      </View>
-      <View style={styles.actions}>{actions}</View>
-    </View>
-  );
-}
 
-function Outcome({
-  color,
-  count,
-  label,
-}: {
-  color: string;
-  count: number;
-  label: string;
-}) {
-  return (
-    <Surface style={styles.outcome}>
-      <View style={[styles.outcomeDot, { backgroundColor: color }]} />
-      <AppText variant="heading">{count}</AppText>
-      <AppText variant="caption" style={styles.outcomeLabel}>
-        {label}
-      </AppText>
-    </Surface>
+      {rows.length > 0 ? (
+        <View style={styles.outcomeCard}>
+          {rows.map((row, index) => (
+            <View
+              key={row.label}
+              style={[styles.outcomeRow, index > 0 && styles.outcomeRowDivided]}>
+              <AppText style={styles.outcomeCount}>{row.count}</AppText>
+              <AppText variant="bodySmall">{row.label}</AppText>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      <View style={styles.summaryActions}>{actions}</View>
+    </View>
   );
 }
 
@@ -213,102 +240,110 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     gap: Spacing.lg,
-    paddingVertical: Spacing.lg,
   },
   center: {
+    alignSelf: 'center',
     textAlign: 'center',
   },
-  kanaCard: {
+  pills: {
+    flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 360,
-    minHeight: 300,
     justifyContent: 'center',
-    gap: Spacing.md,
+    gap: 10,
   },
-  glyph: {
-    fontFamily: Fonts.japanese,
-    fontSize: 128,
-    lineHeight: 154,
-  },
-  soundPill: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
+  strokePill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.paleBlue,
+    backgroundColor: Colors.wellFill,
   },
-  sound: {
-    color: Colors.blue,
-    fontFamily: Fonts.headingSemi,
-    fontSize: 22,
+  strokePillLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.inkMuted,
   },
-  questionCard: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '100%',
-    maxWidth: 360,
-    minHeight: 260,
-    justifyContent: 'center',
+  note: {
+    textAlign: 'center',
+    paddingHorizontal: 10,
   },
-  questionGlyph: {
-    fontFamily: Fonts.japanese,
-    fontSize: 144,
-    lineHeight: 170,
+
+
+  field: {
+    gap: Spacing.xs,
   },
   input: {
-    minHeight: 60,
-    borderRadius: Radius.md,
-    borderWidth: 2,
-    borderColor: Colors.border,
-    backgroundColor: Colors.white,
+    fontFamily: Fonts.serif,
+    fontSize: 30,
+    lineHeight: 36,
     color: Colors.ink,
-    fontFamily: Fonts.headingSemi,
-    fontSize: 22,
-    paddingHorizontal: Spacing.lg,
-    textAlign: 'center',
+    paddingBottom: 9,
+    paddingTop: 0,
+    borderBottomWidth: 2,
   },
+  inputEmpty: {
+    borderBottomColor: Colors.fieldRule,
+  },
+  inputFilled: {
+    borderBottomColor: Colors.ink,
+  },
+  actions: {
+    gap: 10,
+  },
+
   summary: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
-  summaryMark: {
-    width: 72,
-    height: 72,
+  summaryTile: {
+    width: 60,
+    height: 60,
     alignItems: 'center',
-    alignSelf: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.greenPale,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
   },
-  summaryMarkText: {
-    color: Colors.green,
-    fontFamily: Fonts.heading,
+  summaryTick: {
+    fontFamily: Fonts.serif,
+    fontSize: 28,
+    lineHeight: 34,
+    color: Colors.ink,
+  },
+  summaryTitle: {
+    fontFamily: Fonts.serif,
     fontSize: 34,
+    lineHeight: 38,
+    color: Colors.ink,
   },
-  outcomeList: {
+  outcomeCard: {
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  outcomeRow: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    alignItems: 'baseline',
+    gap: 10,
+    paddingHorizontal: Spacing.card,
+    paddingVertical: 14,
   },
-  outcome: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: Spacing.md,
-    gap: Spacing.xxs,
+  outcomeRowDivided: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.ruleSoft,
   },
-  outcomeDot: {
-    width: 9,
-    height: 9,
-    borderRadius: Radius.pill,
+  outcomeCount: {
+    fontFamily: Fonts.serif,
+    fontSize: 24,
+    lineHeight: 28,
+    color: Colors.ink,
+    minWidth: 28,
   },
-  outcomeLabel: {
-    textAlign: 'center',
-  },
-  actions: {
-    gap: Spacing.sm,
-    marginTop: Spacing.sm,
+  summaryActions: {
+    gap: 10,
+    marginTop: Spacing.xs,
   },
 });

@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Noto+Sans+JP:wght@200;300;400&display=swap" rel="stylesheet"><style>body{margin:0;background:#E7E2D8;font-family:'DM Sans',system-ui,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px 60px}a{color:#BC3E27;text-decoration:none}a:hover{color:#A5351F}input{font-family:'DM Sans',sans-serif}input:focus{outline:none}</style></helmet>
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+<div style="font:400 13px/1.5 'DM Sans',sans-serif;color:rgba(27,26,23,.5);text-align:center;max-width:420px">Paper &amp; Ink, built out. Tap through the whole flow — tracing is a real drawing surface, so draw with your mouse or finger.</div>
+
+<div style="position:relative;width:390px;height:844px;background:#F4F1EA;border:9px solid #14120E;border-radius:46px;overflow:hidden;box-shadow:0 24px 70px rgba(20,28,56,.22)">
+<div style="position:relative;z-index:5;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 30px;font:500 14px 'DM Sans',sans-serif;color:#1B1A17"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:15px;height:9px;border-radius:2px;background:#1B1A17"></span><span style="width:21px;height:10px;border-radius:3px;border:1.5px solid #1B1A17"></span></span></div>
+
+<div style="position:absolute;top:52px;left:0;right:0;bottom:0;display:flex;flex-direction:column">
+
+<sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 26px 26px">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:#BC3E27"><span style="font:400 17px 'Noto Sans JP',sans-serif;color:#F4F1EA">か</span></div><span style="font:400 22px 'Instrument Serif',serif;color:#1B1A17">Kanakana</span></div>
+<div style="display:flex;gap:5px"><span style="width:18px;height:2px;background:#BC3E27"></span><span style="width:8px;height:2px;background:#D8D1C0"></span></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px">
+<div style="position:relative;height:290px;border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;overflow:hidden;display:flex;align-items:center;justify-content:center">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#EDE6D6"></div>
+<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#EDE6D6"></div>
+<span style="position:absolute;left:26px;top:24px;font:300 44px 'Noto Sans JP',sans-serif;color:rgba(27,26,23,.14)">か</span>
+<span style="position:absolute;right:26px;bottom:22px;font:300 44px 'Noto Sans JP',sans-serif;color:rgba(27,26,23,.14)">ら</span>
+<span style="position:relative;font:200 168px/1 'Noto Sans JP',sans-serif;color:#1B1A17">あ</span>
+<div style="position:absolute;right:0;bottom:0;padding:8px 12px;background:#BC3E27;font:500 10px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#F4F1EA">a</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">Read and write from day one</div>
+<div style="font:400 44px/1.05 'Instrument Serif',serif;color:#1B1A17;text-wrap:pretty">Learn kana that actually sticks.</div>
+<div style="font:400 15px/1.55 'DM Sans',sans-serif;color:#6E675A;text-wrap:pretty">Forty-six characters, and they never leave you. Every Japanese word you'll ever read is built from them — so you'll see each one, hear it, and draw it until it's yours.</div>
+</div>
+<div onClick="{{ goWelcome2 }}" style="display:flex;align-items:center;justify-content:space-between;padding:17px 20px;background:#1B1A17;border-radius:5px;cursor:pointer" style-hover="background:#2C2A24"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">See how it works</span><span style="font:400 17px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isWelcome2 }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 26px 26px">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:#BC3E27"><span style="font:400 17px 'Noto Sans JP',sans-serif;color:#F4F1EA">か</span></div><span style="font:400 22px 'Instrument Serif',serif;color:#1B1A17">Kanakana</span></div>
+<div style="display:flex;gap:5px"><span style="width:8px;height:2px;background:#D8D1C0"></span><span style="width:18px;height:2px;background:#BC3E27"></span></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">Three moves, over and over</div>
+<div style="font:400 36px/1.1 'Instrument Serif',serif;color:#1B1A17;text-wrap:pretty">Meet it, draw it, recall it.</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:15px;align-items:flex-start;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px">
+<div style="width:44px;height:44px;flex:none;border:1px solid #E0DACB;border-radius:3px;display:flex;align-items:center;justify-content:center;background:#F4F1EA"><span style="font:300 26px 'Noto Sans JP',sans-serif;color:#1B1A17">き</span></div>
+<div><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Meet the shape</div><div style="font:400 13px/1.5 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">See it large, hear the sound once.</div></div>
+</div>
+<div style="display:flex;gap:15px;align-items:flex-start;border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;padding:16px">
+<div style="position:relative;width:44px;height:44px;flex:none;border:1px solid #BC3E27;border-radius:3px;display:flex;align-items:center;justify-content:center;background:#FBEFEB"><span style="font:300 26px 'Noto Sans JP',sans-serif;color:rgba(188,62,39,.4)">き</span><span style="position:absolute;right:-5px;top:-5px;width:14px;height:14px;border-radius:999px;background:#BC3E27"></span></div>
+<div><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Draw it once</div><div style="font:400 13px/1.5 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">Tracing the strokes is what makes the shape stop looking like a squiggle.</div></div>
+</div>
+<div style="display:flex;gap:15px;align-items:flex-start;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px">
+<div style="width:44px;height:44px;flex:none;border:1px solid #E0DACB;border-radius:3px;display:flex;align-items:center;justify-content:center;background:#F4F1EA"><span style="font:400 15px 'Instrument Serif',serif;color:#1B1A17">ki</span></div>
+<div><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Recall it later</div><div style="font:400 13px/1.5 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">Misses come back after a little space — never as a penalty.</div></div>
+</div>
+</div>
+<div style="display:flex;justify-content:space-between;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px 18px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font:300 32px 'Noto Sans JP',sans-serif;color:#1B1A17">あ</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">a</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font:300 32px 'Noto Sans JP',sans-serif;color:#1B1A17">い</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">i</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font:300 32px 'Noto Sans JP',sans-serif;color:#1B1A17">う</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">u</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font:300 32px 'Noto Sans JP',sans-serif;color:#1B1A17">え</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">e</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><span style="font:300 32px 'Noto Sans JP',sans-serif;color:#1B1A17">お</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">o</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<div onClick="{{ beginVowels }}" style="display:flex;align-items:center;justify-content:space-between;padding:17px 20px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">Begin with the five vowels</span><span style="font:400 17px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+<div onClick="{{ skipToHome }}" style="text-align:center;padding:6px;cursor:pointer"><span style="font:400 13px 'DM Sans',sans-serif;color:#6E675A;border-bottom:1px solid #C9C1AE">I've used Kanakana before</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;padding:6px 26px 0;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+<div style="display:flex;align-items:center;gap:10px"><div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:3px;background:#BC3E27"><span style="font:400 17px 'Noto Sans JP',sans-serif;color:#F4F1EA">か</span></div><span style="font:400 22px 'Instrument Serif',serif;color:#1B1A17">Kanakana</span></div>
+<span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">{{ todayChip }}</span>
+</div>
+<div style="margin:22px 0 18px">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27;margin-bottom:9px">Today</div>
+<div style="font:400 36px/1.1 'Instrument Serif',serif;color:#1B1A17;text-wrap:pretty">{{ homeHeadline }}</div>
+</div>
+<div style="border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;overflow:hidden">
+<div style="display:flex;border-bottom:1px solid #E6E0D2">
+<div style="flex:1;padding:17px 18px 15px">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#6E675A">{{ primaryKicker }}</div>
+<div style="font:400 25px/1.15 'Instrument Serif',serif;color:#1B1A17;margin-top:5px">{{ primaryTitle }}</div>
+</div>
+<div style="width:90px;flex:none;border-left:1px solid #E6E0D2;display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:8px;gap:2px">
+<sc-for list="{{ primaryPreview }}" as="p" hint-placeholder-count="4">
+<span style="font:300 20px 'Noto Sans JP',sans-serif;color:{{ p.ink }}">{{ p.glyph }}</span>
+</sc-for>
+</div>
+</div>
+<div onClick="{{ startPrimary }}" style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;background:#1B1A17;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">{{ primaryCta }}</span><span style="font:400 18px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+</div>
+<sc-if value="{{ hasWeak }}" hint-placeholder-val="{{ true }}">
+<div onClick="{{ startWeakSpots }}" style="display:flex;align-items:center;gap:14px;margin-top:12px;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:14px 16px;cursor:pointer">
+<div style="width:38px;height:38px;flex:none;border:1px solid #E0DACB;border-radius:3px;background:#F4F1EA;display:flex;align-items:center;justify-content:center"><span style="font:500 13px 'DM Sans',sans-serif;color:#BC3E27">{{ weakCount }}</span></div>
+<div style="flex:1"><div style="font:400 18px 'Instrument Serif',serif;color:#1B1A17">Weak spots</div><div style="font:400 12.5px 'DM Sans',sans-serif;color:#6E675A;margin-top:1px">The ones you keep missing · {{ weakLine }}</div></div>
+<span style="font:400 16px 'DM Sans',sans-serif;color:#6E675A">→</span>
+</div>
+</sc-if>
+<div onClick="{{ startBrush }}" style="display:flex;align-items:center;gap:14px;margin-top:12px;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:14px 16px;cursor:pointer">
+<div style="position:relative;width:38px;height:38px;flex:none;border:1px solid #BC3E27;border-radius:3px;background:#FBEFEB;display:flex;align-items:center;justify-content:center"><span style="font:300 22px 'Noto Sans JP',sans-serif;color:rgba(188,62,39,.45)">{{ brushGlyph }}</span></div>
+<div style="flex:1"><div style="font:400 18px 'Instrument Serif',serif;color:#1B1A17">Brush practice</div><div style="font:400 12.5px 'DM Sans',sans-serif;color:#6E675A;margin-top:1px">{{ brushLine }}</div></div>
+<span style="font:400 16px 'DM Sans',sans-serif;color:#6E675A">→</span>
+</div>
+<div style="height:1px;background:#E0DACB;margin:16px 0 14px"></div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px">
+<span style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Your ink</span>
+<span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ introducedCount }} of 46 · fainter is newer</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:8px 4px">
+<sc-for list="{{ inkStrip }}" as="k" hint-placeholder-count="46">
+<span style="font:300 17px 'Noto Sans JP',sans-serif;text-align:center;color:{{ k.ink }}">{{ k.glyph }}</span>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;padding:12px 26px 24px;border-top:1px solid #E0DACB;gap:6px;background:#F4F1EA">
+<div onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1B1A17">Today</span><span style="width:16px;height:2px;background:#BC3E27"></span></div>
+<div onClick="{{ goInk }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Ink</span><span style="width:16px;height:2px;background:transparent"></span></div>
+<div onClick="{{ goYou }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">You</span><span style="width:16px;height:2px;background:transparent"></span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isMeet }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 26px 26px">
+<div style="display:flex;align-items:center;gap:14px;min-height:44px">
+<span onClick="{{ quitSession }}" style="font:400 26px 'DM Sans',sans-serif;color:#6E675A;width:20px;cursor:pointer">×</span>
+<div style="flex:1;display:flex;gap:3px">
+<sc-for list="{{ stepTicks }}" as="t" hint-placeholder-count="10">
+<span style="flex:1;height:3px;background:{{ t.color }}"></span>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+<div style="text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">New character</div>
+<div style="position:relative;align-self:center;width:262px;height:262px;background:#FDFCF8;border:1px solid #1B1A17;border-radius:5px;display:flex;align-items:center;justify-content:center">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#EDE6D6"></div>
+<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#EDE6D6"></div>
+<span style="position:relative;font:200 168px/1 'Noto Sans JP',sans-serif;color:#1B1A17">{{ glyph }}</span>
+<div style="position:absolute;right:-1px;bottom:-1px;padding:9px 14px;background:#1B1A17;border-radius:5px 0 4px 0"><span style="font:400 19px 'Instrument Serif',serif;color:#F4F1EA">{{ romaji }}</span></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:center;gap:10px">
+<div onClick="{{ playSound }}" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid #DCD5C4;border-radius:999px;background:#FDFCF8;cursor:pointer">
+<span style="display:flex;align-items:flex-end;gap:2px"><span style="width:2px;height:7px;background:#1B1A17"></span><span style="width:2px;height:12px;background:#1B1A17"></span><span style="width:2px;height:9px;background:#1B1A17"></span></span>
+<span style="font:500 12px 'DM Sans',sans-serif;color:#1B1A17">Hear it</span>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:#EFEADD">
+<span style="font:500 12px 'DM Sans',sans-serif;color:#6E675A">{{ strokeCount }}</span>
+</div>
+</div>
+<div style="text-align:center;font:400 14px/1.55 'DM Sans',sans-serif;color:#6E675A;padding:0 10px;text-wrap:pretty">{{ meetHint }}</div>
+<div onClick="{{ next }}" style="display:flex;align-items:center;justify-content:space-between;padding:17px 20px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">Now draw it</span><span style="font:400 17px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isTrace }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 26px 26px">
+<div style="display:flex;align-items:center;gap:14px;min-height:44px">
+<span onClick="{{ quitSession }}" style="font:400 26px 'DM Sans',sans-serif;color:#6E675A;width:20px;cursor:pointer">×</span>
+<div style="flex:1;display:flex;gap:3px">
+<sc-for list="{{ stepTicks }}" as="t" hint-placeholder-count="10">
+<span style="flex:1;height:3px;background:{{ t.color }}"></span>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">Trace it</span>
+<span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ strokeProgress }}</span>
+</div>
+<div style="position:relative;align-self:center;width:262px;height:262px;background:#FDFCF8;border:1px solid #1B1A17;border-radius:5px;overflow:hidden">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#EDE6D6"></div>
+<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#EDE6D6"></div>
+<div style="position:absolute;left:50%;top:0;bottom:0;width:0;border-left:1px dashed #F0E9D9"></div>
+<span style="position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font:200 200px/1 'Noto Sans JP',sans-serif;color:{{ ghostColor }};pointer-events:none;user-select:none">{{ glyph }}</span>
+<canvas ref="{{ canvasRef }}" width="524" height="524" onPointerDown="{{ onDown }}" onPointerMove="{{ onMove }}" onPointerUp="{{ onUp }}" onPointerLeave="{{ onUp }}" style="position:absolute;inset:0;width:262px;height:262px;touch-action:none;cursor:crosshair;opacity:{{ canvasOpacity }}"></canvas>
+<div style="position:absolute;left:-1px;bottom:-1px;padding:7px 12px;background:#1B1A17;border-radius:0 4px 0 4px"><span style="font:400 16px 'Instrument Serif',serif;color:#F4F1EA">{{ romaji }}</span></div>
+</div>
+<sc-if value="{{ pendingCall }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px solid #BC3E27;border-radius:5px;background:#FDFCF8;padding:15px 17px;display:flex;flex-direction:column;gap:11px">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#BC3E27">Close call</div>
+<div style="font:400 13px/1.55 'DM Sans',sans-serif;color:#6E675A;text-wrap:pretty">Your stroke is in red over the dashed model. Too close for us to judge — you decide.</div>
+<div style="display:flex;gap:9px">
+<div onClick="{{ rejectCall }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:14px;border:1px solid #DCD5C4;border-radius:5px;background:#FDFCF8;cursor:pointer"><span style="font:500 14px 'DM Sans',sans-serif;color:#6E675A">Not good enough</span></div>
+<div onClick="{{ acceptCall }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:14px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 14px 'DM Sans',sans-serif;color:#F4F1EA">Count it</span></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ traceOpen }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;opacity:{{ controlsOpacity }}">
+<div onClick="{{ undoStroke }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;border:1px solid {{ undoBorder }};border-radius:999px;background:#FDFCF8;cursor:pointer"><span style="font:400 13px 'DM Sans',sans-serif;color:{{ undoFg }}">↶</span><span style="font:500 12px 'DM Sans',sans-serif;color:{{ undoFg }}">Undo stroke</span></div>
+<div onClick="{{ showHint }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;border:1px solid {{ hintBorder }};border-radius:999px;background:{{ hintBg }};cursor:pointer"><span style="width:10px;height:10px;border-radius:999px;background:{{ hintSwatch }}"></span><span style="font:500 12px 'DM Sans',sans-serif;color:{{ hintFg }}">{{ hintLabel }}</span></div>
+<div onClick="{{ clearTrace }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;border:1px solid #DCD5C4;border-radius:999px;background:#FDFCF8;cursor:pointer"><span style="font:500 12px 'DM Sans',sans-serif;color:#6E675A">Clear all</span></div>
+<div onClick="{{ playSound }}" style="display:flex;align-items:center;gap:7px;padding:9px 14px;border:1px solid #DCD5C4;border-radius:999px;background:#FDFCF8;cursor:pointer"><span style="display:flex;align-items:flex-end;gap:2px"><span style="width:2px;height:6px;background:#6E675A"></span><span style="width:2px;height:11px;background:#6E675A"></span><span style="width:2px;height:8px;background:#6E675A"></span></span><span style="font:500 12px 'DM Sans',sans-serif;color:#6E675A">Sound</span></div>
+</div>
+<div style="text-align:center;font:400 13.5px/1.5 'DM Sans',sans-serif;color:#6E675A;padding:0 6px;text-wrap:pretty">{{ traceHint }}</div>
+<div onClick="{{ reviewTrace }}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:{{ traceCtaBg }};border:1px solid {{ traceCtaBorder }};border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:{{ traceCtaFg }}">{{ traceCta }}</span><span style="font:400 17px 'DM Sans',sans-serif;color:{{ traceCtaArrow }}">→</span></div>
+</sc-if>
+<sc-if value="{{ traceReviewed }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px solid {{ resultAccent }};border-radius:5px;background:#FDFCF8;padding:15px 17px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:{{ resultAccent }}">{{ resultLabel }}</span>
+<span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ resultStrokeLine }}</span>
+</div>
+<div style="display:flex;gap:14px">
+<div style="flex:1">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px"><span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Stroke accuracy</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ resultAccuracy }}</span></div>
+<div style="height:6px;border-radius:999px;background:#EFEADD;overflow:hidden"><div style="width:{{ resultAccuracy }};height:100%;background:{{ resultAccent }}"></div></div>
+</div>
+<div style="flex:1">
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px"><span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Order &amp; direction</span><span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ resultOrder }}</span></div>
+<div style="height:6px;border-radius:999px;background:#EFEADD;overflow:hidden"><div style="width:{{ resultOrder }};height:100%;background:{{ resultAccent }}"></div></div>
+</div>
+</div>
+<div style="font:400 13px/1.55 'DM Sans',sans-serif;color:#6E675A;text-wrap:pretty">{{ resultCopy }}</div>
+<sc-if value="{{ resultForced }}" hint-placeholder-val="{{ false }}">
+<div style="border-top:1px solid #F0EBDE;padding-top:11px;font:400 12px 'DM Sans',sans-serif;color:#6E675A">{{ resultForcedLine }}</div>
+</sc-if>
+</div>
+<div style="display:flex;gap:9px">
+<div onClick="{{ tryAgain }}" style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px;border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;cursor:pointer"><span style="font:500 14px 'DM Sans',sans-serif;color:#1B1A17">Draw it again</span></div>
+<div onClick="{{ next }}" style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 14px 'DM Sans',sans-serif;color:#F4F1EA">Keep going</span><span style="font:400 16px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRecall }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:6px 26px 26px">
+<div style="display:flex;align-items:center;gap:14px;min-height:44px">
+<span onClick="{{ quitSession }}" style="font:400 26px 'DM Sans',sans-serif;color:#6E675A;width:20px;cursor:pointer">×</span>
+<div style="flex:1;display:flex;gap:3px">
+<sc-for list="{{ stepTicks }}" as="t" hint-placeholder-count="10">
+<span style="flex:1;height:3px;background:{{ t.color }}"></span>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:22px">
+<div style="text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#6E675A">{{ recallPrompt }}</div>
+<div style="position:relative;align-self:center;width:262px;height:262px;background:#FDFCF8;border:1px solid #1B1A17;border-radius:5px;display:flex;align-items:center;justify-content:center">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#EDE6D6"></div>
+<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#EDE6D6"></div>
+<span style="position:relative;font:200 168px/1 'Noto Sans JP',sans-serif;color:#1B1A17">{{ glyph }}</span>
+<div onClick="{{ playSound }}" style="position:absolute;right:-1px;bottom:-1px;display:flex;align-items:center;gap:7px;padding:9px 13px;background:#1B1A17;border-radius:5px 0 4px 0;cursor:pointer">
+<span style="display:flex;align-items:flex-end;gap:2px"><span style="width:2px;height:7px;background:#F4F1EA"></span><span style="width:2px;height:12px;background:#F4F1EA"></span><span style="width:2px;height:9px;background:#F4F1EA"></span></span>
+<span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#F4F1EA">Hear it</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:2px;padding-bottom:9px;border-bottom:2px solid {{ inputRule }}">
+<input value="{{ answer }}" onChange="{{ onAnswer }}" onKeyDown="{{ onKey }}" ref="{{ inputRef }}" placeholder="type the sound" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1;border:0;background:transparent;font:400 30px 'Instrument Serif',serif;color:#1B1A17;padding:0" />
+</div>
+<span style="font:400 12px 'DM Sans',sans-serif;color:#6E675A">Romaji · shi, chi, tsu and fu accept either spelling</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div onClick="{{ check }}" style="display:flex;align-items:center;justify-content:center;padding:16px;background:{{ checkBg }};border:1px solid {{ checkBorder }};border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:{{ checkFg }}">Check</span></div>
+<div onClick="{{ reveal }}" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:pointer"><span style="font:400 14px 'DM Sans',sans-serif;color:#6E675A;border-bottom:1px solid #C9C1AE">Show me the answer</span></div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ feedback }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:#F4F1EA;display:flex;flex-direction:column;justify-content:center;gap:22px;padding:26px;z-index:4">
+<div style="text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:{{ fbAccent }}">{{ fbKicker }}</div>
+<div style="position:relative;align-self:center;width:262px;height:262px;background:#FDFCF8;border:1.5px solid {{ fbAccent }};border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+<span style="font:200 150px/1 'Noto Sans JP',sans-serif;color:#1B1A17">{{ fbGlyph }}</span>
+<span style="font:400 30px 'Instrument Serif',serif;color:{{ fbAccent }}">{{ fbRomaji }}</span>
+</div>
+<div style="text-align:center;font:400 14.5px/1.55 'DM Sans',sans-serif;color:#6E675A;padding:0 8px;text-wrap:pretty">{{ fbCopy }}</div>
+<sc-if value="{{ fbSpeed }}" hint-placeholder-val="{{ false }}">
+<div style="text-align:center;font:400 12px 'DM Sans',sans-serif;letter-spacing:.06em;color:#6E675A">{{ fbSpeedLine }}</div>
+</sc-if>
+<sc-if value="{{ fbShowActions }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{ fbTypo }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ undoMiss }}" style="display:flex;align-items:center;justify-content:space-between;padding:15px 20px;border:1px solid #DCD5C4;border-radius:5px;background:#FDFCF8;cursor:pointer"><span style="font:400 14px 'DM Sans',sans-serif;color:#6E675A">{{ fbTypoLine }}</span><span style="font:400 15px 'DM Sans',sans-serif;color:#6E675A">↺</span></div>
+</sc-if>
+<div onClick="{{ traceFromFeedback }}" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#1B1A17">Draw it once to fix the shape</span><span style="font:400 17px 'DM Sans',sans-serif;color:#BC3E27">→</span></div>
+<div onClick="{{ dismissFeedback }}" style="text-align:center;padding:6px;cursor:pointer"><span style="font:400 14px 'DM Sans',sans-serif;color:#6E675A;border-bottom:1px solid #C9C1AE">Keep going</span></div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSummary }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;padding:26px">
+<div style="align-self:center;width:60px;height:60px;border:1px solid #1B1A17;border-radius:3px;background:#FDFCF8;display:flex;align-items:center;justify-content:center"><span style="font:400 30px 'Instrument Serif',serif;color:#BC3E27">✓</span></div>
+<div style="text-align:center;font:400 34px/1.12 'Instrument Serif',serif;color:#1B1A17">{{ summaryTitle }}</div>
+<div style="text-align:center;font:400 14.5px/1.55 'DM Sans',sans-serif;color:#6E675A;text-wrap:pretty">{{ summaryCopy }}</div>
+<div style="border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8">
+<sc-for list="{{ summaryRows }}" as="r" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid #F0EBDE">
+<div style="display:flex;align-items:center;gap:11px"><span style="width:8px;height:8px;border-radius:999px;background:{{ r.color }}"></span><span style="font:400 14px 'DM Sans',sans-serif;color:#1B1A17">{{ r.label }}</span></div>
+<span style="font:400 22px 'Instrument Serif',serif;color:#1B1A17">{{ r.count }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ showDrawn }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px">
+<div style="display:flex;align-items:center;gap:11px"><span style="width:8px;height:8px;border-radius:999px;background:#BC3E27"></span><span style="font:400 14px 'DM Sans',sans-serif;color:#1B1A17">shapes drawn</span></div>
+<span style="font:400 22px 'Instrument Serif',serif;color:#1B1A17">{{ drawnCount }}</span>
+</div>
+</sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div onClick="{{ keepGoing }}" style="display:flex;align-items:center;justify-content:space-between;padding:17px 20px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">Keep going</span><span style="font:400 17px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+<div onClick="{{ goHome }}" style="text-align:center;padding:6px;cursor:pointer"><span style="font:400 14px 'DM Sans',sans-serif;color:#6E675A;border-bottom:1px solid #C9C1AE">Back to today</span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isInk }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;padding:14px 26px 0;overflow:hidden">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">Your ink</div>
+<div style="font:400 32px/1.1 'Instrument Serif',serif;color:#1B1A17;margin-top:7px">{{ inkTitle }}</div>
+<div style="font:400 12.5px/1.5 'DM Sans',sans-serif;color:#6E675A;margin-top:6px;text-wrap:pretty">These forty-six will carry every Japanese word you ever read. Tap one to see where you two stand.</div>
+<div style="display:flex;align-items:center;gap:14px;margin-top:11px">
+<span style="display:flex;align-items:center;gap:5px"><span style="font:300 17px 'Noto Sans JP',sans-serif;color:rgba(27,26,23,.16)">あ</span><span style="font:400 11.5px 'DM Sans',sans-serif;color:#6E675A">new</span></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="font:300 17px 'Noto Sans JP',sans-serif;color:rgba(27,26,23,.95)">あ</span><span style="font:400 11.5px 'DM Sans',sans-serif;color:#6E675A">known</span></span>
+<span style="display:flex;align-items:center;gap:5px"><span style="width:15px;height:15px;border-radius:999px;border:1.5px solid #BC3E27"></span><span style="font:400 11.5px 'DM Sans',sans-serif;color:#6E675A">back today</span></span>
+</div>
+<div style="border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;padding:14px 10px;margin-top:14px">
+<div style="display:flex;margin:0 0 6px 38px">
+<span style="flex:1;text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.1em;color:#6E675A">A</span>
+<span style="flex:1;text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.1em;color:#6E675A">I</span>
+<span style="flex:1;text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.1em;color:#6E675A">U</span>
+<span style="flex:1;text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.1em;color:#6E675A">E</span>
+<span style="flex:1;text-align:center;font:500 10px 'DM Sans',sans-serif;letter-spacing:.1em;color:#6E675A">O</span>
+</div>
+<sc-for list="{{ inkRows }}" as="row" hint-placeholder-count="11">
+<div style="display:flex;align-items:center;height:43px">
+<span style="width:38px;flex:none;font:500 10px 'DM Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6E675A">{{ row.label }}</span>
+<div style="flex:1;display:flex">
+<sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="5">
+<div onClick="{{ c.onSelect }}" style="flex:1;display:flex;align-items:center;justify-content:center;position:relative;height:43px;cursor:pointer">
+<span style="position:absolute;width:36px;height:36px;border-radius:999px;border:1.5px solid {{ c.ring }}"></span>
+<span style="position:relative;font:300 25px 'Noto Sans JP',sans-serif;color:{{ c.ink }}">{{ c.glyph }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="display:flex;padding:12px 26px 24px;border-top:1px solid #E0DACB;gap:6px;background:#F4F1EA">
+<div onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Today</span><span style="width:16px;height:2px;background:transparent"></span></div>
+<div onClick="{{ goInk }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1B1A17">Ink</span><span style="width:16px;height:2px;background:#BC3E27"></span></div>
+<div onClick="{{ goYou }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">You</span><span style="width:16px;height:2px;background:transparent"></span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isYou }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div style="flex:1;padding:14px 26px 0;overflow:hidden">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#BC3E27">You</div>
+<div style="font:400 32px/1.1 'Instrument Serif',serif;color:#1B1A17;margin-top:7px">A quiet place to practise</div>
+<div style="border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;margin-top:18px">
+<div onClick="{{ toggleSound }}" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 18px;border-bottom:1px solid #F0EBDE;cursor:pointer">
+<div style="flex:1"><div style="font:400 18px 'Instrument Serif',serif;color:#1B1A17">Play sounds</div><div style="font:400 12.5px/1.45 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">Hear each character when it appears.</div></div>
+<div style="width:44px;height:26px;flex:none;border-radius:999px;background:{{ soundTrack }};position:relative"><div style="position:absolute;top:3px;left:{{ soundKnob }};width:20px;height:20px;border-radius:999px;background:#FDFCF8"></div></div>
+</div>
+<div onClick="{{ toggleGhost }}" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 18px;border-bottom:1px solid #F0EBDE;cursor:pointer">
+<div style="flex:1"><div style="font:400 18px 'Instrument Serif',serif;color:#1B1A17">Tracing guide</div><div style="font:400 12.5px/1.45 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">Show the faint character underneath while you draw. Turn it off when you're ready to write from memory.</div></div>
+<div style="width:44px;height:26px;flex:none;border-radius:999px;background:{{ ghostTrack }};position:relative"><div style="position:absolute;top:3px;left:{{ ghostKnob }};width:20px;height:20px;border-radius:999px;background:#FDFCF8"></div></div>
+</div>
+<div style="padding:17px 18px">
+<div style="font:400 18px 'Instrument Serif',serif;color:#1B1A17">How this works</div>
+<div style="font:400 13px/1.55 'DM Sans',sans-serif;color:#6E675A;margin-top:6px;text-wrap:pretty">Every character carries its own schedule, and reading and writing are tracked separately — you can recognise ら long before you can write it. Rows only group first meetings; after that each character comes back on its own clock.</div>
+</div>
+</div>
+<div onClick="{{ skipDay }}" style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px 18px;margin-top:12px;cursor:pointer">
+<div style="flex:1"><div style="font:400 14px 'DM Sans',sans-serif;color:#1B1A17">Skip ahead one day</div><div style="font:400 12px 'DM Sans',sans-serif;color:#6E675A;margin-top:2px">{{ dayLine }} · moves the schedule, does not shorten it</div></div>
+<span style="font:400 16px 'DM Sans',sans-serif;color:#1B1A17">→</span>
+</div>
+<div onClick="{{ restart }}" style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px 18px;margin-top:12px;cursor:pointer">
+<span style="font:400 14px 'DM Sans',sans-serif;color:#BC3E27">Restart this demo from the beginning</span>
+<span style="font:400 16px 'DM Sans',sans-serif;color:#BC3E27">↻</span>
+</div>
+<div style="text-align:center;font:400 12px 'DM Sans',sans-serif;color:#6E675A;margin-top:16px">Kanakana · hiragana · katakana coming</div>
+</div>
+<div style="display:flex;padding:12px 26px 24px;border-top:1px solid #E0DACB;gap:6px;background:#F4F1EA">
+<div onClick="{{ goHome }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Today</span><span style="width:16px;height:2px;background:transparent"></span></div>
+<div onClick="{{ goInk }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Ink</span><span style="width:16px;height:2px;background:transparent"></span></div>
+<div onClick="{{ goYou }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer"><span style="font:500 11px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#1B1A17">You</span><span style="width:16px;height:2px;background:#BC3E27"></span></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ detail }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:6;background:#F4F1EA;display:flex;flex-direction:column">
+<div style="flex:1;overflow-y:auto;padding:6px 26px 20px">
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+<div onClick="{{ closeDetail }}" style="display:flex;align-items:center;gap:8px;cursor:pointer"><span style="font:400 18px 'DM Sans',sans-serif;color:#6E675A">←</span><span style="font:400 13px 'DM Sans',sans-serif;color:#6E675A">Your ink</span></div>
+<span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">{{ detailRow }} · {{ detailIndex }} of 46</span>
+</div>
+
+<div style="display:flex;align-items:center;gap:20px;margin-top:14px">
+<div style="position:relative;width:132px;height:132px;flex:none;border:1px solid #1B1A17;border-radius:5px;background:#FDFCF8;display:flex;align-items:center;justify-content:center">
+<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:#EDE6D6"></div>
+<div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#EDE6D6"></div>
+<span style="position:relative;font:200 88px/1 'Noto Sans JP',sans-serif;color:#1B1A17">{{ detailGlyph }}</span>
+<div style="position:absolute;right:-1px;bottom:-1px;padding:5px 10px;background:#1B1A17;border-radius:4px 0 4px 0"><span style="font:400 15px 'Instrument Serif',serif;color:#F4F1EA">{{ detailRomaji }}</span></div>
+</div>
+<div style="flex:1">
+<div style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#BC3E27">{{ detailBond }}</div>
+<div style="font:400 27px/1.12 'Instrument Serif',serif;color:#1B1A17;margin-top:6px">{{ detailBondLine }}</div>
+<div style="font:400 12.5px/1.5 'DM Sans',sans-serif;color:#6E675A;margin-top:7px">{{ detailHistory }}</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:11px;margin-top:20px;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:16px 18px">
+<div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px"><span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Reading it</span><span style="font:400 12.5px 'DM Sans',sans-serif;color:#6E675A">{{ detailReading }}</span></div>
+<div style="height:6px;border-radius:999px;background:#EFEADD;overflow:hidden"><div style="width:{{ detailReadPct }};height:100%;background:#1B1A17"></div></div>
+</div>
+<div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px"><span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Writing it</span><span style="font:400 12.5px 'DM Sans',sans-serif;color:#6E675A">{{ detailWriting }}</span></div>
+<div style="height:6px;border-radius:999px;background:#EFEADD;overflow:hidden"><div style="width:{{ detailWritePct }};height:100%;background:#BC3E27"></div></div>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;border-top:1px solid #F0EBDE;padding-top:11px;margin-top:2px">
+<span style="font:500 10px 'DM Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6E675A">Reading speed</span>
+<span style="font:400 12.5px 'DM Sans',sans-serif;color:#1B1A17">{{ detailSpeedNote }}</span>
+</div>
+<div style="display:flex;padding-top:2px">
+<div style="flex:1"><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">{{ detailSpeed }}</div><div style="font:400 11px 'DM Sans',sans-serif;color:#6E675A">to read it</div></div>
+<div style="flex:1"><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">{{ detailDrawn }}</div><div style="font:400 11px 'DM Sans',sans-serif;color:#6E675A">times drawn</div></div>
+<div style="flex:1"><div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">{{ detailDue }}</div><div style="font:400 11px 'DM Sans',sans-serif;color:#6E675A">next return</div></div>
+</div>
+</div>
+
+<div style="margin-top:20px">
+<div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">The shape</div>
+<div style="font:400 13.5px/1.6 'DM Sans',sans-serif;color:#6E675A;margin-top:6px;text-wrap:pretty">{{ detailNote }}</div>
+</div>
+
+<div style="margin-top:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between">
+<span style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Where you'll meet it</span>
+<span style="font:400 11.5px 'DM Sans',sans-serif;color:#6E675A">real words</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+<sc-for list="{{ detailWords }}" as="w" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:12px 16px">
+<span style="font:300 24px 'Noto Sans JP',sans-serif;color:#1B1A17">{{ w.before }}<span style="color:#BC3E27">{{ w.target }}</span>{{ w.after }}</span>
+<div style="flex:1"><div style="font:400 13.5px 'DM Sans',sans-serif;color:#1B1A17">{{ w.meaning }}</div><div style="font:400 11.5px 'DM Sans',sans-serif;color:#6E675A;margin-top:1px">{{ w.romaji }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:20px">
+<div style="font:400 19px 'Instrument Serif',serif;color:#1B1A17">Easy to mix up with</div>
+<div style="display:flex;gap:9px;margin-top:10px">
+<sc-for list="{{ detailConfusions }}" as="c" hint-placeholder-count="2">
+<div onClick="{{ c.onSelect }}" style="display:flex;align-items:center;gap:10px;border:1px solid #E0DACB;border-radius:5px;background:#FDFCF8;padding:9px 14px;cursor:pointer">
+<span style="font:300 26px 'Noto Sans JP',sans-serif;color:#1B1A17">{{ c.glyph }}</span>
+<div><div style="font:400 13px 'DM Sans',sans-serif;color:#1B1A17">{{ c.romaji }}</div><div style="font:400 11px 'DM Sans',sans-serif;color:#6E675A">{{ c.hint }}</div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="display:flex;gap:10px;padding:12px 26px 26px;border-top:1px solid #E0DACB;background:#F4F1EA">
+<div onClick="{{ playSound }}" style="width:58px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid #DCD5C4;border-radius:5px;background:#FDFCF8;cursor:pointer">
+<span style="display:flex;align-items:flex-end;gap:2px"><span style="width:2px;height:8px;background:#1B1A17"></span><span style="width:2px;height:14px;background:#1B1A17"></span><span style="width:2px;height:10px;background:#1B1A17"></span></span>
+</div>
+<div onClick="{{ traceDetail }}" style="flex:1;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#1B1A17;border-radius:5px;cursor:pointer"><span style="font:500 15px 'DM Sans',sans-serif;color:#F4F1EA">Draw {{ detailGlyph }}</span><span style="font:400 17px 'DM Sans',sans-serif;color:#E4A08F">→</span></div>
+</div>
+</div>
+</sc-if>
+
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(27,26,23,.22);z-index:8;pointer-events:none"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940}}">
+const ROWS = [
+  ['Vowels', [['あ','a',3,0],['い','i',2,1],['う','u',2,2],['え','e',2,3],['お','o',3,4]]],
+  ['K', [['か','ka',3,0],['き','ki',4,1],['く','ku',1,2],['け','ke',3,3],['こ','ko',2,4]]],
+  ['S', [['さ','sa',3,0],['し','shi',1,1],['す','su',2,2],['せ','se',3,3],['そ','so',1,4]]],
+  ['T', [['た','ta',4,0],['ち','chi',2,1],['つ','tsu',1,2],['て','te',1,3],['と','to',2,4]]],
+  ['N', [['な','na',4,0],['に','ni',3,1],['ぬ','nu',2,2],['ね','ne',2,3],['の','no',1,4]]],
+  ['H', [['は','ha',3,0],['ひ','hi',1,1],['ふ','fu',4,2],['へ','he',1,3],['ほ','ho',4,4]]],
+  ['M', [['ま','ma',3,0],['み','mi',2,1],['む','mu',3,2],['め','me',2,3],['も','mo',3,4]]],
+  ['Y', [['や','ya',3,0],['ゆ','yu',2,2],['よ','yo',2,4]]],
+  ['R', [['ら','ra',2,0],['り','ri',2,1],['る','ru',1,2],['れ','re',2,3],['ろ','ro',1,4]]],
+  ['W', [['わ','wa',2,0],['を','wo',3,4]]],
+  ['N final', [['ん','n',1,2]]],
+];
+
+const ALIASES = { shi:['si'], chi:['ti'], tsu:['tu'], fu:['hu'], wo:['o'], n:['nn',"n'"] };
+
+const ALL = [];
+ROWS.forEach(([label, kana], r) => {
+  kana.forEach(([glyph, romaji, strokes, col]) => {
+    ALL.push({ id: romaji + '-' + r, glyph, romaji, strokes, col, row: r, rowLabel: label });
+  });
+});
+
+const SEED = {
+  'a-0':  { s: 0.92, dueIn: 6, seen: 14, drawn: 5, lapses: 0, avgMs: 1100 },
+  'i-0':  { s: 0.80, dueIn: 4, seen: 11, drawn: 4, lapses: 1, avgMs: 1400 },
+  'u-0':  { s: 0.95, dueIn: 7, seen: 15, drawn: 6, lapses: 0, avgMs: 900 },
+  'e-0':  { s: 0.50, dueIn: 0, seen: 7,  drawn: 2, lapses: 2, avgMs: 2600 },
+  'o-0':  { s: 0.85, dueIn: 5, seen: 12, drawn: 4, lapses: 1, avgMs: 1250 },
+  'ka-1': { s: 0.72, dueIn: 2, seen: 9,  drawn: 3, lapses: 1, avgMs: 1600 },
+  'ki-1': { s: 0.36, dueIn: 0, seen: 6,  drawn: 1, lapses: 3, avgMs: 3100 },
+  'ku-1': { s: 0.60, dueIn: 3, seen: 8,  drawn: 3, lapses: 1, avgMs: 1500 },
+  'ke-1': { s: 0.55, dueIn: 1, seen: 7,  drawn: 2, lapses: 2, avgMs: 2200 },
+  'ko-1': { s: 0.30, dueIn: 0, seen: 5,  drawn: 1, lapses: 3, avgMs: 3400 },
+  'sa-2': { s: 0.22, dueIn: 1, seen: 3,  drawn: 1, lapses: 1, avgMs: 2900 },
+  'shi-2':{ s: 0.16, dueIn: 2, seen: 2,  drawn: 0, lapses: 0, avgMs: 3300 },
+};
+
+// Deliberately generous: a wobbly さ from a beginner should pass. Nothing here
+// ever blocks progress — "Keep going" is always available.
+const RESULTS = {
+  clean: {
+    label: 'Clean, and in the right order',
+    accent: '#1B1A17',
+    copy: 'Every stroke in the right place, the right order and the right direction. That is the motor pattern you want — it carries into every kanji later.',
+  },
+  loose: {
+    label: 'Right order, a little loose',
+    accent: '#8A6A1F',
+    copy: 'Order and direction were correct, which is the part that matters most. Proportion will tighten up on its own with repetition.',
+  },
+  order: {
+    label: 'Shape is there, order needs work',
+    accent: '#8A6A1F',
+    copy: 'Japanese builds each character in a fixed sequence, and readers can see when it is off. Watch the dot — it marks where each stroke begins.',
+  },
+  partial: {
+    label: 'Stopped part-way',
+    accent: '#8A6A1F',
+    copy: 'Only some of the strokes were drawn, so there is nothing to judge yet. Finish the character to see how it went — or move on and come back to it.',
+  },
+  guided: {
+    label: 'Guided through it',
+    accent: '#BC3E27',
+    copy: 'Some strokes were drawn in for you. No harm done — this one just needs a few more passes with the hint on.',
+  },
+};
+
+const BONDS = [
+  { at: 0, label: 'Newly met', line: 'You two have only just been introduced.' },
+  { at: 0.3, label: 'Getting acquainted', line: 'You know the shape. The sound still takes a beat.' },
+  { at: 0.6, label: 'On familiar terms', line: 'It turns up and you read straight through it.' },
+  { at: 0.85, label: 'Old friend', line: 'This one is yours for good.' },
+];
+
+// Overrides the strength ladder: repeated misses are their own relationship, and
+// naming it plainly is more useful than calling a well-known nemesis "newly met".
+function bondFor(state, read, write) {
+  if (!state) return { label: 'Not met yet', line: null };
+  const lapses = state.lapses || 0;
+  const seen = state.seen || 0;
+  if (lapses >= 3) return { label: 'Your nemesis', line: 'Missed ' + lapses + ' times. It will keep coming back until it sticks — that is the system working, not you failing.' };
+  if (lapses >= 2 && seen >= 3) return { label: 'Still slippery', line: 'You have met this one plenty of times; it just has not settled yet.' };
+  return BONDS.filter((b) => (read + write) / 2 >= b.at).pop() || BONDS[0];
+}
+
+// word, romaji, meaning — the vocabulary each character actually shows up in
+const WORDS = {
+  a: [['あめ','ame','rain'],['あさ','asa','morning']],
+  i: [['いぬ','inu','dog'],['いち','ichi','one']],
+  u: [['うみ','umi','sea'],['うた','uta','song']],
+  e: [['えき','eki','station'],['こえ','koe','voice']],
+  o: [['おと','oto','sound'],['おかね','okane','money']],
+  ka: [['かさ','kasa','umbrella'],['かわ','kawa','river']],
+  ki: [['きた','kita','north'],['つき','tsuki','moon']],
+  ku: [['くつ','kutsu','shoes'],['くち','kuchi','mouth']],
+  ke: [['けさ','kesa','this morning'],['いけ','ike','pond']],
+  ko: [['ここ','koko','here'],['ねこ','neko','cat']],
+  sa: [['さかな','sakana','fish'],['さくら','sakura','cherry blossom']],
+  shi: [['しま','shima','island'],['あし','ashi','foot']],
+  su: [['すな','suna','sand'],['みず','mizu','water']],
+  se: [['せかい','sekai','world'],['せなか','senaka','back']],
+  so: [['そら','sora','sky'],['そこ','soko','over there']],
+  ta: [['たまご','tamago','egg'],['たかい','takai','tall']],
+  chi: [['ちかい','chikai','near'],['くち','kuchi','mouth']],
+  tsu: [['つき','tsuki','moon'],['つくえ','tsukue','desk']],
+  te: [['てがみ','tegami','letter'],['て','te','hand']],
+  to: [['とり','tori','bird'],['とけい','tokei','clock']],
+  na: [['なつ','natsu','summer'],['なまえ','namae','name']],
+  ni: [['にく','niku','meat'],['にわ','niwa','garden']],
+  nu: [['ぬの','nuno','cloth'],['いぬ','inu','dog']],
+  ne: [['ねこ','neko','cat'],['おかね','okane','money']],
+  no: [['のみもの','nomimono','a drink'],['つの','tsuno','horn']],
+  ha: [['はな','hana','flower'],['はし','hashi','bridge']],
+  hi: [['ひと','hito','person'],['ひかり','hikari','light']],
+  fu: [['ふゆ','fuyu','winter'],['ふね','fune','boat']],
+  he: [['へや','heya','room'],['へび','hebi','snake']],
+  ho: [['ほし','hoshi','star'],['ほん','hon','book']],
+  ma: [['まち','machi','town'],['まど','mado','window']],
+  mi: [['みず','mizu','water'],['みち','michi','road']],
+  mu: [['むし','mushi','insect'],['むら','mura','village']],
+  me: [['め','me','eye'],['あめ','ame','rain']],
+  mo: [['もり','mori','forest'],['もの','mono','thing']],
+  ya: [['やま','yama','mountain'],['やさい','yasai','vegetables']],
+  yu: [['ゆき','yuki','snow'],['ゆめ','yume','a dream']],
+  yo: [['よる','yoru','night'],['よむ','yomu','to read']],
+  ra: [['さくら','sakura','cherry blossom'],['そら','sora','sky']],
+  ri: [['りんご','ringo','apple'],['とり','tori','bird']],
+  ru: [['はる','haru','spring'],['よる','yoru','night']],
+  re: [['これ','kore','this one'],['れきし','rekishi','history']],
+  ro: [['ろく','roku','six'],['いろ','iro','colour']],
+  wa: [['わたし','watashi','I, me'],['かわ','kawa','river']],
+  wo: [['ほんをよむ','hon wo yomu','to read a book']],
+  n: [['ほん','hon','book'],['にほん','nihon','Japan']],
+};
+
+const CONFUSIONS = {
+  a: [['o','the loop opens the other way']], i: [['ri','ri joins at the top']],
+  u: [['tsu','tsu has no top tick'],['ra','ra is sharper']],
+  e: [['chi','chi curves under']], o: [['a','a has no flick'],['nu','nu loops closed']],
+  ka: [['ke','ke stands upright']], ki: [['sa','sa has one crossbar'],['chi','chi is round']],
+  ku: [['he','he is flat and wide']], ke: [['ka','ka leans']], ko: [['ni','ni has a stem']],
+  sa: [['ki','ki has two bars'],['chi','chi faces the other way']],
+  shi: [['tsu','tsu curves the other way'],['mo','mo has bars']],
+  su: [['mu','mu has a tail']], se: [['sa','sa has no box']],
+  so: [['n','n is one soft stroke']], ta: [['na','na has a loop']],
+  chi: [['sa','sa is angular'],['ki','ki has two bars']],
+  tsu: [['shi','shi opens upward'],['u','u has a tick']],
+  te: [['ra','ra has two parts']], to: [['ri','ri is two strokes']],
+  na: [['ta','ta has no loop'],['me','me is round']],
+  ni: [['ko','ko has no stem']], nu: [['me','me has no loop'],['o','o is open']],
+  ne: [['re','re has no loop'],['wa','wa has no loop']],
+  no: [['so','so is angular']], ha: [['ho','ho has two bars'],['ke','ke has no loop']],
+  hi: [['he','he is flat']], fu: [['wo','wo is one shape']],
+  he: [['ku','ku is a corner']], ho: [['ha','ha has one bar'],['ma','ma is looped']],
+  ma: [['ho','ho is squarer'],['mo','mo hangs down']],
+  mi: [['na','na is taller']], mu: [['su','su has no tail']],
+  me: [['nu','nu has a loop'],['na','na is taller']],
+  mo: [['ma','ma has a loop'],['shi','shi is one stroke']],
+  ya: [['chi','chi has no flick']], yu: [['wo','wo is wider']],
+  yo: [['ni','ni is two parts']], ra: [['u','u is rounder'],['chi','chi is smoother']],
+  ri: [['i','i is two short strokes']], ru: [['ro','ro has no loop']],
+  re: [['ne','ne has a loop'],['wa','wa is open']],
+  ro: [['ru','ru ends in a loop']], wa: [['ne','ne has a loop'],['re','re hooks']],
+  wo: [['yu','yu is symmetrical'],['fu','fu is four strokes']],
+  n: [['so','so is angular']],
+};
+
+const MEET_HINTS = {
+  a: 'Three strokes. The last one curves back like a ribbon — that loop is what tells あ apart from お.',
+  i: 'Two short strokes, both falling left to right. The shortest character in the set.',
+  u: 'A small tick, then one long curve. Keep the top stroke detached.',
+  e: 'A tick, then a shape like a folded flag. Compare it to ん later.',
+  o: 'Almost あ, but the loop opens the other way and it gains a flick on the right.',
+  ka: 'Three strokes. The long diagonal comes first, then the crossbar, then the flick.',
+  ki: 'Four strokes: two crossbars, then the long descent, then the curl.',
+  ku: 'One stroke. A single sharp corner, like the beak of a bird.',
+  ke: 'Three strokes. A vertical, then a lid, then a long right leg.',
+  ko: 'Two strokes, both short and horizontal-ish. The easiest one in the row.',
+};
+
+function strokeText(n) {
+  return n === 1 ? 'One stroke' : `${n} strokes`;
+}
+
+function hintFor(item) {
+  return MEET_HINTS[item.romaji] || `${strokeText(item.strokes)}. Follow the faint guide, then try it once without.`;
+}
+
+class Component extends DCLogic {
+  state = {
+    screen: 'welcome',
+    states: { ...SEED },
+    session: null,
+    index: 0,
+    answer: '',
+    feedback: null,
+    strokes: 0,
+    ghost: true,
+    sound: true,
+    detail: null,
+    traceResult: null,
+    done: [],
+    misses: 0,
+    forced: 0,
+    orderSlips: 0,
+    hint: false,
+    note: null,
+    pendingCall: null,
+    day: 0,
+    drawnThisSession: 0,
+    outcomes: { introduced: [], strengthened: [], returning: [] },
+  };
+
+  // ---------- stroke engine ----------
+  // Model strokes come from KanjiVG (Ulrich Apel, CC BY-SA 3.0): one ordered
+  // <path> per stroke, so order and direction are real data, not guesses.
+  // Approach follows hanzi-writer: grade ONE stroke at a time against the
+  // expected model stroke, hint after N misses, force-accept after more so the
+  // learner is never stuck.
+  SAMPLES = 16;
+  TOL = 46;        // mean point distance accepted, in canvas px
+  HINT_AFTER = 2;
+  FORCE_AFTER = 4;
+
+  async loadStrokes(item) {
+    this._kvg = this._kvg || {};
+    const cp = item.glyph.codePointAt(0).toString(16).padStart(5, '0');
+    if (this._kvg[cp]) return this._kvg[cp];
+    const svgText = await (await fetch('kanji/' + cp + '.svg')).text();
+    const doc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+    const ds = [...doc.querySelectorAll('path')].map((p) => p.getAttribute('d'));
+    const NS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', '0 0 109 109');
+    svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden');
+    document.body.appendChild(svg);
+    const k = 262 / 109;
+    const strokes = ds.map((d) => {
+      const el = document.createElementNS(NS, 'path');
+      el.setAttribute('d', d);
+      svg.appendChild(el);
+      const len = el.getTotalLength();
+      const pts = [];
+      for (let i = 0; i <= this.SAMPLES; i++) {
+        const p = el.getPointAtLength((len * i) / this.SAMPLES);
+        pts.push([p.x * k, p.y * k]);
+      }
+      return { d, pts, len: len * k };
+    });
+    svg.remove();
+    this._kvg[cp] = strokes;
+    return strokes;
+  }
+
+  resample(pts, n) {
+    if (pts.length < 2) return new Array(n + 1).fill(pts[0] || [0, 0]);
+    let total = 0;
+    const segs = [];
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      segs.push(d); total += d;
+    }
+    if (!total) return new Array(n + 1).fill(pts[0]);
+    const out = [pts[0]];
+    let target = total / n, acc = 0, i = 1;
+    while (out.length <= n && i < pts.length) {
+      if (acc + segs[i - 1] >= target) {
+        const r = (target - acc) / segs[i - 1];
+        out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * r,
+                  pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * r]);
+        target += total / n;
+      } else { acc += segs[i - 1]; i++; }
+    }
+    while (out.length <= n) out.push(pts[pts.length - 1]);
+    return out;
+  }
+
+  // Mean paired-point distance, forwards and reversed. Reversed winning clearly
+  // means the stroke was drawn backwards — worth telling the learner, because
+  // direction is half of what makes handwriting look right.
+  compare(userPts, model) {
+    const A = this.resample(userPts, this.SAMPLES);
+    const B = model.pts;
+    let fwd = 0, rev = 0;
+    for (let i = 0; i <= this.SAMPLES; i++) {
+      fwd += Math.hypot(A[i][0] - B[i][0], A[i][1] - B[i][1]);
+      rev += Math.hypot(A[i][0] - B[this.SAMPLES - i][0], A[i][1] - B[this.SAMPLES - i][1]);
+    }
+    const n = this.SAMPLES + 1;
+    return { fwd: fwd / n, rev: rev / n, best: Math.min(fwd, rev) / n };
+  }
+
+  canvasRef = (el) => {
+    if (!el || el === this.canvas) return;
+    this.canvas = el;
+    const ctx = el.getContext('2d');
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    this.ctx = ctx;
+    this.redraw();
+  };
+
+  point(e) {
+    const r = this.canvas.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top];
+  }
+
+  redraw() {
+    const ctx = this.ctx;
+    if (!ctx || !this.canvas) return;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const done = this.state.done || [];
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = '#1B1A17';
+    done.forEach((st) => {
+      if (st.pts.length < 2) return;
+      ctx.beginPath();
+      ctx.moveTo(st.pts[0][0], st.pts[0][1]);
+      st.pts.forEach((p) => ctx.lineTo(p[0], p[1]));
+      ctx.stroke();
+    });
+    const pending = this.state.pendingCall;
+    if (pending && pending.pts.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = '#BC3E27';
+      ctx.beginPath();
+      ctx.moveTo(pending.pts[0][0], pending.pts[0][1]);
+      pending.pts.forEach((p) => ctx.lineTo(p[0], p[1]));
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (this.live && this.live.length > 1) {
+      ctx.beginPath();
+      ctx.moveTo(this.live[0][0], this.live[0][1]);
+      this.live.forEach((p) => ctx.lineTo(p[0], p[1]));
+      ctx.stroke();
+    }
+    // Progressive hint: only ever the NEXT stroke, with its starting point —
+    // where to begin is the thing beginners actually get wrong.
+    const hint = this.state.hint && this.model && this.model[done.length];
+    if (hint) {
+      ctx.save();
+      ctx.lineWidth = 9;
+      ctx.strokeStyle = 'rgba(188,62,39,.42)';
+      ctx.setLineDash([9, 8]);
+      ctx.beginPath();
+      ctx.moveTo(hint.pts[0][0], hint.pts[0][1]);
+      hint.pts.forEach((p) => ctx.lineTo(p[0], p[1]));
+      ctx.stroke();
+      ctx.restore();
+      ctx.beginPath();
+      ctx.fillStyle = '#BC3E27';
+      ctx.arc(hint.pts[0][0], hint.pts[0][1], 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  onDown = (e) => {
+    if (!this.ctx || this.state.traceResult || !this.model) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    this.live = [this.point(e)];
+    this.drawing = true;
+  };
+
+  onMove = (e) => {
+    if (!this.drawing) return;
+    this.live.push(this.point(e));
+    this.redraw();
+  };
+
+  onUp = () => {
+    if (!this.drawing) return;
+    this.drawing = false;
+    const pts = this.live || [];
+    this.live = null;
+    if (pts.length < 2 || !this.model) { this.redraw(); return; }
+    this.judgeStroke(pts);
+  };
+
+  judgeStroke(pts) {
+    const done = this.state.done || [];
+    const idx = done.length;
+    const expected = this.model[idx];
+    if (!expected) return;
+
+    const mine = this.compare(pts, expected);
+    // Which remaining stroke does this actually look most like?
+    let bestIdx = idx, bestScore = mine.best;
+    for (let j = idx + 1; j < this.model.length; j++) {
+      const c = this.compare(pts, this.model[j]);
+      if (c.best < bestScore * 0.75) { bestScore = c.best; bestIdx = j; }
+    }
+
+    const backwards = mine.rev < mine.fwd * 0.75;
+    if (mine.best <= this.TOL && !backwards) {
+      this.setState((st) => ({
+        done: [...(st.done || []), { pts }],
+        strokes: (st.strokes || 0) + 1,
+        misses: 0,
+        hint: false,
+        note: null,
+      }), () => { this.redraw(); this.maybeFinish(); });
+      return;
+    }
+
+    const misses = (this.state.misses || 0) + 1;
+    let note = 'Not that stroke yet — try again.';
+    let slip = false;
+    if (bestIdx !== idx) {
+      note = 'That is stroke ' + (bestIdx + 1) + '. Japanese builds this character in order — stroke ' + (idx + 1) + ' comes first.';
+      slip = true;
+    } else if (backwards) {
+      note = 'Right shape, drawn backwards — begin at the dot and pull the other way.';
+      slip = true;
+    }
+
+    // Marginal shape, right order: the recogniser genuinely cannot tell. Rather
+    // than guess, show both and let the learner call it — a self-assessment step,
+    // not a failure state.
+    if (!slip && mine.best <= this.TOL * 1.7) {
+      this.setState((st) => ({ pendingCall: { pts }, misses, hint: true, note: null }), () => this.redraw());
+      return;
+    }
+
+    if (misses >= this.FORCE_AFTER) {
+      this.setState((st) => ({
+        done: [...(st.done || []), { pts: expected.pts, forced: true }],
+        strokes: (st.strokes || 0) + 1,
+        misses: 0,
+        hint: false,
+        forced: (st.forced || 0) + 1,
+        orderSlips: (st.orderSlips || 0) + (slip ? 1 : 0),
+        note: 'Drawn in for you — watch the dot and the direction.',
+      }), () => { this.redraw(); this.maybeFinish(); });
+      return;
+    }
+
+    this.setState((st) => ({
+      misses,
+      note,
+      hint: misses >= this.HINT_AFTER,
+      orderSlips: (st.orderSlips || 0) + (slip ? 1 : 0),
+    }), () => this.redraw());
+  }
+
+  maybeFinish() {
+    if (!this.model || (this.state.done || []).length < this.model.length) return;
+    this.setState({ traceResult: this.finalScore() });
+  }
+
+  finalScore() {
+    const done = this.state.done || [];
+    const orderSlips = this.state.orderSlips || 0;
+    const forced = this.state.forced || 0;
+    const backwards = 0;
+    // Accuracy per stroke, expressed so higher is always better.
+    let total = 0;
+    done.forEach((d, i) => {
+      if (d.forced) return;
+      const c = this.compare(d.pts, this.model[i]);
+      total += Math.max(0, 1 - c.best / (this.TOL * 1.6));
+    });
+    const graded = done.filter((d) => !d.forced).length || 1;
+    const expected = this.model.length;
+    const complete = done.length >= expected;
+    // Accuracy is over the WHOLE character: strokes never drawn score zero, so a
+    // third of a character can never report as perfect.
+    const accuracy = total / Math.max(graded, expected);
+    const verdict = !complete ? 'partial'
+      : forced ? 'guided'
+      : (orderSlips || backwards) ? 'order'
+      : accuracy >= 0.62 ? 'clean' : 'loose';
+    return { accuracy, orderSlips, forced, backwards, complete, strokes: done.length, expected, verdict };
+  }
+
+  callIt = (mine) => {
+    const pending = this.state.pendingCall;
+    if (!pending) return;
+    if (mine) {
+      this.setState((st) => ({
+        done: [...(st.done || []), { pts: pending.pts, selfGraded: true }],
+        strokes: (st.strokes || 0) + 1,
+        misses: 0, hint: false, pendingCall: null, note: null,
+      }), () => { this.redraw(); this.maybeFinish(); });
+    } else {
+      this.setState({ pendingCall: null, note: 'Try it again — begin at the dot.' }, () => this.redraw());
+    }
+  };
+
+  acceptCall = () => this.callIt(true);
+  rejectCall = () => this.callIt(false);
+
+  undoStroke = () => {
+    this.setState((st) => ({
+      done: (st.done || []).slice(0, -1),
+      strokes: Math.max(0, (st.strokes || 0) - 1),
+      misses: 0,
+      note: null,
+      traceResult: null,
+      pendingCall: null,
+    }), () => this.redraw());
+  };
+
+  showHint = () => this.setState({ hint: true }, () => this.redraw());
+
+  wipe() {
+    this.live = null;
+    if (this.ctx && this.canvas) this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  clearTrace = () => {
+    this.setState({ done: [], strokes: 0, misses: 0, note: null, hint: false, forced: 0, orderSlips: 0, traceResult: null, pendingCall: null }, () => this.redraw());
+  };
+
+  prepareTrace(item) {
+    this.model = null;
+    this.loadStrokes(item).then((strokes) => {
+      this.model = strokes;
+      this.forceUpdate();
+      this.redraw();
+    });
+  }
+
+  // ---------- scheduling ----------
+  itemById(id) { return ALL.find((i) => i.id === id); }
+
+  intervalFor(strength) {
+    const ladder = [1, 1, 2, 4, 7, 14, 21];
+    return ladder[Math.min(ladder.length - 1, Math.round(strength * (ladder.length - 1)))];
+  }
+
+  dueItems() {
+    return ALL.filter((i) => {
+      const st = this.state.states[i.id];
+      return st && (st.dueIn || 0) <= 0;
+    });
+  }
+
+  // "The ones you keep missing" — ranked by lapses first, then by weakness.
+  // Deliberately ignores the due date: this is massed practice, not review.
+  weakItems() {
+    return ALL
+      .filter((i) => {
+        const st = this.state.states[i.id];
+        if (!st) return false;
+        if ((st.dueIn || 0) <= 0) return false; // already in the due queue
+        return (st.lapses || 0) >= 1 || st.s < 0.62;
+      })
+      .sort((a, b) => {
+        const x = this.state.states[a.id], y = this.state.states[b.id];
+        return (y.lapses || 0) - (x.lapses || 0) || x.s - y.s;
+      })
+      .slice(0, 6);
+  }
+
+  startWeakSpots = () => {
+    const weak = this.weakItems();
+    if (!weak.length) return;
+    this.startSession(weak.map((i) => ({ kind: 'recall', id: i.id })), 'weak');
+  };
+
+  // Demo affordance: real intervals are hours to days, which cannot be shown in
+  // a walkthrough. Advancing the clock is honest — it moves the schedule rather
+  // than shortening it.
+  skipDay = () => {
+    this.setState((st) => {
+      const states = {};
+      Object.keys(st.states).forEach((id) => {
+        const v = st.states[id];
+        const dueIn = Math.max(0, (v.dueIn || 0) - 1);
+        states[id] = { ...v, dueIn, due: dueIn <= 0 };
+      });
+      return { states, day: (st.day || 0) + 1 };
+    });
+  };
+
+  nextRowItems() {
+    for (let r = 0; r < ROWS.length; r++) {
+      const inRow = ALL.filter((i) => i.row === r);
+      const fresh = inRow.filter((i) => !this.state.states[i.id]);
+      if (fresh.length) return { rowIndex: r, items: fresh, label: ROWS[r][0] };
+    }
+    return null;
+  }
+
+  startSession(steps, kind, extra) {
+    if (!steps || !steps.length) {
+      this.setState({ screen: 'home', session: null, feedback: null, detail: null, ...(extra || {}) });
+      return;
+    }
+    this.setState({
+      screen: 'session', session: { steps, kind }, index: 0, answer: '',
+      feedback: null, strokes: 0, drawnThisSession: 0, detail: null, traceResult: null,
+      done: [], misses: 0, forced: 0, orderSlips: 0, hint: false, note: null,
+      outcomes: { introduced: [], strengthened: [], returning: [] },
+      ...(extra || {}),
+    });
+    if (steps[0] && steps[0].kind === 'trace') this.prepareTrace(this.itemById(steps[0].id));
+    this.wipe();
+  }
+
+  startPrimary = () => {
+    const due = this.dueItems();
+    if (due.length) {
+      this.startSession(due.map((i) => ({ kind: 'recall', id: i.id })), 'review');
+      return;
+    }
+    this.startLesson();
+  };
+
+  startLesson = () => {
+    const next = this.nextRowItems();
+    if (!next) { this.setState({ screen: 'home' }); return; }
+    const group = next.items.slice(0, 3);
+    const steps = [];
+    group.forEach((i) => { steps.push({ kind: 'meet', id: i.id }); steps.push({ kind: 'trace', id: i.id }); });
+    group.forEach((i) => steps.push({ kind: 'recall', id: i.id }));
+    if (group.length > 1) steps.push({ kind: 'recall', id: group[0].id });
+    this.startSession(steps, 'lesson');
+  };
+
+  beginVowels = () => {
+    const vowels = ALL.filter((i) => i.row === 0).slice(0, 3);
+    const steps = [];
+    vowels.forEach((i) => { steps.push({ kind: 'meet', id: i.id }); steps.push({ kind: 'trace', id: i.id }); });
+    vowels.forEach((i) => steps.push({ kind: 'recall', id: i.id }));
+    this.startSession(steps, 'lesson', { states: {} });
+  };
+
+  startBrush = () => {
+    const known = ALL.filter((i) => this.state.states[i.id]).slice(0, 4);
+    if (!known.length) { this.startLesson(); return; }
+    this.startSession(known.map((i) => ({ kind: 'trace', id: i.id })), 'brush');
+  };
+
+  // ---------- flow ----------
+  current() {
+    const s = this.state.session;
+    if (!s) return null;
+    return s.steps[this.state.index] || null;
+  }
+
+  advance = (overrideSteps) => {
+    const s = this.state.session;
+    if (!s) return;
+    const steps = overrideSteps || s.steps;
+    if (this.state.index + 1 >= steps.length) {
+      this.setState({ screen: 'summary', feedback: null });
+      return;
+    }
+    const nextStep = steps[this.state.index + 1];
+    if (nextStep && nextStep.kind === 'trace') this.prepareTrace(this.itemById(nextStep.id));
+    this.setState((st) => ({ session: { ...s, steps }, index: st.index + 1, answer: '', feedback: null,
+      strokes: 0, traceResult: null, done: [], misses: 0, forced: 0, orderSlips: 0, hint: false, note: null,
+      pendingCall: null }));
+    this.wipe();
+  };
+
+  reviewTrace = () => {
+    if (this.state.pendingCall) return; // resolve the close call first
+    if (!(this.state.done || []).length) { this.advance(); return; }
+    this.setState({ traceResult: this.finalScore() });
+  };
+
+  tryAgain = () => this.clearTrace();
+
+  next = () => {
+    const step = this.current();
+    if (step && step.kind === 'meet') {
+      this.setState((st) => ({
+        outcomes: { ...st.outcomes, introduced: [...st.outcomes.introduced, step.id] },
+      }));
+    }
+    if (step && step.kind === 'trace') {
+      const item = this.itemById(step.id);
+      this.setState((st) => ({
+        drawnThisSession: st.drawnThisSession + (st.strokes > 0 ? 1 : 0),
+        states: (() => {
+          const prev = st.states[item.id] || { s: 0.15, due: false, seen: 0, drawn: 0 };
+          return { ...st.states, [item.id]: { ...prev, drawn: (prev.drawn || 0) + (st.strokes > 0 ? 1 : 0) } };
+        })(),
+      }));
+    }
+    this.advance();
+  };
+
+  grade(input, item) {
+    const v = String(input || '').trim().toLowerCase();
+    return v === item.romaji || (ALIASES[item.romaji] || []).includes(v);
+  }
+
+  settle(item, correct, ms) {
+    this.setState((st) => {
+      const prev = st.states[item.id] || { s: 0.12, drawn: 0, seen: 0, dueIn: 0, lapses: 0, avgMs: 0 };
+      this._undo = { id: item.id, prev, outcomes: st.outcomes };
+      // Answering before a card is due is weak evidence, so it earns a smaller
+      // strength bump and CANNOT push the next review further out. A miss always
+      // counts in full. This is what makes a weak-spots session safe to offer.
+      const early = (prev.dueIn || 0) > 0;
+      let s = prev.s, dueIn = prev.dueIn || 0, lapses = prev.lapses || 0;
+      if (correct) {
+        s = Math.min(1, prev.s + (early ? 0.08 : 0.22));
+        if (!early) dueIn = this.intervalFor(s);
+      } else {
+        s = Math.max(0.1, prev.s - 0.12);
+        dueIn = 0;
+        lapses += 1;
+      }
+      const avgMs = ms ? (prev.avgMs ? Math.round(prev.avgMs * 0.6 + ms * 0.4) : ms) : prev.avgMs;
+      const o = st.outcomes;
+      return {
+        states: { ...st.states, [item.id]: { ...prev, s, dueIn, lapses, avgMs, due: dueIn <= 0, seen: (prev.seen || 0) + 1 } },
+        outcomes: {
+          introduced: o.introduced,
+          strengthened: correct ? [...o.strengthened, item.id] : o.strengthened,
+          returning: correct ? o.returning : [...o.returning, item.id],
+        },
+      };
+    });
+  }
+
+  check = () => {
+    const step = this.current();
+    if (!step || !this.state.answer.trim()) return;
+    const item = this.itemById(step.id);
+    const correct = this.grade(this.state.answer, item);
+    const ms = this.recallStart ? Date.now() - this.recallStart : 0;
+    this.recallStart = null;
+    this.settle(item, correct, ms);
+    this.setState({ feedback: { correct, item, revealed: false, ms, typo: this.nearMiss(this.state.answer, item) } });
+    if (correct) {
+      this.timer = setTimeout(() => this.advance(), 850);
+    }
+  };
+
+  // One-character slips are the common case: "kj" for "ki". Offering the override
+  // only when the answer was CLOSE keeps it from becoming a free pass.
+  nearMiss(input, item) {
+    const v = String(input || '').trim().toLowerCase();
+    const t = item.romaji;
+    if (!v || v === t) return false;
+    if (Math.abs(v.length - t.length) > 1) return false;
+    let edits = 0, i = 0, j = 0;
+    while (i < v.length && j < t.length) {
+      if (v[i] === t[j]) { i++; j++; continue; }
+      edits++;
+      if (edits > 1) return false;
+      if (v.length > t.length) i++;
+      else if (v.length < t.length) j++;
+      else { i++; j++; }
+    }
+    return edits + (v.length - i) + (t.length - j) <= 1;
+  }
+
+  // A typo must not tell the scheduler you have forgotten the character.
+  undoMiss = () => {
+    const u = this._undo;
+    const fb = this.state.feedback;
+    if (!u || !fb) return;
+    this._undo = null;
+    this.setState((st) => ({
+      states: { ...st.states, [u.id]: u.prev },
+      outcomes: u.outcomes,
+      feedback: { ...fb, correct: true, corrected: true, typo: false },
+    }));
+    this.timer = setTimeout(() => this.advance(), 900);
+  };
+
+  reveal = () => {
+    const step = this.current();
+    if (!step) return;
+    const item = this.itemById(step.id);
+    this.recallStart = null;
+    this.settle(item, false, 0);
+    this.setState({ feedback: { correct: false, item, revealed: true, typo: false } });
+  };
+
+  dismissFeedback = () => this.advance();
+
+  traceFromFeedback = () => {
+    const fb = this.state.feedback;
+    if (!fb) return;
+    const s = this.state.session;
+    const steps = [...s.steps];
+    steps.splice(this.state.index + 1, 0, { kind: 'trace', id: fb.item.id });
+    this.advance(steps);
+  };
+
+  onAnswer = (e) => this.setState({ answer: e.target.value });
+  onKey = (e) => { if (e.key === 'Enter') this.check(); };
+  inputRef = (el) => {
+    if (el && el !== this.input) {
+      this.input = el;
+      this.recallStart = Date.now();
+      setTimeout(() => el.focus(), 60);
+    }
+  };
+
+  quitSession = () => this.setState({ screen: 'home', session: null, feedback: null });
+  goHome = () => this.setState({ screen: 'home', session: null, feedback: null, detail: null });
+  goInk = () => this.setState({ screen: 'ink', detail: null });
+  goYou = () => this.setState({ screen: 'you', detail: null });
+  goWelcome2 = () => this.setState({ screen: 'welcome2' });
+  skipToHome = () => this.setState({ screen: 'home', states: { ...SEED } });
+  keepGoing = () => { const due = this.dueItems(); due.length ? this.startPrimary() : this.startLesson(); };
+  restart = () => this.setState({ screen: 'welcome', states: { ...SEED }, session: null, detail: null });
+  toggleGhost = () => this.setState((s) => ({ ghost: !s.ghost }));
+  toggleSound = () => this.setState((s) => ({ sound: !s.sound }));
+  closeDetail = () => this.setState({ detail: null });
+
+  playSound = () => {
+    if (!this.state.sound) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      this.audio = this.audio || new AC();
+      const t = this.audio.currentTime;
+      const o = this.audio.createOscillator();
+      const g = this.audio.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(392, t);
+      o.frequency.exponentialRampToValueAtTime(523, t + 0.16);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      o.connect(g).connect(this.audio.destination);
+      o.start(t); o.stop(t + 0.36);
+    } catch (err) { /* audio unavailable */ }
+  };
+
+  traceDetail = () => {
+    const item = this.state.detail;
+    if (!item) return;
+    this.startSession([{ kind: 'trace', id: item.id }], 'brush');
+  };
+
+  componentWillUnmount() { clearTimeout(this.timer); }
+
+  profileVals(detail, s) {
+    if (!detail) return { detail: false, detailWords: [], detailConfusions: [] };
+    const read = s ? s.s : 0;
+    const write = s ? Math.min(1, (s.drawn || 0) * 0.22) : 0;
+    const bond = bondFor(s, read, write);
+    const words = (WORDS[detail.romaji] || []).map(([word, romaji, meaning]) => {
+      const i = word.indexOf(detail.glyph);
+      return i < 0
+        ? { before: word, target: '', after: '', romaji, meaning }
+        : { before: word.slice(0, i), target: detail.glyph, after: word.slice(i + 1), romaji, meaning };
+    });
+    const confusions = (CONFUSIONS[detail.romaji] || []).map(([romaji, hint]) => {
+      const it = ALL.find((i) => i.romaji === romaji);
+      return {
+        glyph: it ? it.glyph : '',
+        romaji,
+        hint,
+        onSelect: () => this.setState({ detail: it }),
+      };
+    });
+    const label = (v) => (v > 0.75 ? 'Strong' : v > 0.4 ? 'Coming along' : v > 0 ? 'Just started' : 'Not yet');
+    return {
+      detail: true,
+      detailGlyph: detail.glyph,
+      detailRomaji: detail.romaji,
+      detailStrokes: detail.strokes,
+      detailRow: detail.rowLabel === 'N final' ? 'Final n' : detail.rowLabel + ' row',
+      detailIndex: ALL.indexOf(detail) + 1,
+      detailBond: bond.label,
+      detailBondLine: s ? bond.line : `${strokeText(detail.strokes)}, waiting for you.`,
+      detailHistory: s
+        ? `First met in the ${detail.rowLabel} lesson · ${strokeText(detail.strokes).toLowerCase()}`
+        : 'It arrives in a later lesson.',
+      detailReading: s ? label(read) : 'Not yet',
+      detailWriting: s ? label(write) : 'Not yet',
+      detailReadPct: Math.round(read * 100) + '%',
+      detailWritePct: Math.round(write * 100) + '%',
+      detailSeen: s ? s.seen || 0 : 0,
+      detailDrawn: s ? s.drawn || 0 : 0,
+      detailSpeed: s && s.avgMs ? (s.avgMs / 1000).toFixed(1) + 's' : '—',
+      detailSpeedNote: s && s.avgMs
+        ? (s.avgMs < 1300 ? 'fluent — no longer decoding it'
+          : s.avgMs < 2200 ? 'quick, with a small pause'
+          : 'still working it out')
+        : 'no readings yet',
+      detailLapses: s ? s.lapses || 0 : 0,
+      detailDue: s
+        ? ((s.dueIn || 0) <= 0 ? 'today' : (s.dueIn === 1 ? 'tomorrow' : 'in ' + s.dueIn + ' days'))
+        : '—',
+      detailNote: hintFor(detail),
+      detailWords: words,
+      detailConfusions: confusions,
+    };
+  }
+
+  // ---------- view model ----------
+  renderVals() {
+    const st = this.state;
+    const step = this.current();
+    const item = step ? this.itemById(step.id) : null;
+    const kind = step ? step.kind : null;
+    const inSession = st.screen === 'session';
+    const tr = kind === 'trace' ? st.traceResult : null;
+    const doneCount = (st.done || []).length;
+    const modelLen = this.model ? this.model.length : 0;
+    const due = this.dueItems();
+    const weak = this.weakItems();
+    const introduced = Object.keys(st.states).length;
+    const nextRow = this.nextRowItems();
+
+    const inkOf = (id) => {
+      const s = st.states[id];
+      return s ? `rgba(27,26,23,${(0.18 + s.s * 0.8).toFixed(2)})` : 'rgba(27,26,23,.1)';
+    };
+
+    const inkRows = ROWS.map(([label, kana], r) => ({
+      label,
+      cells: [0, 1, 2, 3, 4].map((col) => {
+        const seed = kana.find((k) => k[3] === col);
+        if (!seed) return { glyph: '', ink: 'transparent', ring: 'transparent', onSelect: () => {} };
+        const it = ALL.find((i) => i.row === r && i.col === col);
+        const s = st.states[it.id];
+        return {
+          glyph: it.glyph,
+          ink: inkOf(it.id),
+          ring: s && s.due ? '#BC3E27' : 'transparent',
+          onSelect: () => this.setState({ detail: it }),
+        };
+      }),
+    }));
+
+    const primary = due.length
+      ? { kicker: 'Review first', title: `${due.length} ${due.length === 1 ? 'character' : 'characters'}, about ${Math.max(2, Math.round(due.length * 0.6))} minutes`, cta: 'Begin review', preview: due }
+      : nextRow
+        ? { kicker: 'Next row', title: `Meet ${nextRow.items.length} new ${nextRow.items.length === 1 ? 'shape' : 'shapes'} in the ${nextRow.label} row`, cta: 'Start the lesson', preview: nextRow.items }
+        : { kicker: 'All met', title: 'Every character is in your ink', cta: 'Brush practice', preview: ALL.slice(0, 3) };
+
+    const knownForBrush = ALL.filter((i) => st.states[i.id]);
+    const fb = st.feedback;
+    const detail = st.detail;
+    const detailState = detail ? st.states[detail.id] : null;
+
+    const isBrush = st.session && st.session.kind === 'brush';
+    const summaryRows = isBrush
+      ? []
+      : [
+          { label: 'introduced', count: new Set(st.outcomes.introduced).size, color: '#BC3E27' },
+          { label: 'strengthened', count: new Set(st.outcomes.strengthened).size, color: '#1B1A17' },
+          { label: 'returning soon', count: new Set(st.outcomes.returning).size, color: '#6E675A' },
+        ].filter((r) => r.count > 0);
+
+    return {
+      isWelcome: st.screen === 'welcome',
+      isWelcome2: st.screen === 'welcome2',
+      isHome: st.screen === 'home',
+      isInk: st.screen === 'ink',
+      isYou: st.screen === 'you',
+      isSummary: st.screen === 'summary',
+      isMeet: inSession && kind === 'meet' && !fb,
+      isTrace: inSession && kind === 'trace' && !fb,
+      isRecall: inSession && kind === 'recall' && !fb,
+
+      glyph: item ? item.glyph : '',
+      romaji: item ? item.romaji : '',
+      strokeCount: item ? strokeText(item.strokes) : '',
+      meetHint: item ? hintFor(item) : '',
+      traceHint: st.note
+        ? st.note
+        : doneCount === 0
+          ? 'Draw stroke by stroke. Each one is checked for place, order and direction.'
+          : modelLen && doneCount < modelLen
+            ? (modelLen - doneCount) + ' to go — take your time.'
+            : 'All strokes drawn.',
+      strokeProgress: item && modelLen
+        ? 'Stroke ' + Math.min(doneCount + 1, modelLen) + ' of ' + modelLen
+        : item ? 'Loading strokes…' : '',
+      traceNote: st.note || (modelLen && doneCount >= modelLen ? 'All strokes drawn.' : ''),
+      undoBorder: doneCount > 0 ? '#1B1A17' : '#DCD5C4',
+      undoFg: doneCount > 0 ? '#1B1A17' : '#6E675A',
+      hintBg: st.hint ? '#FBEFEB' : '#FDFCF8',
+      hintBorder: st.hint ? '#BC3E27' : '#DCD5C4',
+      hintFg: st.hint ? '#BC3E27' : '#6E675A',
+      hintSwatch: st.hint ? '#BC3E27' : '#DCD5C4',
+      hintLabel: st.hint ? 'Showing next stroke' : 'Show next stroke',
+      // While the model is loading the square accepts nothing, so say so.
+      modelReady: !!modelLen,
+      canvasOpacity: modelLen ? '1' : '.4',
+      controlsOpacity: modelLen ? '1' : '.45',
+      traceCta: doneCount > 0 ? 'Done' : 'Skip drawing',
+      // A muted control keeps paper under it. Inverting cream onto a mid-tone
+      // fill is what kept failing contrast, and the peach arrow is only legible
+      // on the near-black fill it was drawn for.
+      traceCtaBg: doneCount > 0 ? '#1B1A17' : '#EFEADD',
+      traceCtaBorder: doneCount > 0 ? '#1B1A17' : '#DCD5C4',
+      traceCtaFg: doneCount > 0 ? '#F4F1EA' : '#6E675A',
+      traceCtaArrow: doneCount > 0 ? '#E4A08F' : '#6E675A',
+      ghostColor: tr ? 'rgba(27,26,23,.1)' : st.ghost ? 'rgba(27,26,23,.1)' : 'rgba(27,26,23,0)',
+      traceOpen: !tr && !st.pendingCall,
+      traceReviewed: !!tr && !st.pendingCall,
+      resultLabel: tr ? RESULTS[tr.verdict].label : '',
+      resultCopy: tr ? RESULTS[tr.verdict].copy : '',
+      resultAccent: tr ? RESULTS[tr.verdict].accent : '#1B1A17',
+      // Both metrics read the same way: a longer bar is a better drawing.
+      resultAccuracy: tr ? Math.round(tr.accuracy * 100) + '%' : '0%',
+      resultOrder: tr
+        ? Math.round(100 * (1 - Math.min(1, (tr.orderSlips + tr.forced) / Math.max(1, tr.expected)))) + '%'
+        : '0%',
+      resultStrokeLine: tr
+        ? (tr.complete
+            ? tr.strokes + (tr.strokes === 1 ? ' stroke' : ' strokes')
+            : tr.strokes + ' of ' + tr.expected + ' strokes')
+        : '',
+      resultForced: !!(tr && tr.forced),
+      resultForcedLine: tr && tr.forced
+        ? tr.forced + (tr.forced === 1 ? ' stroke was' : ' strokes were') + ' drawn in for you'
+        : '',
+      reviewTrace: this.reviewTrace,
+      tryAgain: this.tryAgain,
+      undoStroke: this.undoStroke,
+      showHint: this.showHint,
+      ghostLabel: st.ghost ? 'Guide on' : 'Guide off',
+      ghostSwatch: st.ghost ? '#BC3E27' : '#D8D1C0',
+      recallPrompt: kind === 'recall' && item && st.states[item.id] ? 'What sound is this?' : 'One more time — what sound?',
+
+      stepTicks: (st.session ? st.session.steps : []).map((s, i) => ({
+        color: i < st.index ? '#1B1A17' : i === st.index ? '#BC3E27' : '#DDD6C6',
+      })),
+
+      answer: st.answer,
+      onAnswer: this.onAnswer,
+      onKey: this.onKey,
+      inputRef: this.inputRef,
+      inputRule: st.answer ? '#1B1A17' : '#D8D1C0',
+      checkBg: st.answer.trim() ? '#1B1A17' : '#EFEADD',
+      checkBorder: st.answer.trim() ? '#1B1A17' : '#DCD5C4',
+      checkFg: st.answer.trim() ? '#F4F1EA' : '#6E675A',
+
+      feedback: !!fb,
+      fbGlyph: fb ? fb.item.glyph : '',
+      fbRomaji: fb ? fb.item.romaji : '',
+      fbAccent: fb && fb.correct ? '#1B1A17' : '#BC3E27',
+      fbKicker: fb ? (fb.correct ? 'Yes' : fb.revealed ? 'Here it is' : 'Not yet') : '',
+      fbCopy: fb
+        ? fb.correct
+          ? 'That link just got a little stronger.'
+          : 'No harm done — it comes back in a few prompts.'
+        : '',
+      fbShowActions: !!fb && !fb.correct,
+      fbTypo: !!(fb && fb.typo && !fb.revealed),
+      fbTypoLine: fb && fb.typo ? 'I typed it wrong — I knew this' : '',
+      fbSpeed: !!(fb && fb.correct && fb.ms),
+      fbSpeedLine: fb && fb.ms ? 'read in ' + (fb.ms / 1000).toFixed(1) + 's' : '',
+      // stroke self-grade
+      pendingCall: !!st.pendingCall,
+      undoMiss: this.undoMiss,
+      acceptCall: this.acceptCall,
+      rejectCall: this.rejectCall,
+      startWeakSpots: this.startWeakSpots,
+      skipDay: this.skipDay,
+      hasWeak: weak.length > 0,
+      weakCount: weak.length,
+      weakLine: weak.length
+        ? weak.slice(0, 4).map((i) => i.glyph).join('  ') + (weak.length > 4 ? '  +' + (weak.length - 4) : '')
+        : '',
+      dayLine: st.day ? 'Day ' + (st.day + 1) + ' of the demo' : 'Day 1 of the demo',
+
+      todayChip: due.length ? `Tue · ${due.length} due` : 'Tue · all clear',
+      homeHeadline: due.length
+        ? `${due.length === 1 ? 'One sound is' : due.length + ' sounds are'} ready to come back.`
+        : nextRow
+          ? `Ready for the ${nextRow.label} row.`
+          : 'Every shape is in your ink.',
+      primaryKicker: primary.kicker,
+      primaryTitle: primary.title,
+      primaryCta: primary.cta,
+      primaryPreview: primary.preview.slice(0, 4).map((i) => ({ glyph: i.glyph, ink: inkOf(i.id) })),
+      brushGlyph: knownForBrush.length ? knownForBrush[0].glyph : 'あ',
+      brushCount: Math.min(4, knownForBrush.length),
+      brushLine: knownForBrush.length
+        ? `Draw ${Math.min(4, knownForBrush.length)} ${Math.min(4, knownForBrush.length) === 1 ? 'shape' : 'shapes'} you've met · 2 min`
+        : 'Unlocks once you\u2019ve met your first shapes',
+      introducedCount: introduced,
+      inkStrip: ALL.map((i) => ({ glyph: i.glyph, ink: inkOf(i.id) })),
+      inkRows,
+      inkTitle: `${introduced} of 46 characters`,
+
+      summaryTitle: st.session && st.session.kind === 'review' ? 'Reviews done'
+        : st.session && st.session.kind === 'weak' ? 'Weak spots, worked'
+        : isBrush ? 'Ink on paper' : 'A new row is underway',
+      summaryCopy: st.session && st.session.kind === 'weak'
+        ? 'Practising early cannot push these further out — only a miss moves a schedule. So this was free practice on the ones giving you trouble.'
+        : isBrush
+        ? 'Nothing is scored here. Drawing a shape is how your hand learns it — the reading schedule is untouched.'
+        : 'Nothing is scored. Your next practice is already scheduled from what you recalled just now.',
+      summaryRows,
+      drawnCount: st.drawnThisSession,
+      showDrawn: st.drawnThisSession > 0,
+
+      soundTrack: st.sound ? '#1B1A17' : '#D8D1C0',
+      soundKnob: st.sound ? '21px' : '3px',
+      ghostTrack: st.ghost ? '#1B1A17' : '#D8D1C0',
+      ghostKnob: st.ghost ? '21px' : '3px',
+
+      ...this.profileVals(detail, detailState),
+
+      goWelcome2: this.goWelcome2,
+      beginVowels: this.beginVowels,
+      skipToHome: this.skipToHome,
+      startPrimary: this.startPrimary,
+      startBrush: this.startBrush,
+      goHome: this.goHome,
+      goInk: this.goInk,
+      goYou: this.goYou,
+      next: this.next,
+      quitSession: this.quitSession,
+      check: this.check,
+      reveal: this.reveal,
+      dismissFeedback: this.dismissFeedback,
+      traceFromFeedback: this.traceFromFeedback,
+      keepGoing: this.keepGoing,
+      restart: this.restart,
+      clearTrace: this.clearTrace,
+      toggleGhost: this.toggleGhost,
+      toggleSound: this.toggleSound,
+      playSound: this.playSound,
+      closeDetail: this.closeDetail,
+      traceDetail: this.traceDetail,
+      canvasRef: this.canvasRef,
+      onDown: this.onDown,
+      onMove: this.onMove,
+      onUp: this.onUp,
+    };
+  }
+}
+</script>
+</body>
+</html>

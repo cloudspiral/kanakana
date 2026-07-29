@@ -6,8 +6,8 @@ import { Colors, Spacing } from '@/constants/theme';
 export function LoadingScreen() {
   return (
     <View style={styles.container}>
-      <ActivityIndicator color={Colors.blue} size="large" />
-      <AppText variant="caption">Opening your practice…</AppText>
+      <ActivityIndicator color={Colors.inkMuted} size="large" />
+      <AppText variant="bodySmall">Opening your practice…</AppText>
     </View>
   );
 }
@@ -18,6 +18,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.md,
-    backgroundColor: Colors.canvas,
+    backgroundColor: Colors.paper,
   },
 });

@@ -7,6 +7,7 @@ import type {
   LearningItem,
   PracticeStep,
   SessionOutcomes,
+  SkillId,
 } from './types';
 
 export function localDateKey(date = new Date()): string {
@@ -32,6 +33,7 @@ function step(
   moduleType: PracticeStep['moduleType'],
   kind: PracticeStep['kind'],
   schemaVersion = 1,
+  skillId: SkillId = 'kana_reading',
 ): PracticeStep {
   return {
     id: Crypto.randomUUID(),
@@ -40,7 +42,7 @@ function step(
     moduleType,
     moduleSchemaVersion: schemaVersion,
     itemId,
-    skillId: 'kana_reading',
+    skillId,
     isRecheck: false,
   };
 }
@@ -99,12 +101,22 @@ function avoidImmediateRepeats(items: LearningItem[]): LearningItem[] {
   return result;
 }
 
+/** One prompt in a review queue: a character, and which skill is being asked. */
+export interface ReviewTarget {
+  item: LearningItem;
+  skillId: SkillId;
+}
+
 export function buildReviewSession(
   manifest: CurriculumManifest,
-  items: LearningItem[],
+  targets: ReviewTarget[],
   now = new Date(),
 ): ActivePracticeSession {
-  const ordered = avoidImmediateRepeats(items);
+  // Spread repeats of the same character apart, whichever skill is asked.
+  const byItem = new Map(targets.map((target) => [target.item.id, target]));
+  const ordered = avoidImmediateRepeats(
+    targets.map((target) => target.item),
+  ).map((item) => byItem.get(item.id)!);
   return {
     id: Crypto.randomUUID(),
     kind: 'review',
@@ -112,12 +124,16 @@ export function buildReviewSession(
     localDate: localDateKey(now),
     startedAt: now.toISOString(),
     updatedAt: now.toISOString(),
-    steps: ordered.map((item) =>
+    steps: ordered.map((target) =>
       step(
-        item.id,
+        target.item.id,
         'due-review',
-        'kana-reading-input-v1',
+        target.skillId === 'kana_writing'
+          ? 'kana-writing-input-v1'
+          : 'kana-reading-input-v1',
         'assessment',
+        1,
+        target.skillId,
       ),
     ),
     currentIndex: 0,

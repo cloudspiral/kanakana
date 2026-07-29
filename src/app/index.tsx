@@ -1,17 +1,19 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/Buttons';
+import { GuideSquare } from '@/components/GuideSquare';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { Surface } from '@/components/Surface';
-import { AppText } from '@/components/Typography';
+import { AppText, Kana } from '@/components/Typography';
 import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
+import { inkColor } from '@/domain/ink';
+import { dueTargets, weakItems } from '@/domain/scheduler';
+import { learnerStateKey, type CurriculumUnit, type LearningItem } from '@/domain/types';
 
 export default function HomeRoute() {
   const app = useApp();
@@ -24,13 +26,28 @@ export default function HomeRoute() {
   return <Home />;
 }
 
+/** The items a unit introduces, in curriculum order, de-duplicated across modules. */
+function unitItems(unit: CurriculumUnit, items: LearningItem[]): LearningItem[] {
+  const wanted = new Set(
+    unit.modules.flatMap((module) => module.targets.map((target) => target.itemId)),
+  );
+  return items.filter((item) => wanted.has(item.id));
+}
+
+function StepIndicator({ step }: { step: 0 | 1 }) {
+  return (
+    <View style={styles.steps}>
+      <View style={step === 0 ? styles.stepActive : styles.stepIdle} />
+      <View style={step === 1 ? styles.stepActive : styles.stepIdle} />
+    </View>
+  );
+}
+
 function Onboarding() {
   const app = useApp();
   const router = useRouter();
-  const [page, setPage] = useState(0);
-  const vowelItems = app.manifest.items.filter(
-    (item) => item.content.rowId === 'vowels',
-  );
+  const [page, setPage] = useState<0 | 1>(0);
+  const vowels = app.manifest.items.filter((item) => item.content.rowId === 'vowels');
 
   async function begin() {
     await app.completeOnboarding();
@@ -40,60 +57,88 @@ function Onboarding() {
 
   return (
     <AppScreen scroll={false}>
-      <View style={styles.onboardingHeader}>
+      <View style={styles.headerRow}>
         <Wordmark />
-        <View style={styles.pageDots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={[styles.dot, page === 1 && styles.dotActive]} />
-        </View>
+        <StepIndicator step={page} />
       </View>
+
       {page === 0 ? (
         <View style={styles.onboardingBody}>
-          <LinearGradient
-            colors={[Colors.ink, '#29365C']}
-            style={styles.heroArt}>
-            <AppText style={styles.heroKana}>あ</AppText>
-            <View style={[styles.orbit, styles.orbitOne]}>
-              <AppText style={styles.orbitKana}>か</AppText>
-            </View>
-            <View style={[styles.orbit, styles.orbitTwo]}>
-              <AppText style={styles.orbitKana}>ら</AppText>
-            </View>
-            <View style={styles.pinkGlow} />
-          </LinearGradient>
-          <View style={styles.onboardingCopy}>
-            <AppText variant="eyebrow">Read Japanese from day one</AppText>
-            <AppText variant="hero">
-              Learn kana that{'\n'}actually sticks.
-            </AppText>
-            <AppText color={Colors.inkMuted}>
-              Short introductions build recognition. Smart reviews bring each
-              character back just before you forget it.
+          {/* Full-bleed at 290 tall rather than square — the practice screens
+              are the ones that use a true square. */}
+          <GuideSquare
+            size={290}
+            width="100%"
+            chip={{ label: 'a', tone: 'accent', corner: 'bottomRight' }}
+            overlay={
+              <>
+                <Kana style={[styles.cornerKana, styles.cornerKanaTopLeft]}>か</Kana>
+                <Kana style={[styles.cornerKana, styles.cornerKanaBottomRight]}>ら</Kana>
+              </>
+            }>
+            <Kana size="hero">あ</Kana>
+          </GuideSquare>
+
+          <View style={styles.copyBlock}>
+            <AppText variant="kicker">Read and write from day one</AppText>
+            <AppText variant="display">Learn kana that actually sticks.</AppText>
+            <AppText variant="body" color={Colors.inkMuted}>
+              Forty-six characters, and they never leave you. Every Japanese word
+              you&rsquo;ll ever read is built from them — so you&rsquo;ll see each
+              one, hear it, and draw it until it&rsquo;s yours.
             </AppText>
           </View>
-          <Button label="See how it works" onPress={() => setPage(1)} />
+
+          <Button label="See how it works" arrow onPress={() => setPage(1)} />
         </View>
       ) : (
         <View style={styles.onboardingBody}>
-          <View style={styles.onboardingCopy}>
-            <AppText variant="eyebrow">Your first five</AppText>
-            <AppText variant="title">Start with the sounds everything builds on.</AppText>
-            <AppText color={Colors.inkMuted}>
-              Meet a few kana, recall them, then add more. Misses return after a
-              little space—never as a punishment, always as useful practice.
-            </AppText>
+          <View style={styles.copyBlock}>
+            <AppText variant="kicker">Three moves, over and over</AppText>
+            <AppText variant="screenTitle">Meet it, draw it, recall it.</AppText>
           </View>
-          <Surface style={styles.vowels}>
-            {vowelItems.map((item) => (
+
+          <View style={styles.moves}>
+            <MoveRow
+              title="Meet the shape"
+              body="See it large, hear the sound once."
+              tile={<Kana style={styles.moveGlyph}>き</Kana>}
+            />
+            {/* Drawing is the differentiator, so the middle row carries the ink
+                border, the accent tile and the dot. */}
+            <MoveRow
+              emphasis
+              title="Draw it once"
+              body="Tracing the strokes is what makes the shape stop looking like a squiggle."
+              tile={
+                <Kana style={[styles.moveGlyph, styles.moveGlyphDrawn]}>き</Kana>
+              }
+            />
+            <MoveRow
+              title="Recall it later"
+              body="Misses come back after a little space — never as a penalty."
+              tile={<AppText style={styles.moveRomaji}>ki</AppText>}
+            />
+          </View>
+
+          <View style={styles.vowelStrip}>
+            {vowels.map((item) => (
               <View key={item.id} style={styles.vowel}>
-                <AppText style={styles.vowelGlyph}>{item.content.glyph}</AppText>
-                <AppText variant="caption">{item.content.primaryAnswer}</AppText>
+                <Kana style={styles.vowelGlyph}>{item.content.glyph}</Kana>
+                <AppText style={styles.vowelRomaji}>
+                  {item.content.primaryAnswer}
+                </AppText>
               </View>
             ))}
-          </Surface>
+          </View>
+
           <View style={styles.onboardingActions}>
-            <Button label="Begin with vowels" onPress={begin} />
-            <Button label="Back" onPress={() => setPage(0)} variant="quiet" />
+            <Button label="Begin with the five vowels" arrow onPress={begin} />
+            <Button
+              label="I've used Kanakana before"
+              variant="link"
+              onPress={() => void app.completeOnboarding()}
+            />
           </View>
         </View>
       )}
@@ -101,322 +146,508 @@ function Onboarding() {
   );
 }
 
+function MoveRow({
+  title,
+  body,
+  tile,
+  emphasis = false,
+}: {
+  title: string;
+  body: string;
+  tile: React.ReactNode;
+  emphasis?: boolean;
+}) {
+  return (
+    <View style={[styles.moveRow, emphasis && styles.moveRowEmphasis]}>
+      <View style={[styles.moveTile, emphasis && styles.moveTileEmphasis]}>
+        {tile}
+        {emphasis ? <View style={styles.moveDot} /> : null}
+      </View>
+      <View style={styles.moveCopy}>
+        <AppText style={styles.moveTitle}>{title}</AppText>
+        <AppText variant="bodySmall" style={styles.moveBody}>
+          {body}
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
 function Home() {
   const app = useApp();
   const router = useRouter();
-  const nextUnit = app.manifest.units.find(
-    (unit) => unit.id === app.nextUnitId,
+
+  // Both skills: the count, the preview and the queue "Begin review" builds
+  // must agree, and a character can be due for writing but not reading.
+  const dueTargetList = useMemo(
+    () => dueTargets(app.manifest.items, app.snapshot.skillStates),
+    [app.manifest.items, app.snapshot.skillStates],
   );
-  const startedCount = Object.values(app.snapshot.skillStates).filter(
-    (state) => state.reps > 0,
-  ).length;
+  const due = dueTargetList.map((target) => target.item);
+
+  const nextUnit = app.manifest.units.find((unit) => unit.id === app.nextUnitId);
+  const nextRowItems = nextUnit ? unitItems(nextUnit, app.manifest.items) : [];
+  const nextRowLabel = nextRowItems[0]?.content.rowLabel ?? nextUnit?.shortTitle ?? '';
+
   const hasActiveSession = Boolean(app.activeSession);
-  const complete = !app.nextUnitId && app.dueCount === 0 && !hasActiveSession;
+  const weekday = new Date()
+    .toLocaleDateString(undefined, { weekday: 'short' })
+    .toUpperCase();
+  const todayChip = due.length
+    ? `${weekday} · ${due.length} due`
+    : `${weekday} · all clear`;
 
-  const primaryLabel = hasActiveSession
-    ? 'Resume practice'
-    : app.dueCount > 0
-      ? `Review ${app.dueCount} ${app.dueCount === 1 ? 'kana' : 'kana'}`
+  const headline = due.length
+    // "kana" is invariant in Japanese, so only the verb agrees.
+    ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
+    : nextUnit
+      ? `Ready for the ${nextRowLabel} row.`
+      : 'Every shape is in your ink.';
+
+  // Mirrors startContinue(): due reviews first, then the next row.
+  const primary = hasActiveSession
+    ? {
+        kicker: 'In progress',
+        title: 'Pick up where you stopped',
+        cta: 'Resume practice',
+        preview: due.length ? due : nextRowItems,
+      }
+    : due.length
+      ? {
+          kicker: 'Review first',
+          title: `${due.length} ${due.length === 1 ? 'character' : 'characters'}, about ${Math.max(2, Math.round(due.length * 0.6))} minutes`,
+          cta: 'Begin review',
+          preview: due,
+        }
       : nextUnit
-        ? `Continue with ${nextUnit.shortTitle}`
-        : 'You’re caught up';
+        ? {
+            kicker: 'Next row',
+            title: `Meet ${nextRowItems.length} new ${nextRowItems.length === 1 ? 'shape' : 'shapes'} in the ${nextRowLabel} row`,
+            cta: 'Start the lesson',
+            preview: nextRowItems,
+          }
+        : {
+            kicker: 'All met',
+            title: 'Every character is in your ink',
+            cta: 'Review when something returns',
+            preview: app.manifest.items.slice(0, 4),
+          };
 
-  async function continueLearning() {
+  const caughtUp = !hasActiveSession && !due.length && !nextUnit;
+
+  const brushGlyph = app.manifest.items.find((item) =>
+    Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
+  )?.content.glyph;
+
+  const weak = useMemo(
+    () => weakItems(app.manifest.items, app.snapshot.skillStates),
+    [app.manifest.items, app.snapshot.skillStates],
+  );
+  const weakLine = [
+    ...weak.slice(0, 4).map((item) => item.content.glyph),
+    ...(weak.length > 4 ? [`+${weak.length - 4}`] : []),
+  ].join(' ');
+
+  async function startWeak() {
+    const result = await app.startWeakSpots();
+    if (result === 'practice') {
+      router.push('/practice');
+    }
+  }
+
+  async function startPrimary() {
     const result = await app.startContinue();
     if (result === 'practice') {
       router.push('/practice');
     }
   }
 
-  const learnedPercent = Math.round(
-    (startedCount / app.manifest.items.length) * 100,
-  );
+  function stateFor(item: LearningItem) {
+    return app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')];
+  }
 
   return (
     <AppScreen bottomNav={<BottomNav />}>
-      <Wordmark />
-      <View style={styles.homeHeading}>
-        <AppText variant="eyebrow">Today’s path</AppText>
-        <AppText variant="title">
-          {app.dueCount > 0
-            ? 'A few sounds are ready to return.'
-            : nextUnit
-              ? 'Keep building your hiragana.'
-              : 'The full hiragana set is underway.'}
-        </AppText>
+      <View style={styles.headerRow}>
+        <Wordmark />
+        <AppText variant="meterLabel">{todayChip}</AppText>
       </View>
 
-      <LinearGradient
-        colors={[Colors.ink, '#24325B']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.continueCard}>
-        <View style={styles.continueTop}>
-          <View>
-            <AppText style={styles.continueEyebrow}>
-              {hasActiveSession
-                ? 'In progress'
-                : app.dueCount > 0
-                  ? 'Due reviews first'
-                  : complete
-                    ? 'All rows introduced'
-                    : 'Next lesson'}
-            </AppText>
-            <AppText style={styles.continueTitle}>{primaryLabel}</AppText>
+      <View style={styles.homeHeading}>
+        <AppText variant="kicker">Today</AppText>
+        <AppText variant="screenTitle">{headline}</AppText>
+      </View>
+
+      <View style={styles.primaryCard}>
+        <View style={styles.primaryTop}>
+          <View style={styles.primaryCopy}>
+            <AppText variant="meterLabel">{primary.kicker}</AppText>
+            <AppText style={styles.primaryTitle}>{primary.title}</AppText>
           </View>
-          <View style={styles.continueKana}>
-            <AppText style={styles.continueKanaText}>
-              {app.dueCount > 0 ? '復' : nextUnit ? nextUnit.shortTitle[0] : '✓'}
-            </AppText>
+          <View style={styles.primaryPreview}>
+            {primary.preview.slice(0, 4).map((item) => (
+              <Kana
+                key={item.id}
+                style={styles.previewGlyph}
+                color={inkColor(stateFor(item))}>
+                {item.content.glyph}
+              </Kana>
+            ))}
           </View>
         </View>
-        <AppText style={styles.continueDescription}>
-          {app.dueCount > 0
-            ? 'Your review queue mixes rows and keeps repeated prompts apart.'
-            : complete
-              ? 'Come back when the scheduler marks a sound ready for review.'
-              : 'A focused introduction followed by cumulative recall.'}
-        </AppText>
         <Pressable
           accessibilityRole="button"
-          disabled={complete}
-          onPress={continueLearning}
-          style={[styles.continueButton, complete && styles.disabled]}>
-          <AppText style={styles.continueButtonText}>
-            {hasActiveSession ? 'Resume' : app.dueCount > 0 ? 'Start review' : 'Continue'}
+          accessibilityState={{ disabled: caughtUp }}
+          disabled={caughtUp}
+          onPress={startPrimary}
+          style={({ pressed }) => [
+            styles.primaryFooter,
+            pressed && !caughtUp && styles.primaryFooterPressed,
+            caughtUp && styles.primaryFooterDisabled,
+          ]}>
+          <AppText
+            variant="button"
+            style={caughtUp ? styles.primaryCtaDisabled : styles.primaryCta}>
+            {primary.cta}
           </AppText>
-          {!complete && <AppText style={styles.arrow}>→</AppText>}
-        </Pressable>
-      </LinearGradient>
-
-      <View style={styles.snapshotHeader}>
-        <AppText variant="heading">Your hiragana</AppText>
-        <Pressable onPress={() => router.push('/progress')}>
-          <AppText color={Colors.blue}>View grid</AppText>
+          {caughtUp ? null : (
+            <AppText style={styles.primaryArrow} aria-hidden>
+              →
+            </AppText>
+          )}
         </Pressable>
       </View>
-      <Surface style={styles.snapshotCard}>
-        <View style={styles.metric}>
-          <AppText variant="title">{startedCount}</AppText>
-          <AppText variant="caption">of 46 introduced</AppText>
+
+      {/* Deliberately not the due queue — massed practice on the ones that keep
+          slipping. Hidden entirely when there is nothing shaky. */}
+      {weak.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void startWeak()}
+          style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
+          <View style={styles.weakTile}>
+            <AppText style={styles.weakCount}>{weak.length}</AppText>
+          </View>
+          <View style={styles.brushCopy}>
+            <AppText style={styles.brushTitle}>Weak spots</AppText>
+            <AppText style={styles.brushLine}>
+              The ones you keep missing · {weakLine}
+            </AppText>
+          </View>
+          <AppText style={styles.brushArrow} aria-hidden>
+            →
+          </AppText>
+        </Pressable>
+      ) : null}
+
+      {/* Brush practice. Falls through to the lesson when nothing has been met
+          yet, rather than opening an empty drawing session. */}
+      <Pressable
+        accessibilityRole="button"
+        onPress={() =>
+          brushGlyph
+            ? router.push({ pathname: '/trace', params: { glyph: brushGlyph } })
+            : startPrimary()
+        }
+        style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
+        <View style={styles.brushTile}>
+          <Kana style={styles.brushGlyph}>{brushGlyph ?? 'あ'}</Kana>
         </View>
-        <View style={styles.metricDivider} />
-        <View style={styles.metric}>
-          <AppText variant="title">{app.dueCount}</AppText>
-          <AppText variant="caption">ready now</AppText>
+        <View style={styles.brushCopy}>
+          <AppText style={styles.brushTitle}>Brush practice</AppText>
+          <AppText style={styles.brushLine}>
+            {brushGlyph
+              ? `Draw a shape you've met · 2 min`
+              : 'Unlocks once you’ve met your first shapes'}
+          </AppText>
         </View>
-        <View style={styles.progressTrack}>
-          <View
-            style={[styles.progressFill, { width: `${learnedPercent}%` }]}
-          />
-        </View>
-      </Surface>
-      <AppText variant="caption" style={styles.offlineNote}>
-        Saved on this device · learning continues without a connection
-      </AppText>
+        <AppText style={styles.brushArrow} aria-hidden>
+          →
+        </AppText>
+      </Pressable>
+
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  onboardingHeader: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 44,
   },
-  pageDots: {
+  steps: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 5,
   },
-  dot: {
+  stepActive: {
+    width: 18,
+    height: 2,
+    backgroundColor: Colors.accent,
+  },
+  stepIdle: {
     width: 8,
-    height: 8,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.border,
+    height: 2,
+    backgroundColor: Colors.fieldRule,
   },
-  dotActive: {
-    width: 22,
-    backgroundColor: Colors.blue,
-  },
+
   onboardingBody: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    gap: Spacing.gutter,
+    paddingBottom: Spacing.gutter,
   },
-  heroArt: {
-    height: 270,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
+  centered: {
+    alignSelf: 'center',
   },
-  heroKana: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
-    fontSize: 136,
-    lineHeight: 160,
-  },
-  orbit: {
+  cornerKana: {
     position: 'absolute',
-    width: 58,
-    height: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderColor: 'rgba(255,255,255,0.2)',
-    borderWidth: 1,
+    fontFamily: Fonts.kanaLight,
+    fontSize: 44,
+    lineHeight: 54,
+    color: 'rgba(27, 26, 23, 0.14)',
   },
-  orbitOne: {
-    left: 34,
-    top: 35,
-    transform: [{ rotate: '-8deg' }],
+  cornerKanaTopLeft: {
+    left: 26,
+    top: 24,
   },
-  orbitTwo: {
-    right: 35,
-    bottom: 33,
-    transform: [{ rotate: '8deg' }],
+  cornerKanaBottomRight: {
+    right: 26,
+    bottom: 22,
   },
-  orbitKana: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
-    fontSize: 30,
-  },
-  pinkGlow: {
-    position: 'absolute',
-    right: -28,
-    top: -30,
-    width: 120,
-    height: 120,
-    borderRadius: Radius.pill,
-    backgroundColor: 'rgba(233,30,140,0.35)',
-  },
-  onboardingCopy: {
+  copyBlock: {
     gap: Spacing.sm,
   },
-  onboardingActions: {
-    gap: Spacing.xs,
+
+  moves: {
+    gap: Spacing.stack,
   },
-  vowels: {
+  moveRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 15,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  moveRowEmphasis: {
+    borderColor: Colors.ink,
+  },
+  moveTile: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.paper,
+  },
+  moveTileEmphasis: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentSoft,
+  },
+  moveDot: {
+    position: 'absolute',
+    right: -5,
+    top: -5,
+    width: 14,
+    height: 14,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.accent,
+  },
+  moveGlyph: {
+    fontSize: 26,
+    lineHeight: 32,
+  },
+  moveGlyphDrawn: {
+    color: 'rgba(188, 62, 39, 0.4)',
+  },
+  moveRomaji: {
+    fontFamily: Fonts.serif,
+    fontSize: 15,
+    lineHeight: 19,
+  },
+  moveCopy: {
+    flex: 1,
+  },
+  moveTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 19,
+    lineHeight: 23,
+  },
+  moveBody: {
+    marginTop: 2,
+  },
+
+  vowelStrip: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.card,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
   },
   vowel: {
     alignItems: 'center',
-    gap: Spacing.xxs,
+    gap: 3,
   },
   vowelGlyph: {
-    fontFamily: Fonts.japanese,
-    fontSize: 38,
-    lineHeight: 50,
+    fontSize: 32,
+    lineHeight: 40,
   },
+  vowelRomaji: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.inkMuted,
+  },
+  onboardingActions: {
+    gap: 9,
+  },
+
   homeHeading: {
-    gap: Spacing.sm,
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.lg,
+    gap: 9,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.card,
   },
-  continueCard: {
-    borderRadius: Radius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.lg,
+  primaryCard: {
+    borderWidth: 1,
+    borderColor: Colors.ink,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
     overflow: 'hidden',
   },
-  continueTop: {
+  primaryTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.ruleSoft,
   },
-  continueEyebrow: {
-    color: '#B9C5F9',
-    fontFamily: Fonts.headingSemi,
-    fontSize: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1.1,
+  primaryCopy: {
+    flex: 1,
+    paddingHorizontal: Spacing.card,
+    paddingTop: 17,
+    paddingBottom: 15,
+    gap: 5,
   },
-  continueTitle: {
-    color: Colors.white,
-    fontFamily: Fonts.heading,
-    fontSize: 24,
-    lineHeight: 32,
-    marginTop: Spacing.xxs,
+  primaryTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 25,
+    lineHeight: 29,
   },
-  continueKana: {
-    width: 58,
-    height: 58,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.md,
-    backgroundColor: 'rgba(255,255,255,0.11)',
-  },
-  continueKanaText: {
-    color: Colors.white,
-    fontFamily: Fonts.japanese,
-    fontSize: 28,
-  },
-  continueDescription: {
-    color: '#D6DDF8',
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  continueButton: {
-    minHeight: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: Radius.md,
-    backgroundColor: Colors.white,
-    paddingHorizontal: Spacing.lg,
-  },
-  continueButtonText: {
-    color: Colors.blue,
-    fontFamily: Fonts.headingSemi,
-  },
-  arrow: {
-    color: Colors.pink,
-    fontFamily: Fonts.heading,
-    fontSize: 22,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  snapshotHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.xl,
-    marginBottom: Spacing.sm,
-  },
-  snapshotCard: {
+  primaryPreview: {
+    width: 90,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
+    justifyContent: 'center',
+    alignContent: 'center',
+    gap: 2,
+    padding: Spacing.xs,
+    borderLeftWidth: 1,
+    borderLeftColor: Colors.ruleSoft,
   },
-  metric: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  metricDivider: {
-    width: 1,
-    height: 44,
-    backgroundColor: Colors.border,
-  },
-  progressTrack: {
-    width: '100%',
-    height: 8,
-    marginTop: Spacing.lg,
-    overflow: 'hidden',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.paleBlue,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.blue,
-  },
-  offlineNote: {
+  previewGlyph: {
+    width: 34,
+    fontSize: 20,
+    lineHeight: 26,
     textAlign: 'center',
-    marginTop: Spacing.md,
   },
+  primaryFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    paddingHorizontal: Spacing.card,
+    paddingVertical: 15,
+    backgroundColor: Colors.ink,
+  },
+  primaryFooterPressed: {
+    backgroundColor: Colors.inkPressed,
+  },
+  primaryFooterDisabled: {
+    backgroundColor: Colors.wellFill,
+  },
+  primaryCta: {
+    color: Colors.paper,
+  },
+  primaryCtaDisabled: {
+    color: Colors.inkMuted,
+  },
+  primaryArrow: {
+    fontSize: 18,
+    lineHeight: 22,
+    color: Colors.peach,
+  },
+
+  brushRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginTop: Spacing.stack,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  brushRowPressed: {
+    backgroundColor: Colors.wellFill,
+  },
+  weakTile: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.paper,
+  },
+  weakCount: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 13,
+    lineHeight: 17,
+    color: Colors.accent,
+  },
+  brushTile: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.accent,
+    borderRadius: Radius.small,
+    backgroundColor: Colors.accentSoft,
+  },
+  brushGlyph: {
+    fontSize: 22,
+    lineHeight: 28,
+    color: 'rgba(188, 62, 39, 0.45)',
+  },
+  brushCopy: {
+    flex: 1,
+  },
+  brushTitle: {
+    fontFamily: Fonts.serif,
+    fontSize: 18,
+    lineHeight: 22,
+  },
+  brushLine: {
+    fontSize: 12.5,
+    lineHeight: 17,
+    color: Colors.inkMuted,
+    marginTop: 1,
+  },
+  brushArrow: {
+    fontSize: 16,
+    lineHeight: 20,
+    color: Colors.inkMuted,
+  },
+
 });

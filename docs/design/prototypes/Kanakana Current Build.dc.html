@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet"><style>body{margin:0;background:#EDEBE6;font-family:Poppins,system-ui,sans-serif}a{color:#3C5BDB}a:hover{color:#2F47B8}</style></helmet>
+
+<section style="padding:44px 48px 56px">
+<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+<span style="font:600 10px ui-monospace,Menlo,monospace;padding:4px 8px;background:#161C2C;color:#fff;border-radius:4px">RECREATION</span>
+<span style="font:600 15px/1.2 Poppins,sans-serif;color:#161C2C">Kanakana — current build, rebuilt from <code style="font:500 12px ui-monospace,Menlo,monospace;color:#566079">cloudspiral/kanakana@main</code></span>
+</div>
+<p style="margin:0 0 32px;font:400 13px/1.6 Poppins,sans-serif;color:rgba(22,28,44,.55);max-width:760px;text-wrap:pretty">Every value below is lifted from source: <code style="font:500 12px ui-monospace,Menlo,monospace">src/constants/theme.ts</code> (Poppins, #3C5BDB blue, #E91E8C pink, #161C2C ink, 18/24px radii), the shared <code style="font:500 12px ui-monospace,Menlo,monospace">AppScreen / Surface / Buttons / Typography / BottomNav</code> components, and the five routes in <code style="font:500 12px ui-monospace,Menlo,monospace">src/app/</code>. This is the baseline I'll design against.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Onboarding · page 1 &nbsp;<code style="font:500 11px ui-monospace,Menlo,monospace">app/index.tsx</code></div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 48px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#161C2C"><span style="font:400 22px/27px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div><span style="font:700 20px Poppins,sans-serif;letter-spacing:-.5px;color:#161C2C">Kanakana</span></div>
+<div style="display:flex;gap:6px"><span style="width:22px;height:8px;border-radius:999px;background:#3C5BDB"></span><span style="width:8px;height:8px;border-radius:999px;background:#DEE4F2"></span></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;padding-bottom:24px">
+<div style="position:relative;height:270px;display:flex;align-items:center;justify-content:center;border-radius:24px;overflow:hidden;background:linear-gradient(#161C2C,#29365C)">
+<span style="font:400 136px/160px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">あ</span>
+<div style="position:absolute;left:34px;top:35px;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);transform:rotate(-8deg)"><span style="font:400 30px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div>
+<div style="position:absolute;right:35px;bottom:33px;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);transform:rotate(8deg)"><span style="font:400 30px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">ら</span></div>
+<div style="position:absolute;right:-28px;top:-30px;width:120px;height:120px;border-radius:999px;background:rgba(233,30,140,.35)"></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Read Japanese from day one</span>
+<span style="font:700 38px/46px Poppins,sans-serif;letter-spacing:-1.3px;color:#161C2C">Learn kana that<br>actually sticks.</span>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-wrap:pretty">Short introductions build recognition. Smart reviews bring each character back just before you forget it.</span>
+</div>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#fff">See how it works</span></div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Onboarding · page 2</div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 48px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#161C2C"><span style="font:400 22px/27px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div><span style="font:700 20px Poppins,sans-serif;letter-spacing:-.5px;color:#161C2C">Kanakana</span></div>
+<div style="display:flex;gap:6px"><span style="width:22px;height:8px;border-radius:999px;background:#3C5BDB"></span><span style="width:22px;height:8px;border-radius:999px;background:#3C5BDB"></span></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;padding-bottom:24px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Your first five</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">Start with the sounds everything builds on.</span>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-wrap:pretty">Meet a few kana, recall them, then add more. Misses return after a little space—never as a punishment, always as useful practice.</span>
+</div>
+<div style="display:flex;justify-content:space-between;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px 16px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:400 38px/50px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">あ</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">a</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:400 38px/50px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">い</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">i</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:400 38px/50px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">う</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">u</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:400 38px/50px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">え</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">e</span></div>
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font:400 38px/50px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">お</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">o</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#fff">Begin with vowels</span></div>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid transparent;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#3C5BDB">Back</span></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Home · returning learner, 7 due</div>
+<div style="position:relative;width:390px;min-height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="display:flex;flex-direction:column;min-height:794px">
+<div style="flex:1;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#161C2C"><span style="font:400 22px/27px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div><span style="font:700 20px Poppins,sans-serif;letter-spacing:-.5px;color:#161C2C">Kanakana</span></div>
+<div style="display:flex;flex-direction:column;gap:12px;margin:32px 0 24px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Today’s path</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">A few sounds are ready to return.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:24px;border-radius:24px;padding:24px;overflow:hidden;background:linear-gradient(135deg,#161C2C,#24325B)">
+<div style="display:flex;justify-content:space-between;gap:16px">
+<div><div style="font:600 12px Poppins,sans-serif;letter-spacing:1.1px;text-transform:uppercase;color:#B9C5F9">Due reviews first</div><div style="font:700 24px/32px Poppins,sans-serif;color:#fff;margin-top:4px">Review 7 kana</div></div>
+<div style="flex:none;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:rgba(255,255,255,.11)"><span style="font:400 28px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">復</span></div>
+</div>
+<div style="font:400 14px/22px Poppins,sans-serif;color:#D6DDF8">Your review queue mixes rows and keeps repeated prompts apart.</div>
+<div style="min-height:54px;display:flex;align-items:center;justify-content:space-between;border-radius:18px;background:#fff;padding:0 24px"><span style="font:600 16px Poppins,sans-serif;color:#3C5BDB">Start review</span><span style="font:700 22px Poppins,sans-serif;color:#E91E8C">→</span></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin:32px 0 12px"><span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">Your hiragana</span><span style="font:400 16px/25px Poppins,sans-serif;color:#3C5BDB">View grid</span></div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center"><span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">12</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">of 46 introduced</span></div>
+<div style="width:1px;height:44px;background:#DEE4F2"></div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center"><span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">7</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">ready now</span></div>
+<div style="width:100%;height:8px;margin-top:24px;border-radius:999px;background:#EEF3FF;overflow:hidden"><div style="width:26%;height:100%;border-radius:999px;background:#3C5BDB"></div></div>
+</div>
+<div style="text-align:center;margin-top:16px;font:400 13px/19px Poppins,sans-serif;color:#566079">Saved on this device · learning continues without a connection</div>
+</div>
+<div style="background:#F7F9FE;border-top:1px solid #DEE4F2;padding:12px 24px 20px">
+<div style="display:flex;gap:8px">
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px;background:#EEF3FF"><span style="font:400 20px/22px Poppins,sans-serif;color:#3C5BDB">⌂</span><span style="font:600 11px/15px Poppins,sans-serif;color:#3C5BDB">Home</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">◫</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Progress</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">⚙</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Settings</span></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Practice · introduction module</div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#fff;border:1px solid #DEE4F2"><span style="font:400 28px/31px Poppins,sans-serif;color:#566079">×</span></div>
+<div style="flex:1;height:9px;border-radius:999px;background:#DEE4F2;overflow:hidden"><div style="width:30%;height:100%;border-radius:999px;background:#3C5BDB"></div></div>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">3/10</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;padding:24px 0">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">New kana</span>
+<span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C;text-align:center">Meet か  き</span>
+<div style="align-self:center;width:100%;max-width:360px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:400 128px/154px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">か</span>
+<div style="padding:8px 24px;border-radius:999px;background:#EEF3FF"><span style="font:600 22px Poppins,sans-serif;color:#3C5BDB">ka</span></div>
+</div>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-align:center">Notice the shape, then connect it to its sound.</span>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#fff">I’ve got it</span></div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Practice · recall input &nbsp;<code style="font:500 11px ui-monospace,Menlo,monospace">kana-reading-input-v1</code></div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#fff;border:1px solid #DEE4F2"><span style="font:400 28px/31px Poppins,sans-serif;color:#566079">×</span></div>
+<div style="flex:1;height:9px;border-radius:999px;background:#DEE4F2;overflow:hidden"><div style="width:50%;height:100%;border-radius:999px;background:#3C5BDB"></div></div>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">5/10</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px;padding:24px 0">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Recall</span>
+<span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C;text-align:center">What sound does this make?</span>
+<div style="align-self:center;width:100%;max-width:360px;min-height:260px;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:400 144px/170px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">き</span>
+</div>
+<div style="min-height:60px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:2px solid #DEE4F2;background:#fff;padding:0 24px"><span style="font:600 22px Poppins,sans-serif;color:#8A93A9">Type the romaji</span></div>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px;opacity:.45"><span style="font:600 16px Poppins,sans-serif;color:#fff">Check answer</span></div>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid transparent;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#3C5BDB">Show answer</span></div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Practice · feedback, correct</div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#fff;border:1px solid #DEE4F2"><span style="font:400 28px/31px Poppins,sans-serif;color:#566079">×</span></div>
+<div style="flex:1;height:9px;border-radius:999px;background:#DEE4F2;overflow:hidden"><div style="width:50%;height:100%;border-radius:999px;background:#3C5BDB"></div></div>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">5/10</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#18785D">Correct</span>
+<div style="min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#E7F7F1;border:1px solid #B9E5D6;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:400 132px/158px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">き</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#18785D">ki</span>
+</div>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-align:center">That connection just got a little stronger.</span>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Practice · feedback, incorrect</div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#fff;border:1px solid #DEE4F2"><span style="font:400 28px/31px Poppins,sans-serif;color:#566079">×</span></div>
+<div style="flex:1;height:9px;border-radius:999px;background:#DEE4F2;overflow:hidden"><div style="width:60%;height:100%;border-radius:999px;background:#3C5BDB"></div></div>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">6/10</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:24px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#E91E8C">Let’s bring this back</span>
+<div style="min-height:310px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#FFF0F3;border:1px solid #F4CBD5;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:400 132px/158px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#161C2C">く</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#B33A56">ku</span>
+</div>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-align:center">You’ll see it again after a few other prompts.</span>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#fff">Continue</span></div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Session summary</div>
+<div style="position:relative;width:390px;height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="position:absolute;top:50px;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:24px;padding:16px 24px 48px">
+<div style="width:72px;height:72px;align-self:center;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#E7F7F1"><span style="font:700 34px Poppins,sans-serif;color:#18785D">✓</span></div>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C;text-align:center">A new row is underway</span>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-align:center;text-wrap:pretty">Your next practice is already being scheduled from what you recalled today.</span>
+<div style="display:flex;gap:12px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:16px 8px;box-shadow:0 14px 40px rgba(33,44,86,.10)"><span style="width:9px;height:9px;border-radius:999px;background:#3C5BDB"></span><span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">5</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079;text-align:center">introduced</span></div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:16px 8px;box-shadow:0 14px 40px rgba(33,44,86,.10)"><span style="width:9px;height:9px;border-radius:999px;background:#18785D"></span><span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">9</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079;text-align:center">strengthened</span></div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:16px 8px;box-shadow:0 14px 40px rgba(33,44,86,.10)"><span style="width:9px;height:9px;border-radius:999px;background:#E91E8C"></span><span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">2</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079;text-align:center">returning soon</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #3C5BDB;background:#3C5BDB;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#fff">Keep going</span></div>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #DEE4F2;background:#fff;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#3C5BDB">Back home</span></div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Progress · gojūon map</div>
+<div style="position:relative;width:390px;min-height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="display:flex;flex-direction:column;min-height:794px">
+<div style="flex:1;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#161C2C"><span style="font:400 22px/27px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div><span style="font:700 20px Poppins,sans-serif;letter-spacing:-.5px;color:#161C2C">Kanakana</span></div>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:32px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Progress</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">Your gojūon map</span>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-wrap:pretty">Each kana is scheduled independently. This grid shows where each reading skill stands today.</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:16px;margin:24px 0">
+<div style="display:flex;align-items:center;gap:4px"><span style="font:400 16px Poppins,sans-serif;color:#566079">○</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">Not started</span></div>
+<div style="display:flex;align-items:center;gap:4px"><span style="font:400 16px Poppins,sans-serif;color:#3C5BDB">◐</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">Learning</span></div>
+<div style="display:flex;align-items:center;gap:4px"><span style="font:400 16px Poppins,sans-serif;color:#18785D">●</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">Strong</span></div>
+<div style="display:flex;align-items:center;gap:4px"><span style="font:400 16px Poppins,sans-serif;color:#B33A56">↻</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">Due</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px 12px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<div style="display:flex;margin-left:64px">
+<span style="flex:1;text-align:center;font:400 13px/19px Poppins,sans-serif;color:#566079">a</span>
+<span style="flex:1;text-align:center;font:400 13px/19px Poppins,sans-serif;color:#566079">i</span>
+<span style="flex:1;text-align:center;font:400 13px/19px Poppins,sans-serif;color:#566079">u</span>
+<span style="flex:1;text-align:center;font:400 13px/19px Poppins,sans-serif;color:#566079">e</span>
+<span style="flex:1;text-align:center;font:400 13px/19px Poppins,sans-serif;color:#566079">o</span>
+</div>
+<sc-for list="{{ rows }}" as="row" hint-placeholder-count="11">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="width:56px;flex:none;font:400 10px/19px Poppins,sans-serif;color:#566079">{{ row.label }}</span>
+<div style="flex:1;display:flex;gap:5px">
+<sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="5">
+<div style="flex:1;min-width:0;aspect-ratio:.82;position:relative;display:flex;align-items:center;justify-content:center;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }}">
+<span style="font:400 24px/30px 'Hiragino Sans','Noto Sans JP',sans-serif;color:{{ c.fg }}">{{ c.glyph }}</span>
+<span style="position:absolute;right:3px;top:1px;font-size:8px;color:{{ c.fg }}">{{ c.marker }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="text-align:center;margin-top:16px;font:400 13px/19px Poppins,sans-serif;color:#566079">Progress is informational. Continue from Home to keep reviews and new material in the right order.</div>
+</div>
+<div style="background:#F7F9FE;border-top:1px solid #DEE4F2;padding:12px 24px 20px">
+<div style="display:flex;gap:8px">
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">⌂</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Home</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px;background:#EEF3FF"><span style="font:400 20px/22px Poppins,sans-serif;color:#3C5BDB">◫</span><span style="font:600 11px/15px Poppins,sans-serif;color:#3C5BDB">Progress</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">⚙</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Settings</span></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:500 12px/1.3 Poppins,sans-serif;color:rgba(22,28,44,.5)">Settings</div>
+<div style="position:relative;width:390px;min-height:844px;background:#F7F9FE;border:9px solid #12151F;border-radius:46px;overflow:hidden;box-shadow:0 20px 60px rgba(20,28,56,.18)">
+<div style="height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:600 14px Poppins,sans-serif;color:#161C2C"><span>9:41</span><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:14px;height:10px;border-radius:2px;background:#161C2C"></span><span style="width:22px;height:11px;border-radius:3px;border:1.5px solid #161C2C"></span></span></div>
+<div style="display:flex;flex-direction:column;min-height:794px">
+<div style="flex:1;padding:16px 24px 24px">
+<div style="display:flex;align-items:center;gap:12px;min-height:48px"><div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#161C2C"><span style="font:400 22px/27px 'Hiragino Sans','Noto Sans JP',sans-serif;color:#fff">か</span></div><span style="font:700 20px Poppins,sans-serif;letter-spacing:-.5px;color:#161C2C">Kanakana</span></div>
+<div style="display:flex;flex-direction:column;gap:12px;margin:32px 0 24px">
+<span style="font:600 12px/16px Poppins,sans-serif;letter-spacing:1.2px;text-transform:uppercase;color:#3C5BDB">Settings</span>
+<span style="font:700 30px/38px Poppins,sans-serif;letter-spacing:-.8px;color:#161C2C">A focused learning space</span>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:24px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;margin-bottom:16px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">Haptic feedback</span><span style="font:400 13px/19px Poppins,sans-serif;color:#566079">A subtle confirmation after each answer on supported devices.</span></div>
+<div style="flex:none;width:51px;height:31px;border-radius:999px;background:#AAB9F5;position:relative"><div style="position:absolute;right:2px;top:2px;width:27px;height:27px;border-radius:999px;background:#3C5BDB"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;margin-bottom:16px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">How Kanakana works</span>
+<span style="font:400 16px/25px Poppins,sans-serif;color:#566079;text-wrap:pretty">Each kana and skill has its own memory schedule. Correct recall strengthens that connection; misses return sooner. Lesson rows organize first exposure, but reviews are never tied together afterward.</span>
+<div style="height:1px;background:#DEE4F2"></div>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">V1 teaches the 46 basic modern hiragana through kana reading: see a glyph and type its romaji.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;background:#fff;border:1px solid #DEE4F2;border-radius:24px;padding:24px;box-shadow:0 14px 40px rgba(33,44,86,.10)">
+<span style="font:600 20px/27px Poppins,sans-serif;color:#161C2C">Progress data</span>
+<span style="font:400 13px/19px Poppins,sans-serif;color:#566079">Your learning state is stored locally and continues offline.</span>
+<div style="min-height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;border:1px solid #DEE4F2;background:#fff;padding:12px 24px"><span style="font:600 16px Poppins,sans-serif;color:#3C5BDB">Reset progress</span></div>
+</div>
+<div style="text-align:center;margin-top:12px;font:400 13px/19px Poppins,sans-serif;color:#566079">Kanakana MVP · Curriculum v1</div>
+</div>
+<div style="background:#F7F9FE;border-top:1px solid #DEE4F2;padding:12px 24px 20px">
+<div style="display:flex;gap:8px">
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">⌂</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Home</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px"><span style="font:400 20px/22px Poppins,sans-serif;color:#566079">◫</span><span style="font:400 11px/15px Poppins,sans-serif;color:#566079">Progress</span></div>
+<div style="flex:1;min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:18px;background:#EEF3FF"><span style="font:400 20px/22px Poppins,sans-serif;color:#3C5BDB">⚙</span><span style="font:600 11px/15px Poppins,sans-serif;color:#3C5BDB">Settings</span></div>
+</div>
+</div>
+</div>
+<div style="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);width:140px;height:5px;border-radius:999px;background:rgba(22,28,44,.25)"></div>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const GOJUON = [
+  ['Vowels', [['あ','a',0],['い','i',1],['う','u',2],['え','e',3],['お','o',4]]],
+  ['K row', [['か','ka',0],['き','ki',1],['く','ku',2],['け','ke',3],['こ','ko',4]]],
+  ['S row', [['さ','sa',0],['し','shi',1],['す','su',2],['せ','se',3],['そ','so',4]]],
+  ['T row', [['た','ta',0],['ち','chi',1],['つ','tsu',2],['て','te',3],['と','to',4]]],
+  ['N row', [['な','na',0],['に','ni',1],['ぬ','nu',2],['ね','ne',3],['の','no',4]]],
+  ['H row', [['は','ha',0],['ひ','hi',1],['ふ','fu',2],['へ','he',3],['ほ','ho',4]]],
+  ['M row', [['ま','ma',0],['み','mi',1],['む','mu',2],['め','me',3],['も','mo',4]]],
+  ['Y row', [['や','ya',0],['ゆ','yu',2],['よ','yo',4]]],
+  ['R row', [['ら','ra',0],['り','ri',1],['る','ru',2],['れ','re',3],['ろ','ro',4]]],
+  ['W row', [['わ','wa',0],['を','wo',4]]],
+  ['Final N', [['ん','n',2]]],
+];
+
+const STATUS = {
+  none:     { bg: '#FFFFFF', bd: '#DEE4F2', fg: '#566079', marker: '○' },
+  learning: { bg: '#EEF3FF', bd: '#C8D4FF', fg: '#3C5BDB', marker: '◐' },
+  strong:   { bg: '#E7F7F1', bd: '#B9E5D6', fg: '#18785D', marker: '●' },
+  due:      { bg: '#FFF0F8', bd: '#F4C5DE', fg: '#B33A56', marker: '↻' },
+};
+
+// plausible mid-progress learner: vowels strong, K mixed, S learning
+const SEEDED = {
+  0: ['strong','strong','strong','due','strong'],
+  1: ['strong','due','strong','strong','due'],
+  2: ['learning','learning','learning','none','none'],
+};
+
+class Component extends DCLogic {
+  renderVals() {
+    const rows = GOJUON.map(([label, kana], rowIndex) => {
+      const cells = [0, 1, 2, 3, 4].map((column) => {
+        const seed = kana.find((k) => k[2] === column);
+        if (!seed) return { glyph: '', marker: '', bg: 'transparent', bd: 'transparent', fg: 'transparent' };
+        const key = (SEEDED[rowIndex] || [])[column] || 'none';
+        const v = STATUS[key];
+        return { glyph: seed[0], marker: v.marker, bg: v.bg, bd: v.bd, fg: v.fg };
+      });
+      return { label, cells };
+    });
+    return { rows };
+  }
+}
+</script>
+</body>
+</html>

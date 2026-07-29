@@ -1,4 +1,4 @@
-import { createInitialSnapshot } from './initialState';
+import { createInitialSnapshot, hydrateSnapshot } from './initialState';
 import type {
   LearnerSnapshot,
   LearningRepository,
@@ -18,7 +18,7 @@ export class BrowserLearningRepository implements LearningRepository {
       return createInitialSnapshot();
     }
     try {
-      return { ...createInitialSnapshot(), ...JSON.parse(value) };
+      return hydrateSnapshot(JSON.parse(value));
     } catch {
       globalThis.localStorage?.removeItem(STORAGE_KEY);
       return createInitialSnapshot();
