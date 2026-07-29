@@ -198,7 +198,8 @@ function Home() {
     : `${weekday} · all clear`;
 
   const headline = due.length
-    ? `${due.length === 1 ? 'One sound is' : `${due.length} sounds are`} ready to come back.`
+    // "kana" is invariant in Japanese, so only the verb agrees.
+    ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
     : nextUnit
       ? `Ready for the ${nextRowLabel} row.`
       : 'Every shape is in your ink.';
