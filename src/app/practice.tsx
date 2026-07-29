@@ -322,11 +322,6 @@ export default function PracticeRoute() {
           }
           onUndoTypo={() => void undoTypo()}
           onContinue={() => advanceAfterFeedback()}
-          onDraw={() => {
-            const glyph = feedback.item.content.glyph;
-            advanceAfterFeedback();
-            router.push({ pathname: '/trace', params: { glyph } });
-          }}
         />
       ) : null}
     </AppScreen>
@@ -342,7 +337,6 @@ function FeedbackOverlay({
   canUndoTypo,
   onUndoTypo,
   onContinue,
-  onDraw,
 }: {
   feedback: Feedback;
   square: number;
@@ -351,7 +345,6 @@ function FeedbackOverlay({
   canUndoTypo: boolean;
   onUndoTypo(): void;
   onContinue(): void;
-  onDraw(): void;
 }) {
   const accent = feedback.correct ? Colors.ink : Colors.accent;
   const kicker = feedback.correct ? 'Yes' : feedback.revealed ? 'Here it is' : 'Not yet';
@@ -398,6 +391,10 @@ function FeedbackOverlay({
         </AppText>
       ) : null}
 
+      {/* No "draw it to fix the shape" here. Drawing is assessed by its own
+          review prompt, and the tracing surface is reached by meeting a
+          character or by choosing to practise one — not as a detour out of a
+          reading miss. */}
       {!feedback.correct ? (
         <View style={styles.overlayActions}>
           {canUndoTypo ? (
@@ -413,15 +410,6 @@ function FeedbackOverlay({
               </AppText>
             </Pressable>
           ) : null}
-          <Pressable
-            accessibilityRole="button"
-            onPress={onDraw}
-            style={styles.drawRow}>
-            <AppText variant="button">Draw it once to fix the shape</AppText>
-            <AppText style={styles.drawArrow} aria-hidden>
-              →
-            </AppText>
-          </Pressable>
           <Button label="Keep going" variant="link" onPress={onContinue} />
         </View>
       ) : null}
@@ -523,22 +511,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: Colors.inkMuted,
-  },
-  drawRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 44,
-    paddingHorizontal: 20,
-    paddingVertical: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.ink,
-    borderRadius: Radius.rect,
-    backgroundColor: Colors.card,
-  },
-  drawArrow: {
-    fontSize: 17,
-    lineHeight: 21,
-    color: Colors.accent,
   },
 });

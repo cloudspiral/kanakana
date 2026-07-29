@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Pill } from '@/components/Buttons';
 import { GuideSquare } from '@/components/GuideSquare';
@@ -10,6 +10,16 @@ import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { strokeNoteFor } from '@/domain/kanaContent';
 import { strokeCount } from '@/domain/strokes';
 import type { LearningItem, ModuleType, SessionOutcomes } from '@/domain/types';
+import type { TextStyle } from 'react-native';
+
+/**
+ * The field is a serif line on a rule, so the browser's default focus ring
+ * boxes it and fights the design. Native has no equivalent, hence web only.
+ */
+const NO_WEB_OUTLINE =
+  Platform.OS === 'web'
+    ? ({ outlineStyle: 'none' } as unknown as TextStyle)
+    : null;
 
 /** The design's square. Screens scale it down on narrower devices. */
 export const PRACTICE_SQUARE = 262;
@@ -136,7 +146,11 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
             placeholderTextColor={Colors.inkMuted}
             returnKeyType="done"
             spellCheck={false}
-            style={[styles.input, filled ? styles.inputFilled : styles.inputEmpty]}
+            style={[
+              styles.input,
+              filled ? styles.inputFilled : styles.inputEmpty,
+              NO_WEB_OUTLINE,
+            ]}
             value={answer}
           />
         </View>
