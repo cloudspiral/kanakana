@@ -189,10 +189,6 @@ function Home() {
   const nextRowItems = nextUnit ? unitItems(nextUnit, app.manifest.items) : [];
   const nextRowLabel = nextRowItems[0]?.content.rowLabel ?? nextUnit?.shortTitle ?? '';
 
-  const introduced = app.manifest.items.filter((item) =>
-    Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
-  ).length;
-
   const hasActiveSession = Boolean(app.activeSession);
   const weekday = new Date()
     .toLocaleDateString(undefined, { weekday: 'short' })
@@ -369,24 +365,6 @@ function Home() {
         </AppText>
       </Pressable>
 
-      <View style={styles.divider} />
-
-      <View style={styles.inkHeader}>
-        <AppText style={styles.inkTitle}>Your ink</AppText>
-        <AppText style={styles.inkCaption}>
-          {introduced} of {app.manifest.items.length} · fainter is newer
-        </AppText>
-      </View>
-      <View style={styles.inkStrip}>
-        {app.manifest.items.map((item) => (
-          <Kana
-            key={item.id}
-            style={styles.inkStripGlyph}
-            color={inkColor(stateFor(item))}>
-            {item.content.glyph}
-          </Kana>
-        ))}
-      </View>
     </AppScreen>
   );
 }
@@ -671,37 +649,4 @@ const styles = StyleSheet.create({
     color: Colors.inkMuted,
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: Colors.rule,
-    marginTop: Spacing.md,
-    marginBottom: 14,
-  },
-  inkHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    marginBottom: 11,
-  },
-  inkTitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 19,
-    lineHeight: 23,
-  },
-  inkCaption: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.inkMuted,
-  },
-  inkStrip: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    rowGap: 8,
-  },
-  inkStripGlyph: {
-    width: '10%',
-    fontSize: 17,
-    lineHeight: 24,
-    textAlign: 'center',
-  },
 });

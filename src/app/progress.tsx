@@ -34,7 +34,6 @@ export default function ProgressRoute() {
     return <LoadingScreen />;
   }
 
-  const now = new Date();
   const introduced = app.manifest.items.filter((item) =>
     Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
   ).length;
@@ -46,8 +45,8 @@ export default function ProgressRoute() {
         {introduced} of {app.manifest.items.length} characters
       </AppText>
       <AppText variant="bodySmall" style={styles.intro}>
-        These forty-six will carry every Japanese word you ever read. Tap one to
-        see where you two stand.
+        These forty-six will carry every Japanese word you ever read. The darker
+        a character, the better you know it. Tap one to see where you two stand.
       </AppText>
 
       {/* The legend is required — ink density is meaningless without it. */}
@@ -59,10 +58,6 @@ export default function ProgressRoute() {
         <View style={styles.legendItem}>
           <Kana color={LEGEND_KNOWN}>あ</Kana>
           <AppText style={styles.legendLabel}>known</AppText>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={styles.legendRing} />
-          <AppText style={styles.legendLabel}>back today</AppText>
         </View>
       </View>
 
@@ -93,13 +88,10 @@ export default function ProgressRoute() {
                 }
                 const state =
                   app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')];
-                const isDue = Boolean(
-                  state && state.reps > 0 && new Date(state.due) <= now,
-                );
                 return (
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${item.content.glyph}, ${item.content.primaryAnswer}${isDue ? ', back today' : ''}`}
+                    accessibilityLabel={`${item.content.glyph}, ${item.content.primaryAnswer}`}
                     key={column}
                     onPress={() =>
                       router.push({
@@ -108,7 +100,6 @@ export default function ProgressRoute() {
                       })
                     }
                     style={styles.cell}>
-                    {isDue ? <View style={styles.dueRing} /> : null}
                     <Kana size="gridCell" color={inkColor(state)}>
                       {item.content.glyph}
                     </Kana>
@@ -150,13 +141,6 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 16,
     color: Colors.inkMuted,
-  },
-  legendRing: {
-    width: 15,
-    height: 15,
-    borderRadius: Radius.pill,
-    borderWidth: 1.5,
-    borderColor: Colors.accent,
   },
 
   grid: {
@@ -204,13 +188,5 @@ const styles = StyleSheet.create({
     height: 43,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dueRing: {
-    position: 'absolute',
-    width: 36,
-    height: 36,
-    borderRadius: Radius.pill,
-    borderWidth: 1.5,
-    borderColor: Colors.accent,
   },
 });
