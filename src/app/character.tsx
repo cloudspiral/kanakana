@@ -52,7 +52,7 @@ export default function CharacterRoute() {
     return (
       <AppScreen scroll={false} contentStyle={styles.missing}>
         <AppText variant="sectionTitle">That character is not in this set.</AppText>
-        <Button label="Back to your ink" onPress={() => router.back()} />
+        <Button label="Back to your kana" onPress={() => router.back()} />
       </AppScreen>
     );
   }
@@ -70,7 +70,7 @@ export default function CharacterRoute() {
         accessibilityRole="button"
         onPress={() => router.back()}
         style={styles.back}>
-        <AppText style={styles.backLabel}>← Your ink</AppText>
+        <AppText style={styles.backLabel}>← Your kana</AppText>
       </Pressable>
 
       <View style={styles.header}>

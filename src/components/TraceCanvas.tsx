@@ -39,6 +39,11 @@ interface TraceCanvasProps {
   size: number;
   /** Draw the whole character faintly underneath. */
   ghost?: boolean;
+  /**
+   * Allow the next-stroke hint. Off during a review: the hint is the shape,
+   * and showing it would hand over the answer being asked for.
+   */
+  hints?: boolean;
   /** Reject input and dim the surface — used while the model is unavailable. */
   disabled?: boolean;
 }
@@ -47,6 +52,7 @@ export function TraceCanvas({
   trace,
   size,
   ghost = true,
+  hints = true,
   disabled = false,
 }: TraceCanvasProps) {
   // Read through a ref inside the responder: PanResponder captures its handlers
@@ -123,7 +129,7 @@ export function TraceCanvas({
           : null}
 
         {/* The hint sits under the ink so a drawn stroke covers it. */}
-        {trace.hint && nextModelStroke ? (
+        {hints && trace.hint && nextModelStroke ? (
           <>
             <Path
               d={toPath(nextModelStroke)}

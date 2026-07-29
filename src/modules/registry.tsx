@@ -1,5 +1,5 @@
 import { forwardRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Pill } from '@/components/Buttons';
 import { GuideSquare } from '@/components/GuideSquare';
@@ -85,8 +85,6 @@ interface ReadingProps {
   onAnswerChange(answer: string): void;
   onSubmit(): void;
   onReveal(): void;
-  onHear?: () => void;
-  canHear?: boolean;
 }
 
 /** Design screen 6 — Recall. */
@@ -101,8 +99,6 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
       onAnswerChange,
       onSubmit,
       onReveal,
-      onHear,
-      canHear = false,
     },
     ref,
   ) {
@@ -113,22 +109,15 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
           {prompt}
         </AppText>
 
+        {/* Deliberately no "Hear it" here: the sound IS the answer, so offering
+            it before the learner commits is just a slower Show me the answer.
+            It appears on the feedback screen instead. */}
         <GuideSquare size={square} style={styles.center}>
           <Kana
             size="hero"
             style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
             {item.content.glyph}
           </Kana>
-          {canHear ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Hear ${item.content.primaryAnswer}`}
-              onPress={onHear}
-              style={styles.hearCorner}>
-              <SoundBars color={Colors.paper} />
-              <AppText style={styles.hearCornerLabel}>Hear it</AppText>
-            </Pressable>
-          ) : null}
         </GuideSquare>
 
         <View style={styles.field}>
@@ -150,9 +139,6 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
             style={[styles.input, filled ? styles.inputFilled : styles.inputEmpty]}
             value={answer}
           />
-          <AppText style={styles.fieldHelp}>
-            Romaji · shi, chi, tsu and fu accept either spelling
-          </AppText>
         </View>
 
         <View style={styles.actions}>
@@ -268,24 +254,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
 
-  hearCorner: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-    backgroundColor: Colors.ink,
-  },
-  hearCornerLabel: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 11,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-    color: Colors.paper,
-  },
 
   field: {
     gap: Spacing.xs,
@@ -304,11 +272,6 @@ const styles = StyleSheet.create({
   },
   inputFilled: {
     borderBottomColor: Colors.ink,
-  },
-  fieldHelp: {
-    fontSize: 12,
-    lineHeight: 16,
-    color: Colors.inkMuted,
   },
   actions: {
     gap: 10,

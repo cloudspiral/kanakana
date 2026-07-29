@@ -7,7 +7,7 @@ import { Colors, MaxContentWidth, MinTouch, Spacing } from '@/constants/theme';
 
 const destinations = [
   { path: '/', label: 'Today' },
-  { path: '/progress', label: 'Ink' },
+  { path: '/progress', label: 'Kana' },
   { path: '/settings', label: 'You' },
 ] as const;
 

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import {
   AccessibilityInfo,
   Pressable,
@@ -7,12 +7,13 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AppScreen } from '@/components/AppScreen';
-import { Button } from '@/components/Buttons';
+import { Button, Pill } from '@/components/Buttons';
 import { GuideSquare } from '@/components/GuideSquare';
 import { KanaWritingInput } from '@/components/KanaWritingInput';
+import { SoundBars } from '@/components/SoundBars';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
@@ -48,6 +49,16 @@ export default function PracticeRoute() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  /**
+   * The character to keep showing while the drawing screen slides in.
+   *
+   * The introduction has to be marked seen before we navigate, or coming back
+   * would land on the character just met. But that advance re-renders this
+   * screen underneath the opening trace screen, so you catch the old one
+   * changing behind the animation. Holding the outgoing view keeps the
+   * background still until the detour is over.
+   */
+  const [heldItem, setHeldItem] = useState<LearningItem | null>(null);
   const { width } = useWindowDimensions();
   const soundOn = app.snapshot.settings.soundEnabled;
 
@@ -85,6 +96,15 @@ export default function PracticeRoute() {
       .filter((glyph, index, all) => all.indexOf(glyph) === index);
     void preloadKana(glyphs);
   }, [app.manifest, session]);
+
+  // Back from the drawing detour and fully visible again — release the held
+  // view. Doing it on focus rather than on navigation means the swap happens
+  // after the trace screen has finished dismissing, not during it.
+  useFocusEffect(
+    useCallback(() => {
+      setHeldItem(null);
+    }, []),
+  );
 
   useEffect(() => {
     if (step?.kind === 'assessment' && !feedback) {
@@ -145,8 +165,10 @@ export default function PracticeRoute() {
       return;
     }
     const glyph = item.content.glyph;
+    setHeldItem(item);
     const complete = await app.advanceIntroduction();
     if (complete) {
+      setHeldItem(null);
       router.replace('/summary');
       return;
     }
@@ -235,7 +257,17 @@ export default function PracticeRoute() {
         </View>
       </View>
 
-      {step.kind === 'introduction' ? (
+      {heldItem ? (
+        // Frozen copy of the character just met. Interaction is disabled: the
+        // drawing screen owns the interaction until it is dismissed.
+        <KanaIntroductionRenderer
+          heading=""
+          item={heldItem}
+          square={square}
+          canHear={false}
+          onContinue={() => {}}
+        />
+      ) : step.kind === 'introduction' ? (
         <KanaIntroductionRenderer
           heading={
             typeof module?.content.heading === 'string'
@@ -264,8 +296,6 @@ export default function PracticeRoute() {
           disabled={submitting}
           item={item}
           square={square}
-          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
-          onHear={() => void playKana(item.content.glyph)}
           onAnswerChange={setAnswer}
           onReveal={() => void submit(true)}
           onSubmit={() => void submit(false)}
@@ -283,6 +313,8 @@ export default function PracticeRoute() {
         <FeedbackOverlay
           feedback={feedback}
           square={square}
+          canHear={soundOn && isKanaAudioAvailable(feedback.item.content.glyph)}
+          onHear={() => void playKana(feedback.item.content.glyph)}
           canUndoTypo={
             !feedback.correct &&
             !feedback.revealed &&
@@ -305,6 +337,8 @@ export default function PracticeRoute() {
 function FeedbackOverlay({
   feedback,
   square,
+  canHear,
+  onHear,
   canUndoTypo,
   onUndoTypo,
   onContinue,
@@ -312,6 +346,8 @@ function FeedbackOverlay({
 }: {
   feedback: Feedback;
   square: number;
+  canHear: boolean;
+  onHear(): void;
   canUndoTypo: boolean;
   onUndoTypo(): void;
   onContinue(): void;
@@ -338,6 +374,15 @@ function FeedbackOverlay({
           {feedback.primaryAnswer}
         </AppText>
       </GuideSquare>
+
+      {canHear ? (
+        <Pill
+          label="Hear it"
+          icon={<SoundBars />}
+          onPress={onHear}
+          style={styles.overlayHear}
+        />
+      ) : null}
 
       <AppText variant="bodySmall" style={styles.overlayCopy}>
         {feedback.correct
@@ -443,6 +488,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.serif,
     fontSize: 30,
     lineHeight: 34,
+  },
+  overlayHear: {
+    alignSelf: 'center',
   },
   overlayCopy: {
     textAlign: 'center',

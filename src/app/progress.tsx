@@ -41,7 +41,7 @@ export default function ProgressRoute() {
 
   return (
     <AppScreen bottomNav={<BottomNav />}>
-      <AppText variant="kicker">Your ink</AppText>
+      <AppText variant="kicker">Your kana</AppText>
       <AppText style={styles.title}>
         {introduced} of {app.manifest.items.length} characters
       </AppText>

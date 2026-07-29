@@ -72,14 +72,15 @@ export function KanaWritingInput({
       <GuideSquare
         size={square}
         style={styles.center}
-        overlay={<TraceCanvas trace={trace} size={square} ghost={false} />}
+        overlay={
+          <TraceCanvas trace={trace} size={square} ghost={false} hints={false} />
+        }
       />
 
       {trace.awaitingCall ? (
         <View style={styles.block}>
           <AppText variant="bodySmall" style={styles.center}>
-            Your stroke is in red over the dashed model. Too close for us to
-            judge — you decide.
+            That stroke is right on the line and we cannot call it. You decide.
           </AppText>
           <View style={styles.row}>
             <Button
