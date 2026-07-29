@@ -60,11 +60,10 @@ interface KanaProps extends TextProps {
  * through font weight (Noto Sans JP 200 vs 300), not only size.
  */
 export function Kana({ size = 'inline', color, style, ...props }: KanaProps) {
+  // Never fall back to `styles.base` here — it carries the DM Sans family, which
+  // has no kana and silently drops the glyph to a heavier system Japanese face.
   return (
-    <Text
-      {...props}
-      style={[glyphStyles[size], color ? { color } : styles.base, style]}
-    />
+    <Text {...props} style={[glyphStyles[size], color ? { color } : null, style]} />
   );
 }
 

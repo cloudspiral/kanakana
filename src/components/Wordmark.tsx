@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText, Kana } from './Typography';
 import { appConfig } from '@/constants/config';
-import { Colors, Fonts, MinTouch, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MinTouch, Radius } from '@/constants/theme';
 
 export function Wordmark() {
   const router = useRouter();
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     flexDirection: 'row',
-    gap: Spacing.xs,
+    gap: 10,
     minHeight: MinTouch,
   },
   mark: {
@@ -41,11 +41,14 @@ const styles = StyleSheet.create({
     height: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.tile,
-    backgroundColor: Colors.ink,
+    borderRadius: Radius.small,
+    // Accent, not ink. The design README's screen-1 prose says "ink tile", but
+    // its own token table lists the logo tile under `accent` and every
+    // prototype screen draws it vermillion.
+    backgroundColor: Colors.accent,
   },
   markText: {
-    color: Colors.card,
+    color: Colors.paper,
     fontSize: 17,
     lineHeight: 21,
   },
