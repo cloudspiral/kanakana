@@ -65,7 +65,10 @@ describe('practice queue construction', () => {
         (item) => item.content.rowId === 'k',
       ).slice(0, 2),
     ];
-    const session = buildReviewSession(BUNDLED_MANIFEST, items);
+    const session = buildReviewSession(
+    BUNDLED_MANIFEST,
+    items.map((item) => ({ item, skillId: 'kana_reading' as const })),
+  );
     const rows = session.steps.map(
       (step) =>
         BUNDLED_MANIFEST.items.find((item) => item.id === step.itemId)!.content

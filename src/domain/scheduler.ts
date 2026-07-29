@@ -20,8 +20,11 @@ import {
 
 const scheduler = fsrs(FSRS_CONFIG);
 
-/** The skill the review queues are built from. */
+/** The skill the reading queue is built from. */
 const REVIEW_SKILL: SkillId = 'kana_reading';
+
+/** The writing skill, scheduled independently of reading for the same character. */
+export const WRITING_SKILL: SkillId = 'kana_writing';
 
 
 /** A character is a weak spot below this ink strength, even with no lapses. */
@@ -83,15 +86,16 @@ export function dueItems(
   items: LearningItem[],
   states: Record<string, LearnerSkillState>,
   now = new Date(),
+  skillId: SkillId = REVIEW_SKILL,
 ): LearningItem[] {
   return items
     .filter((item) => {
-      const state = states[learnerStateKey(item.id, REVIEW_SKILL)];
+      const state = states[learnerStateKey(item.id, skillId)];
       return Boolean(state && state.reps > 0 && new Date(state.due) <= now);
     })
     .sort((left, right) => {
-      const leftDue = states[learnerStateKey(left.id, REVIEW_SKILL)].due;
-      const rightDue = states[learnerStateKey(right.id, REVIEW_SKILL)].due;
+      const leftDue = states[learnerStateKey(left.id, skillId)].due;
+      const rightDue = states[learnerStateKey(right.id, skillId)].due;
       return leftDue.localeCompare(rightDue);
     });
 }
@@ -112,6 +116,8 @@ export function weakItems(
   states: Record<string, LearnerSkillState>,
   now = new Date(),
 ): LearningItem[] {
+  // Reading only for now: writing weakness would want its own copy tuned to
+  // stroke accuracy rather than recall.
   const stateFor = (item: LearningItem) =>
     states[learnerStateKey(item.id, REVIEW_SKILL)];
   return items
@@ -147,4 +153,26 @@ export function stateLabel(
     return 'Strong';
   }
   return 'Learning';
+}
+
+/**
+ * Every prompt owed right now, across both skills.
+ *
+ * Reading and writing are scheduled independently, so the same character can be
+ * due for one and not the other — that is the whole point of keying progress by
+ * item x skill. A character only enters the writing queue once it has a writing
+ * state, which the practice trace after an introduction creates.
+ */
+export function dueTargets(
+  items: LearningItem[],
+  states: Record<string, LearnerSkillState>,
+  now = new Date(),
+): { item: LearningItem; skillId: SkillId }[] {
+  const targets: { item: LearningItem; skillId: SkillId }[] = [];
+  for (const skillId of [REVIEW_SKILL, WRITING_SKILL]) {
+    for (const item of dueItems(items, states, now, skillId)) {
+      targets.push({ item, skillId });
+    }
+  }
+  return targets;
 }

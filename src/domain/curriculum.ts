@@ -235,6 +235,14 @@ const rawBundledManifest: CurriculumManifest = {
       prompt: 'See a kana and recall its sound.',
       answerField: 'content.acceptedAnswers',
     },
+    {
+      id: 'kana_writing',
+      schemaVersion: 1,
+      label: 'Kana writing',
+      prompt: 'Hear a sound and write its kana.',
+      // Graded from stroke geometry on the client, not from a typed answer.
+      answerField: 'content.glyph',
+    },
   ],
   units: GOJUON_ROWS.map(createUnit),
 };

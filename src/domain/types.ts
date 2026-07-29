@@ -5,6 +5,7 @@ export type SkillId = 'kana_reading' | (string & {});
 export type ModuleType =
   | 'kana-introduction-v1'
   | 'kana-reading-input-v1'
+  | 'kana-writing-input-v1'
   | 'session-summary-v1'
   | (string & {});
 

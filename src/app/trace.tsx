@@ -37,11 +37,22 @@ export default function TraceRoute() {
     }
   }, [glyph, trace]);
 
+  const item = app.manifest.items.find((candidate) => candidate.content.glyph === glyph);
+
+  // Finishing a practice trace starts the writing schedule for this character.
+  // No stakes: recordWritingPractice only ever seeds a schedule, never damages
+  // one, so practising cannot cost the learner anything.
+  const traceResult = trace.result;
+  useEffect(() => {
+    if (traceResult && item) {
+      void app.recordWritingPractice(item.id);
+    }
+  }, [traceResult, item, app]);
+
   if (!app.ready) {
     return <LoadingScreen />;
   }
 
-  const item = app.manifest.items.find((candidate) => candidate.content.glyph === glyph);
   const romaji = item?.content.primaryAnswer ?? '';
   const square = Math.min(
     REFERENCE_SQUARE,

@@ -246,12 +246,31 @@ Deno.serve(async (request) => {
 
     for (const event of body.events) {
       const item = itemMap.get(event.itemId)!;
-      const classification = classifyReviewAnswer(
-        item.content.primaryAnswer,
-        item.content.acceptedAnswers,
-        event.answer,
-        event.classification === 'revealed',
-      );
+
+      /**
+       * Reading is re-graded here from the raw answer, so a client cannot claim
+       * a correct answer it did not give.
+       *
+       * Writing cannot be: the evidence is a stroke path, graded against
+       * KanjiVG geometry on the device, and the design deliberately leaves that
+       * client-side — it is UX, and shipping raw drawings to the server would
+       * widen what we collect for no benefit. The learner also has the final
+       * say on a close call by design, which is not a judgement the server
+       * could reproduce.
+       *
+       * So for kana_writing we trust the client's verdict. The blast radius is
+       * bounded: a learner can only mis-schedule their own writing practice.
+       * Reading, streaks and anything else stay independently verified.
+       */
+      const isWriting = event.skillId === 'kana_writing';
+      const classification = isWriting
+        ? event.classification
+        : classifyReviewAnswer(
+            item.content.primaryAnswer,
+            item.content.acceptedAnswers,
+            event.answer,
+            event.classification === 'revealed',
+          );
       const correct = classificationIsCorrect(classification);
       const rating = correct ? Rating.Good : Rating.Again;
       const key = stateKey(event.itemId, event.skillId);

@@ -56,3 +56,43 @@ export function inkColor(state: LearnerSkillState | undefined): string {
   const alpha = BASE_ALPHA + inkStrength(state) * EARNED_ALPHA;
   return `rgba(${INK_RGB}, ${alpha.toFixed(2)})`;
 }
+
+/**
+ * How well the learner and this character know each other, in words.
+ *
+ * History is consulted BEFORE the strength ladder. Strength alone described a
+ * character seen six times and missed three as "Newly met", which is both wrong
+ * and discouraging — the misses are the whole story for that character.
+ */
+export function bondFor(state: LearnerSkillState | undefined): {
+  label: string;
+  detail: string;
+} {
+  if (!isIntroduced(state)) {
+    return { label: 'Not met yet', detail: 'You have not been introduced.' };
+  }
+  const { lapses, reps } = state!;
+  if (lapses >= 3) {
+    return {
+      label: 'Your nemesis',
+      detail: `Missed ${lapses} times. It will keep coming back until it sticks — that is the system working, not you failing.`,
+    };
+  }
+  if (lapses >= 2 && reps >= 3) {
+    return {
+      label: 'Still slippery',
+      detail: 'It comes back to you, but not reliably yet. A few more passes.',
+    };
+  }
+  const strength = inkStrength(state);
+  if (strength >= 0.8) {
+    return { label: 'Old friend', detail: 'You read this one without thinking.' };
+  }
+  if (strength >= 0.5) {
+    return { label: 'On familiar terms', detail: 'Solid, with the odd pause.' };
+  }
+  if (strength >= 0.2) {
+    return { label: 'Getting acquainted', detail: 'Coming along — keep meeting it.' };
+  }
+  return { label: 'Newly met', detail: 'Fresh. It will be back soon.' };
+}

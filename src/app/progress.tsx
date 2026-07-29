@@ -1,4 +1,6 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { useRouter } from 'expo-router';
 
 import { AppScreen } from '@/components/AppScreen';
 import { BottomNav } from '@/components/BottomNav';
@@ -27,6 +29,7 @@ function rowLabel(shortTitle: string): string {
 
 export default function ProgressRoute() {
   const app = useApp();
+  const router = useRouter();
   if (!app.ready) {
     return <LoadingScreen />;
   }
@@ -94,16 +97,22 @@ export default function ProgressRoute() {
                   state && state.reps > 0 && new Date(state.due) <= now,
                 );
                 return (
-                  <View
-                    accessible
+                  <Pressable
+                    accessibilityRole="button"
                     accessibilityLabel={`${item.content.glyph}, ${item.content.primaryAnswer}${isDue ? ', back today' : ''}`}
                     key={column}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/character',
+                        params: { glyph: item.content.glyph },
+                      })
+                    }
                     style={styles.cell}>
                     {isDue ? <View style={styles.dueRing} /> : null}
                     <Kana size="gridCell" color={inkColor(state)}>
                       {item.content.glyph}
                     </Kana>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>

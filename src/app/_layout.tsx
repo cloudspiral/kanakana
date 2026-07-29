@@ -48,6 +48,7 @@ export default function RootLayout() {
         <Stack.Screen name="trace" options={{ gestureEnabled: false }} />
         <Stack.Screen name="summary" options={{ gestureEnabled: false }} />
         <Stack.Screen name="progress" />
+        <Stack.Screen name="character" />
         <Stack.Screen name="settings" />
         <Stack.Screen
           name="demo"

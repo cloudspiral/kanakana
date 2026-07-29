@@ -12,7 +12,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { inkColor } from '@/domain/ink';
-import { dueItems, weakItems } from '@/domain/scheduler';
+import { dueTargets, weakItems } from '@/domain/scheduler';
 import { learnerStateKey, type CurriculumUnit, type LearningItem } from '@/domain/types';
 
 export default function HomeRoute() {
@@ -177,10 +177,13 @@ function Home() {
   const app = useApp();
   const router = useRouter();
 
-  const due = useMemo(
-    () => dueItems(app.manifest.items, app.snapshot.skillStates),
+  // Both skills: the count, the preview and the queue "Begin review" builds
+  // must agree, and a character can be due for writing but not reading.
+  const dueTargetList = useMemo(
+    () => dueTargets(app.manifest.items, app.snapshot.skillStates),
     [app.manifest.items, app.snapshot.skillStates],
   );
+  const due = dueTargetList.map((target) => target.item);
 
   const nextUnit = app.manifest.units.find((unit) => unit.id === app.nextUnitId);
   const nextRowItems = nextUnit ? unitItems(nextUnit, app.manifest.items) : [];

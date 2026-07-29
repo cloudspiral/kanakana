@@ -12,11 +12,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppScreen } from '@/components/AppScreen';
 import { Button } from '@/components/Buttons';
 import { GuideSquare } from '@/components/GuideSquare';
+import { KanaWritingInput } from '@/components/KanaWritingInput';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { getItem } from '@/domain/curriculum';
+import { isNearMiss } from '@/domain/answers';
 import { currentStep } from '@/domain/session';
 import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
 import type { AnswerClassification, LearningItem } from '@/domain/types';
@@ -34,6 +36,7 @@ interface Feedback {
   sessionComplete: boolean;
   revealed: boolean;
   responseMs: number;
+  answer: string;
 }
 
 export default function PracticeRoute() {
@@ -120,7 +123,7 @@ export default function PracticeRoute() {
         Date.now() - (questionStartedAt.current ?? Date.now()),
       );
       const result = await app.answerCurrent(answer, responseMs, revealed);
-      const nextFeedback: Feedback = { ...result, item, revealed, responseMs };
+      const nextFeedback: Feedback = { ...result, item, revealed, responseMs, answer };
       setFeedback(nextFeedback);
       // A correct answer needs no decision, so it clears itself. A miss waits —
       // it carries the "draw it once" offer.
@@ -148,6 +151,45 @@ export default function PracticeRoute() {
       return;
     }
     router.push({ pathname: '/trace', params: { glyph } });
+  }
+
+  /** A writing prompt is graded from strokes plus the learner's own call. */
+  async function submitWriting(correct: boolean) {
+    if (submitting || !item) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const responseMs = Math.max(
+        0,
+        Date.now() - (questionStartedAt.current ?? Date.now()),
+      );
+      const result = await app.answerWriting(correct, responseMs);
+      const nextFeedback: Feedback = {
+        ...result,
+        item,
+        revealed: false,
+        responseMs,
+        answer: '',
+      };
+      setFeedback(nextFeedback);
+      if (result.correct) {
+        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 900);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** "I typed it wrong — I knew this." Reverts the miss exactly. */
+  async function undoTypo() {
+    const result = await app.undoLastMiss();
+    setFeedback(null);
+    setAnswer('');
+    questionStartedAt.current = Date.now();
+    if (result?.sessionComplete) {
+      router.replace('/summary');
+    }
   }
 
   function advanceAfterFeedback(currentFeedback = feedback) {
@@ -206,6 +248,15 @@ export default function PracticeRoute() {
           onHear={() => void playKana(item.content.glyph)}
           onContinue={() => void meetThenDraw()}
         />
+      ) : step.moduleType === 'kana-writing-input-v1' ? (
+        <KanaWritingInput
+          key={step.id}
+          item={item}
+          square={square}
+          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
+          onHear={() => void playKana(item.content.glyph)}
+          onDecide={(correct) => void submitWriting(correct)}
+        />
       ) : (
         <KanaReadingInputRenderer
           ref={inputRef}
@@ -232,6 +283,12 @@ export default function PracticeRoute() {
         <FeedbackOverlay
           feedback={feedback}
           square={square}
+          canUndoTypo={
+            !feedback.correct &&
+            !feedback.revealed &&
+            isNearMiss(feedback.item, feedback.answer)
+          }
+          onUndoTypo={() => void undoTypo()}
           onContinue={() => advanceAfterFeedback()}
           onDraw={() => {
             const glyph = feedback.item.content.glyph;
@@ -248,11 +305,15 @@ export default function PracticeRoute() {
 function FeedbackOverlay({
   feedback,
   square,
+  canUndoTypo,
+  onUndoTypo,
   onContinue,
   onDraw,
 }: {
   feedback: Feedback;
   square: number;
+  canUndoTypo: boolean;
+  onUndoTypo(): void;
   onContinue(): void;
   onDraw(): void;
 }) {
@@ -294,6 +355,19 @@ function FeedbackOverlay({
 
       {!feedback.correct ? (
         <View style={styles.overlayActions}>
+          {canUndoTypo ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onUndoTypo}
+              style={styles.typoRow}>
+              <AppText style={styles.typoLabel}>
+                I typed it wrong — I knew this
+              </AppText>
+              <AppText style={styles.typoLabel} aria-hidden>
+                ↺
+              </AppText>
+            </Pressable>
+          ) : null}
           <Pressable
             accessibilityRole="button"
             onPress={onDraw}
@@ -384,6 +458,23 @@ const styles = StyleSheet.create({
   },
   overlayActions: {
     gap: 10,
+  },
+  typoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderWidth: 1,
+    borderColor: Colors.fieldBorder,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+  },
+  typoLabel: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: Colors.inkMuted,
   },
   drawRow: {
     flexDirection: 'row',
