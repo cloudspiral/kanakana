@@ -70,38 +70,31 @@ export type StrokeVerdictTable = Readonly<Record<StrokeVerdictId, StrokeVerdict>
  * Per-kana stroke notes shown when a character is first introduced.
  *
  * **Partial by design, not by omission.** The prototype only wrote these for the
- * first ten kana (the vowel and K rows) and fell back to a generic line for the
- * rest, so the type is `Partial`. Do not fill the gap with invented copy — use
- * `strokeNoteFor`, which reproduces the prototype's fallback exactly.
+ * first ten kana (the vowel and K rows), so the type is `Partial`. Do not fill
+ * the gap with invented copy — the remaining kana simply show no note.
+ *
+ * None of these state a stroke count: every screen that shows a note already
+ * shows the count beside it, on the pill or in the stroke-order diagram.
  */
 export const MEET_HINTS: KanaStrokeNoteTable = {
-  'あ': 'Three strokes. The last one curves back like a ribbon — that loop is what tells あ apart from お.',
-  'い': 'Two short strokes, both falling left to right. The shortest kana in the set.',
+  'あ': 'The last stroke curves back like a ribbon — that loop is what tells あ apart from お.',
+  'い': 'Both strokes fall left to right. The shortest kana in the set.',
   'う': 'A small tick, then one long curve. Keep the top stroke detached.',
   'え': 'A tick, then a shape like a folded flag. Compare it to ん later.',
   'お': 'Almost あ, but the loop opens the other way and it gains a flick on the right.',
-  'か': 'Three strokes. The long diagonal comes first, then the crossbar, then the flick.',
-  'き': 'Four strokes: two crossbars, then the long descent, then the curl.',
-  'く': 'One stroke. A single sharp corner, like the beak of a bird.',
-  'け': 'Three strokes. A vertical, then a lid, then a long right leg.',
-  'こ': 'Two strokes, both short and horizontal-ish. The easiest one in the row.',
+  'か': 'The long diagonal comes first, then the crossbar, then the flick.',
+  'き': 'Two crossbars, then the long descent, then the curl.',
+  'く': 'A single sharp corner, like the beak of a bird.',
+  'け': 'A vertical, then a lid, then a long right leg.',
+  'こ': 'Both strokes short and horizontal-ish. The easiest one in the row.',
 };
 
-/** The prototype's own wording for a stroke count: 'One stroke' or 'N strokes'. */
-function strokeCountText(strokes: number): string {
-  return strokes === 1 ? 'One stroke' : `${strokes} strokes`;
-}
-
 /**
- * The stroke note for a glyph, falling back to the prototype's generic line for
- * the 36 kana MEET_HINTS does not cover. Every kana therefore has a note, and no
- * caller has to handle `undefined`.
+ * The stroke note for a glyph, or `null` for the 36 kana MEET_HINTS does not
+ * cover. Callers render nothing rather than substituting a generic line.
  */
-export function strokeNoteFor(glyph: string, strokes: number): string {
-  return (
-    MEET_HINTS[glyph] ??
-    `${strokeCountText(strokes)}. Follow the faint guide, then try it once without.`
-  );
+export function strokeNoteFor(glyph: string): string | null {
+  return MEET_HINTS[glyph] ?? null;
 }
 
 /**

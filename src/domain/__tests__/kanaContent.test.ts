@@ -35,28 +35,24 @@ describe('kana content tables', () => {
     expect(KNOWN.size).toBe(46);
   });
 
-  it('gives every kana a stroke note, falling back where MEET_HINTS stops', () => {
+  it('returns a note only for the kana MEET_HINTS covers', () => {
     for (const glyph of GLYPHS) {
-      const note = strokeNoteFor(glyph, 2);
-      expect(note.length, `no stroke note for ${glyph}`).toBeGreaterThan(0);
+      expect(strokeNoteFor(glyph)).toBe(MEET_HINTS[glyph] ?? null);
     }
+    expect(strokeNoteFor('ん')).toBeNull();
   });
 
-  it('uses the prototype fallback only for kana MEET_HINTS does not cover', () => {
-    for (const glyph of GLYPHS) {
-      const hint = MEET_HINTS[glyph];
-      const resolved = strokeNoteFor(glyph, 3);
-      if (hint) {
-        expect(resolved).toBe(hint);
-      } else {
-        expect(resolved).toBe(
-          '3 strokes. Follow the faint guide, then try it once without.',
-        );
-      }
+  /**
+   * Every screen showing a note already shows the count beside it — the Meet
+   * pill, the trace header, the character page's row line — so a note that
+   * counts strokes says it a second time.
+   */
+  it('never states a stroke count in a note', () => {
+    for (const [glyph, hint] of Object.entries(MEET_HINTS)) {
+      expect(hint, glyph).not.toMatch(
+        /\b(one|two|three|four|five|\d+)\s+strokes?\b/i,
+      );
     }
-    expect(strokeNoteFor('ん', 1)).toBe(
-      'One stroke. Follow the faint guide, then try it once without.',
-    );
   });
 
   it('keys every table by a glyph the curriculum actually teaches', () => {

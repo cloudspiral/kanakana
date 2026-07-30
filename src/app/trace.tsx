@@ -11,7 +11,6 @@ import { AppText } from '@/components/Typography';
 import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { RESULTS, strokeNoteFor } from '@/domain/kanaContent';
-import { strokeCount } from '@/domain/strokes';
 import { useTrace } from '@/hooks/useTrace';
 
 /** The design's reference square, scaled down on narrower screens. */
@@ -61,6 +60,8 @@ export default function TraceRoute() {
 
   const { result } = trace;
   const verdict = result ? RESULTS[result.verdict] : null;
+  const allDrawn = trace.done.length >= trace.strokeTotal && trace.strokeTotal > 0;
+  const note = trace.note ?? (allDrawn ? 'All strokes drawn.' : strokeNoteFor(glyph));
 
   return (
     <AppScreen scroll={false} contentStyle={styles.screen}>
@@ -135,12 +136,11 @@ export default function TraceRoute() {
             <Pill label="Clear all" disabled={!trace.canUndo} onPress={trace.clear} />
           </View>
 
-          <AppText variant="bodySmall" style={styles.note}>
-            {trace.note ??
-              (trace.done.length >= trace.strokeTotal && trace.strokeTotal > 0
-                ? 'All strokes drawn.'
-                : strokeNoteFor(glyph, strokeCount(glyph)))}
-          </AppText>
+          {note ? (
+            <AppText variant="bodySmall" style={styles.note}>
+              {note}
+            </AppText>
+          ) : null}
 
           {trace.canUndo ? (
             <Button label="Done" arrow onPress={trace.finish} />

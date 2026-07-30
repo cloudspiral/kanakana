@@ -22,7 +22,7 @@ import { getItem } from '@/domain/curriculum';
 import { isNearMiss } from '@/domain/answers';
 import { currentStep } from '@/domain/session';
 import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
-import type { AnswerClassification, LearningItem } from '@/domain/types';
+import type { AnswerClassification, LearningItem, SkillId } from '@/domain/types';
 import {
   KanaIntroductionRenderer,
   KanaReadingInputRenderer,
@@ -34,6 +34,8 @@ interface Feedback {
   classification: AnswerClassification;
   primaryAnswer: string;
   item: LearningItem;
+  /** Which skill was graded — the overlay reports a drawing differently. */
+  skillId: SkillId;
   sessionComplete: boolean;
   revealed: boolean;
   responseMs: number;
@@ -59,6 +61,12 @@ export default function PracticeRoute() {
    * background still until the detour is over.
    */
   const [heldItem, setHeldItem] = useState<LearningItem | null>(null);
+  /**
+   * The pending auto-advance off a correct answer. Held so that closing practice
+   * inside the feedback beat cannot fire a navigation onto a screen the learner
+   * has already left.
+   */
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { width } = useWindowDimensions();
   const soundOn = app.snapshot.settings.soundEnabled;
 
@@ -71,6 +79,15 @@ export default function PracticeRoute() {
         .flatMap((unit) => unit.modules)
         .find((candidate) => candidate.id === step?.moduleId),
     [app.manifest.units, step?.moduleId],
+  );
+
+  useEffect(
+    () => () => {
+      if (advanceTimer.current) {
+        clearTimeout(advanceTimer.current);
+      }
+    },
+    [],
   );
 
   useEffect(() => {
@@ -133,7 +150,7 @@ export default function PracticeRoute() {
   );
 
   async function submit(revealed = false) {
-    if (submitting || (!revealed && !answer.trim()) || !item) {
+    if (submitting || (!revealed && !answer.trim()) || !item || !step) {
       return;
     }
     setSubmitting(true);
@@ -143,12 +160,22 @@ export default function PracticeRoute() {
         Date.now() - (questionStartedAt.current ?? Date.now()),
       );
       const result = await app.answerCurrent(answer, responseMs, revealed);
-      const nextFeedback: Feedback = { ...result, item, revealed, responseMs, answer };
+      const nextFeedback: Feedback = {
+        ...result,
+        item,
+        skillId: step.skillId,
+        revealed,
+        responseMs,
+        answer,
+      };
       setFeedback(nextFeedback);
       // A correct answer needs no decision, so it clears itself. A miss waits —
       // it carries the "draw it once" offer.
       if (result.correct) {
-        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 900);
+        advanceTimer.current = setTimeout(
+          () => advanceAfterFeedback(nextFeedback),
+          reducedMotion ? 0 : 900,
+        );
       }
     } finally {
       setSubmitting(false);
@@ -177,7 +204,7 @@ export default function PracticeRoute() {
 
   /** A writing prompt is graded from strokes plus the learner's own call. */
   async function submitWriting(correct: boolean) {
-    if (submitting || !item) {
+    if (submitting || !item || !step) {
       return;
     }
     setSubmitting(true);
@@ -190,13 +217,17 @@ export default function PracticeRoute() {
       const nextFeedback: Feedback = {
         ...result,
         item,
+        skillId: step.skillId,
         revealed: false,
         responseMs,
         answer: '',
       };
       setFeedback(nextFeedback);
       if (result.correct) {
-        setTimeout(() => advanceAfterFeedback(nextFeedback), reducedMotion ? 0 : 900);
+        advanceTimer.current = setTimeout(
+          () => advanceAfterFeedback(nextFeedback),
+          reducedMotion ? 0 : 900,
+        );
       }
     } finally {
       setSubmitting(false);
@@ -387,7 +418,8 @@ function FeedbackOverlay({
 
       {feedback.correct && feedback.responseMs > 0 ? (
         <AppText style={styles.overlaySpeed}>
-          read in {(feedback.responseMs / 1000).toFixed(1)}s
+          {feedback.skillId === 'kana_writing' ? 'drawn' : 'read'} in{' '}
+          {(feedback.responseMs / 1000).toFixed(1)}s
         </AppText>
       ) : null}
 

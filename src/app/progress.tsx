@@ -8,7 +8,7 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { bareRowLabel, GOJUON_ROWS } from '@/domain/curriculum';
+import { GOJUON_ROWS } from '@/domain/curriculum';
 import { inkColor } from '@/domain/ink';
 import { learnerStateKey } from '@/domain/types';
 
@@ -64,8 +64,10 @@ export default function ProgressRoute() {
 
         {GOJUON_ROWS.map((row) => (
           <View key={row.id} style={styles.row}>
+            {/* Not bareRowLabel: stripping "Final" off ん leaves a second row
+                labelled N, and in a chart that word is the whole distinction. */}
             <AppText numberOfLines={1} style={styles.rowLabel}>
-              {bareRowLabel(row.shortTitle)}
+              {row.shortTitle.replace(/\s+row$/i, '')}
             </AppText>
             <View style={styles.rowCells}>
               {COLUMNS.map((column) => {
@@ -146,7 +148,7 @@ const styles = StyleSheet.create({
   },
   columnLabels: {
     flexDirection: 'row',
-    marginLeft: 46,
+    marginLeft: 54,
     marginBottom: 6,
   },
   columnLabel: {
@@ -163,8 +165,9 @@ const styles = StyleSheet.create({
     height: 43,
   },
   rowLabel: {
-    // 38 in the design, but "VOWELS" uppercased with tracking needs 46.
-    width: 46,
+    // 38 in the design, but "VOWELS" uppercased with tracking needs 46 — and
+    // "FINAL N" needs a little more again.
+    width: 54,
     fontFamily: Fonts.sansMedium,
     fontSize: 10,
     letterSpacing: 0.8,

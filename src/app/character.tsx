@@ -39,6 +39,13 @@ export default function CharacterRoute() {
   const router = useRouter();
   const params = useLocalSearchParams<{ glyph?: string }>();
 
+  /**
+   * The link promises the chart, so it has to land there — a plain back() would
+   * step to the previous character when you arrived via a mix-up chip. dismissTo
+   * pops to the chart if it is behind us and opens it if it is not.
+   */
+  const backToChart = () => router.dismissTo('/progress');
+
   if (!app.ready) {
     return <LoadingScreen />;
   }
@@ -52,7 +59,7 @@ export default function CharacterRoute() {
     return (
       <AppScreen scroll={false} contentStyle={styles.missing}>
         <AppText variant="sectionTitle">That kana is not in this set.</AppText>
-        <Button label="Back to your kana" onPress={() => router.back()} />
+        <Button label="Back to your kana" onPress={backToChart} />
       </AppScreen>
     );
   }
@@ -62,13 +69,14 @@ export default function CharacterRoute() {
   const bond = bondFor(reading);
   const words = WORDS[glyph] ?? [];
   const confusions = CONFUSIONS[glyph] ?? [];
+  const strokeNote = strokeNoteFor(glyph);
   const canHear = app.snapshot.settings.soundEnabled && isKanaAudioAvailable(glyph);
 
   return (
     <AppScreen>
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.back()}
+        onPress={backToChart}
         style={styles.back}>
         <AppText style={styles.backLabel}>← Your kana</AppText>
       </Pressable>
@@ -83,7 +91,7 @@ export default function CharacterRoute() {
         <View style={styles.headerCopy}>
           <AppText variant="kicker">{bond.label}</AppText>
           <AppText style={styles.bondDetail}>{bond.detail}</AppText>
-          <AppText variant="bodySmall" style={styles.provenance}>
+          <AppText variant="bodySmall">
             {item.content.rowLabel} · {strokeCount(glyph) === 1 ? 'one stroke' : `${strokeCount(glyph)} strokes`}
           </AppText>
         </View>
@@ -113,9 +121,11 @@ export default function CharacterRoute() {
       <AppText style={styles.sectionTitle}>The shape</AppText>
       <View style={styles.diagramRow}>
         <StrokeOrderDiagram glyph={glyph} size={DIAGRAM_SIZE} />
-        <AppText variant="bodySmall" style={styles.diagramNote}>
-          {strokeNoteFor(glyph, strokeCount(glyph))}
-        </AppText>
+        {strokeNote ? (
+          <AppText variant="bodySmall" style={styles.diagramNote}>
+            {strokeNote}
+          </AppText>
+        ) : null}
       </View>
 
       {words.length > 0 ? (
@@ -218,7 +228,6 @@ const styles = StyleSheet.create({
   headerGlyph: { fontFamily: Fonts.kanaThin, fontSize: 88, lineHeight: 100 },
   headerCopy: { flex: 1, gap: 4 },
   bondDetail: { fontFamily: Fonts.serif, fontSize: 19, lineHeight: 24, color: Colors.ink },
-  provenance: {},
   hear: { alignSelf: 'flex-start', marginBottom: Spacing.md },
 
   card: {
