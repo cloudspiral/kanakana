@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import * as Crypto from 'expo-crypto';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
@@ -19,12 +20,30 @@ const REFERENCE_SQUARE = 262;
 export default function TraceRoute() {
   const app = useApp();
   const router = useRouter();
-  const params = useLocalSearchParams<{ glyph?: string }>();
+  const params = useLocalSearchParams<{
+    glyph?: string;
+    source?: string;
+    eventId?: string;
+    sessionId?: string;
+  }>();
   const { width } = useWindowDimensions();
 
   const requested = typeof params.glyph === 'string' ? params.glyph : undefined;
   const fallback = app.manifest.items[0]?.content.glyph ?? 'あ';
   const glyph = requested ?? fallback;
+  const source = params.source === 'lesson' ? 'lesson' : 'practice';
+  const fallbackEventId = useRef(Crypto.randomUUID()).current;
+  const fallbackSessionId = useRef(Crypto.randomUUID()).current;
+  const eventId =
+    typeof params.eventId === 'string' ? params.eventId : fallbackEventId;
+  const sessionId =
+    typeof params.sessionId === 'string'
+      ? params.sessionId
+      : fallbackSessionId;
+  const recorded = useRef(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [lessonSessionComplete, setLessonSessionComplete] = useState(false);
 
   const trace = useTrace(glyph);
 
@@ -38,15 +57,35 @@ export default function TraceRoute() {
 
   const item = app.manifest.items.find((candidate) => candidate.content.glyph === glyph);
 
-  // Finishing a practice trace starts the writing schedule for this character.
-  // No stakes: recordWritingPractice only ever seeds a schedule, never damages
-  // one, so practising cannot cost the learner anything.
+  // A full lesson trace owns introduction advancement and seeds writing once.
+  // A profile trace only records practice; it never carries FSRS evidence.
   const traceResult = trace.result;
   useEffect(() => {
-    if (traceResult && item) {
-      void app.recordWritingPractice(item.id);
+    if (!traceResult?.complete || !item || recorded.current) {
+      return;
     }
-  }, [traceResult, item, app]);
+    recorded.current = true;
+    setSaving(true);
+    setSaveError(null);
+    void app
+      .recordCompletedDrawing({
+        eventId,
+        itemId: item.id,
+        source,
+        sessionId,
+        occurredAt: new Date().toISOString(),
+      })
+      .then(({ sessionComplete }) => {
+        setLessonSessionComplete(sessionComplete);
+      })
+      .catch((error: unknown) => {
+        recorded.current = false;
+        setSaveError(
+          error instanceof Error ? error.message : 'Could not save this drawing.',
+        );
+      })
+      .finally(() => setSaving(false));
+  }, [app, eventId, item, sessionId, source, traceResult]);
 
   if (!app.ready) {
     return <LoadingScreen />;
@@ -122,7 +161,26 @@ export default function TraceRoute() {
             <Meter label="Stroke accuracy" value={result.accuracy} />
             <Meter label="Order & direction" value={result.orderAndDirection} />
           </View>
-          <Button label="Keep going" arrow onPress={() => router.back()} />
+          {saveError ? (
+            <AppText variant="bodySmall" style={styles.saveError}>
+              {saveError}
+            </AppText>
+          ) : null}
+          {source === 'lesson' && !result.complete ? (
+            <Button label="Finish every stroke" onPress={trace.clear} />
+          ) : (
+            <Button
+              label="Keep going"
+              arrow
+              loading={saving}
+              disabled={source === 'lesson' && !recorded.current}
+              onPress={() =>
+                lessonSessionComplete
+                  ? router.replace('/summary')
+                  : router.back()
+              }
+            />
+          )}
         </View>
       ) : (
         <>
@@ -142,7 +200,14 @@ export default function TraceRoute() {
             </AppText>
           ) : null}
 
-          {trace.canUndo ? (
+          {source === 'lesson' ? (
+            <Button
+              label={allDrawn ? 'Complete trace' : 'Finish every stroke'}
+              arrow={allDrawn}
+              disabled={!allDrawn}
+              onPress={trace.finish}
+            />
+          ) : trace.canUndo ? (
             <Button label="Done" arrow onPress={trace.finish} />
           ) : (
             <Button
@@ -217,6 +282,9 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.serif,
     fontSize: 22,
     lineHeight: 26,
+  },
+  saveError: {
+    color: Colors.accent,
   },
   meters: {
     gap: Spacing.sm,

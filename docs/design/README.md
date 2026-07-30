@@ -452,15 +452,15 @@ is unchanged.
 
 ## Assets
 
-- **KanjiVG** stroke data — 46 SVGs in `prototypes/kanji/`. CC BY-SA 3.0,
-  Ulrich Apel. Attribution required.
+- **KanjiVG** stroke data — 71 SVGs in `assets/kanjivg/`: 46 base and 25 voiced
+  forms. CC BY-SA 3.0, Ulrich Apel. Attribution required.
 - **Fonts** — Instrument Serif, DM Sans, Noto Sans JP. All SIL Open Font
   License; load via `expo-font`.
 - **No images or icons.** Every icon in the design is drawn from styled views
   (the 3-bar sound icon is three rounded rects; arrows and `×` are text glyphs).
-- **Audio does not exist yet.** The prototype plays a synthesised sine tone as a
-  placeholder. Needs a real per-kana recording set in one consistent voice,
-  stored in Supabase storage and cached for offline.
+- **Audio** — the bundled kana recordings are by Kaori sensei and remain
+  credited in the app under the permission terms recorded in
+  `assets/audio/kana/ATTRIBUTION.md`.
 - **`CONFUSIONS` is my judgement, not sourced data.** The best replacement is
   this app's own `review_events` — which characters do *our* learners actually
   confuse? Better than any published list, and the schema already supports

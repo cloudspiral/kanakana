@@ -17,7 +17,7 @@ import {
 
 /**
  * Stroke counts as hand-entered by the design author in the prototype's item
- * table. The handoff claims KanjiVG agrees with all 46; this is that check.
+ * table. The original handoff covered the 46 base kana; this is that check.
  * (The claim says the counts live in curriculum.ts — they do not, the app has
  * no strokes field. They are in the prototype.)
  */
@@ -59,6 +59,14 @@ describe('baked KanjiVG data', () => {
       .filter(([glyph, count]) => strokeCount(glyph) !== count)
       .map(([glyph, count]) => `${glyph}: prototype ${count}, KanjiVG ${strokeCount(glyph)}`);
     expect(disagreements).toEqual([]);
+  });
+
+  it('includes the trailing accent strokes for voiced forms', () => {
+    expect(strokeCount('か')).toBe(3);
+    expect(strokeCount('が')).toBe(5);
+    expect(strokeCount('は')).toBe(3);
+    expect(strokeCount('ば')).toBe(5);
+    expect(strokeCount('ぱ')).toBe(4);
   });
 
   it('keeps every point inside the normalised square', () => {

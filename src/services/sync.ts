@@ -1,6 +1,7 @@
 import {
   learnerStateKey,
   type CurriculumManifest,
+  type DrawingEvent,
   type LearnerSkillState,
   type LearnerSnapshot,
   type ReviewAttempt,
@@ -87,9 +88,13 @@ class SupabaseSyncService implements SyncService {
     if (!isCloudConfigured || !supabase) {
       return {
         pendingCount: snapshot.reviewOutbox.length,
+        pendingDrawingCount: snapshot.drawingOutbox.length,
         acceptedCount: 0,
         acceptedEventIds: [],
         discardedEventIds: [],
+        acceptedDrawingEventIds: [],
+        discardedDrawingEventIds: [],
+        canonicalDrawingCounts: {},
         canonicalStates: [],
         cloudStatus: 'unconfigured',
       };
@@ -99,23 +104,17 @@ class SupabaseSyncService implements SyncService {
     // reports what the server did accept, rather than re-sending it forever.
     const acceptedEventIds: string[] = [];
     const discardedEventIds: string[] = [];
+    const acceptedDrawingEventIds: string[] = [];
+    const discardedDrawingEventIds: string[] = [];
     const stalled: string[] = [];
+    const drawingStalled: string[] = [];
     const canonicalByKey = new Map<string, LearnerSkillState>();
+    let canonicalDrawingCounts: Record<string, number> = {};
     let guestId: string | undefined;
+    const errors: string[] = [];
 
     try {
       guestId = await ensureAnonymousUser();
-      if (snapshot.reviewOutbox.length === 0) {
-        return {
-          pendingCount: 0,
-          acceptedCount: 0,
-          acceptedEventIds: [],
-          discardedEventIds: [],
-          canonicalStates: [],
-          guestId,
-          cloudStatus: 'synced',
-        };
-      }
 
       const events: ReviewAttempt[] = snapshot.reviewOutbox.map((event) => ({
         ...event,
@@ -129,7 +128,8 @@ class SupabaseSyncService implements SyncService {
           },
         );
         if (error) {
-          throw new Error(await describeInvokeError(error));
+          errors.push(await describeInvokeError(error));
+          break;
         }
         acceptedEventIds.push(...((data?.acceptedEventIds ?? []) as string[]));
         for (const state of (data?.canonicalStates ??
@@ -141,20 +141,64 @@ class SupabaseSyncService implements SyncService {
         }
       }
 
+      // An empty drawing batch is intentional: it hydrates canonical counts on
+      // a new device even when this device has no local drawings to submit.
+      const drawingBatches =
+        snapshot.drawingOutbox.length > 0
+          ? inBatches(snapshot.drawingOutbox, MAX_EVENTS_PER_REQUEST)
+          : [[]];
+      for (const batch of drawingBatches) {
+        const { data, error } = await supabase.functions.invoke(
+          'submit-drawings',
+          {
+            body: { events: batch as DrawingEvent[] },
+          },
+        );
+        if (error) {
+          errors.push(await describeInvokeError(error));
+          break;
+        }
+        acceptedDrawingEventIds.push(
+          ...((data?.acceptedEventIds ?? []) as string[]),
+        );
+        canonicalDrawingCounts = {
+          ...canonicalDrawingCounts,
+          ...((data?.canonicalCounts ?? {}) as Record<string, number>),
+        };
+        for (const event of (data?.rejected ?? []) as RejectedEvent[]) {
+          (event.permanent ? discardedDrawingEventIds : drawingStalled).push(
+            event.eventId,
+          );
+        }
+      }
+
       const settled = acceptedEventIds.length + discardedEventIds.length;
+      const settledDrawings =
+        acceptedDrawingEventIds.length + discardedDrawingEventIds.length;
+      const retryNotices = [
+        stalled.length
+          ? `${stalled.length} review${stalled.length === 1 ? '' : 's'} awaiting retry`
+          : '',
+        drawingStalled.length
+          ? `${drawingStalled.length} drawing${drawingStalled.length === 1 ? '' : 's'} awaiting retry`
+          : '',
+      ].filter(Boolean);
       return {
         pendingCount: Math.max(0, snapshot.reviewOutbox.length - settled),
+        pendingDrawingCount: Math.max(
+          0,
+          snapshot.drawingOutbox.length - settledDrawings,
+        ),
         acceptedCount: acceptedEventIds.length,
         acceptedEventIds,
         discardedEventIds,
+        acceptedDrawingEventIds,
+        discardedDrawingEventIds,
+        canonicalDrawingCounts,
         canonicalStates: [...canonicalByKey.values()],
         guestId,
-        cloudStatus: 'synced',
-        // Not a failed sync — but stalled events would otherwise sit in the
-        // queue with nothing on screen ever saying so.
-        error: stalled.length
-          ? `${stalled.length} review${stalled.length === 1 ? '' : 's'} awaiting retry`
-          : undefined,
+        cloudStatus: errors.length ? 'error' : 'synced',
+        error: [...errors, ...retryNotices].join('; ') || undefined,
       };
     } catch (error) {
       return {
@@ -162,9 +206,16 @@ class SupabaseSyncService implements SyncService {
           snapshot.reviewOutbox.length -
           acceptedEventIds.length -
           discardedEventIds.length,
+        pendingDrawingCount:
+          snapshot.drawingOutbox.length -
+          acceptedDrawingEventIds.length -
+          discardedDrawingEventIds.length,
         acceptedCount: acceptedEventIds.length,
         acceptedEventIds,
         discardedEventIds,
+        acceptedDrawingEventIds,
+        discardedDrawingEventIds,
+        canonicalDrawingCounts,
         canonicalStates: [...canonicalByKey.values()],
         guestId,
         cloudStatus: 'error',

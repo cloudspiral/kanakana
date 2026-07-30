@@ -17,10 +17,9 @@ Kanakana has a very simple onboarding process and is designed to be welcoming to
 brand new users, but still rigorous enough that they master
 the kana as much as they would with any other method.
 
-It teaches the 46 basic modern hiragana through short, cumulative introductions
-and independently schedules reviews for each of their associated skills
-(reading and writing) in accordance with modern SRS scheduling best
-practices.
+It teaches the 46 basic modern hiragana plus 25 dakuten/handakuten forms through
+short, cumulative introductions. The 71 items have independent reading and
+writing schedules, while the familiar gojūon grid remains 46 base cells.
 
 ## Run locally
 
@@ -54,7 +53,9 @@ npm run smoke:supabase
 
 Use the local API URL and publishable key printed by `npx supabase status` in `.env.local`. Never place the service-role key in an Expo environment variable.
 
-The smoke verifies anonymous auth, the 46-item published manifest, one accepted review, idempotent replay, RLS isolation between two guests, and that raw typed input is not retained.
+The smoke verifies anonymous auth, the 71-item/16-unit v3 manifest, review and
+drawing idempotency, schedule-neutral free practice, RLS isolation between two
+guests, and that neither typed answers nor raw drawing geometry are retained.
 
 ## Quality gates
 
@@ -76,11 +77,12 @@ npm run export:web
    npx supabase link --project-ref YOUR_PROJECT_REF
    ```
 
-3. Deploy schema, curriculum, and function:
+3. Deploy schema, curriculum, and functions in this order:
 
    ```bash
    npx supabase db push
    npx supabase functions deploy submit-reviews
+   npx supabase functions deploy submit-drawings
    ```
 
 4. Put only the project URL and publishable key in `.env.local`.

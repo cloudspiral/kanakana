@@ -54,11 +54,9 @@ export default function PracticeRoute() {
   /**
    * The character to keep showing while the drawing screen slides in.
    *
-   * The introduction has to be marked seen before we navigate, or coming back
-   * would land on the character just met. But that advance re-renders this
-   * screen underneath the opening trace screen, so you catch the old one
-   * changing behind the animation. Holding the outgoing view keeps the
-   * background still until the detour is over.
+   * Completing the trace advances the active step while this route is still
+   * underneath the closing trace screen. Holding the outgoing view keeps that
+   * transition still until the detour is fully dismissed.
    */
   const [heldItem, setHeldItem] = useState<LearningItem | null>(null);
   /**
@@ -183,23 +181,24 @@ export default function PracticeRoute() {
   }
 
   /**
-   * Meet → Trace → Recall. The introduction is marked seen before the detour so
-   * that returning from the drawing lands on the next step rather than back on
-   * the character just met.
+   * Meet → Trace → Recall. The introduction stays active until the trace route
+   * records a completed drawing, so backing out cannot silently skip it.
    */
   async function meetThenDraw() {
-    if (!item) {
+    if (!item || !step || !app.activeSession) {
       return;
     }
     const glyph = item.content.glyph;
     setHeldItem(item);
-    const complete = await app.advanceIntroduction();
-    if (complete) {
-      setHeldItem(null);
-      router.replace('/summary');
-      return;
-    }
-    router.push({ pathname: '/trace', params: { glyph } });
+    router.push({
+      pathname: '/trace',
+      params: {
+        glyph,
+        source: 'lesson',
+        eventId: step.id,
+        sessionId: app.activeSession.id,
+      },
+    });
   }
 
   /** A writing prompt is graded from strokes plus the learner's own call. */

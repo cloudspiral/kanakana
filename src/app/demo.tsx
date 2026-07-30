@@ -132,6 +132,10 @@ export default function DemoRoute() {
           value={String(app.snapshot.reviewOutbox.length)}
         />
         <Diagnostic
+          label="Pending drawings"
+          value={String(app.snapshot.drawingOutbox.length)}
+        />
+        <Diagnostic
           label="Last sync"
           value={
             app.snapshot.sync.lastSyncAt

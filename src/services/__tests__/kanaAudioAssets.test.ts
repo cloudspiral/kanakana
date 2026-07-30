@@ -27,8 +27,8 @@ describe('bundled kana audio coverage', () => {
     expect(missing).toEqual([]);
   });
 
-  it('covers all 46 gojuon glyphs', () => {
-    expect(manifestGlyphs).toHaveLength(46);
+  it('covers all 71 base and derived glyphs', () => {
+    expect(manifestGlyphs).toHaveLength(71);
   });
 
   it('maps katakana to the same recordings', () => {

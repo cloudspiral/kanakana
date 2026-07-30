@@ -19,17 +19,27 @@ export function hydrateSnapshot(stored: unknown): LearnerSnapshot {
   // what actually clears it from snapshots written before it was removed —
   // otherwise the spread below would carry it forward for good.
   delete partial.activityEvents;
+  const legacyDrawingCounts =
+    partial.drawingCounts ??
+    Object.fromEntries(
+      Object.values(partial.skillStates ?? {})
+        .filter((state) => state.skillId === 'kana_writing' && state.reps > 0)
+        .map((state) => [state.itemId, state.reps]),
+    );
   return {
     ...initial,
     ...partial,
+    schemaVersion: initial.schemaVersion,
     settings: { ...initial.settings, ...partial.settings },
+    drawingCounts: legacyDrawingCounts,
+    drawingOutbox: partial.drawingOutbox ?? [],
     sync: { ...initial.sync, ...partial.sync },
   };
 }
 
 export function createInitialSnapshot(): LearnerSnapshot {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     onboardingComplete: false,
     completedUnitIds: [],
     settings: {
@@ -39,6 +49,8 @@ export function createInitialSnapshot(): LearnerSnapshot {
     },
     skillStates: {},
     reviewOutbox: [],
+    drawingCounts: {},
+    drawingOutbox: [],
     activeSession: null,
     lastSummary: null,
     cachedManifest: null,

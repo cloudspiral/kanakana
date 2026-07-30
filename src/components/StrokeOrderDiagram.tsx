@@ -2,6 +2,7 @@ import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 
 import { Colors } from '@/constants/theme';
 import { strokeModel, type Point } from '@/domain/strokes';
+import type { DerivedMark } from '@/domain/types';
 
 /** The design's reference square; geometry below is expressed in it. */
 const REFERENCE = 262;
@@ -52,6 +53,8 @@ interface StrokeOrderDiagramProps {
   size: number;
   /** Hide the numbers to show the bare shape. */
   numbered?: boolean;
+  /** Trailing KanjiVG strokes that form the voiced mark. */
+  mark?: DerivedMark;
 }
 
 /**
@@ -66,11 +69,14 @@ export function StrokeOrderDiagram({
   glyph,
   size,
   numbered = true,
+  mark,
 }: StrokeOrderDiagramProps) {
   const model = strokeModel(glyph);
   if (!model) {
     return null;
   }
+  const markStrokeCount = mark === 'dakuten' ? 2 : mark === 'handakuten' ? 1 : 0;
+  const firstMarkStroke = model.length - markStrokeCount;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${REFERENCE} ${REFERENCE}`}>
@@ -78,7 +84,7 @@ export function StrokeOrderDiagram({
         <Path
           key={`stroke-${index}`}
           d={toPath(stroke)}
-          stroke={Colors.ink}
+          stroke={index >= firstMarkStroke ? Colors.accent : Colors.ink}
           strokeWidth={STROKE_WIDTH}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -87,7 +93,7 @@ export function StrokeOrderDiagram({
       ))}
 
       {numbered
-        ? model.map((stroke, index) => {
+        ? model.slice(0, firstMarkStroke).map((stroke, index) => {
             const { x, y } = labelPosition(stroke);
             return (
               <Circle
@@ -102,7 +108,7 @@ export function StrokeOrderDiagram({
         : null}
 
       {numbered
-        ? model.map((stroke, index) => {
+        ? model.slice(0, firstMarkStroke).map((stroke, index) => {
             const { x, y } = labelPosition(stroke);
             return (
               <SvgText

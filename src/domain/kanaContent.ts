@@ -291,6 +291,106 @@ export const WORDS: KanaExampleWordTable = {
     { word: 'ほん', romaji: 'hon', gloss: 'book' },
     { word: 'にほん', romaji: 'nihon', gloss: 'Japan' },
   ],
+  'が': [
+    { word: 'えいが', romaji: 'eiga', gloss: 'a film' },
+    { word: 'がっこう', romaji: 'gakkō', gloss: 'school' },
+  ],
+  'ぎ': [
+    { word: 'ぎんこう', romaji: 'ginkō', gloss: 'a bank' },
+    { word: 'かぎ', romaji: 'kagi', gloss: 'a key' },
+  ],
+  'ぐ': [
+    { word: 'ぐあい', romaji: 'guai', gloss: 'condition' },
+    { word: 'かぐ', romaji: 'kagu', gloss: 'furniture' },
+  ],
+  'げ': [
+    { word: 'げんき', romaji: 'genki', gloss: 'well' },
+    { word: 'ひげ', romaji: 'hige', gloss: 'a beard' },
+  ],
+  'ご': [
+    { word: 'ごはん', romaji: 'gohan', gloss: 'a meal' },
+    { word: 'りんご', romaji: 'ringo', gloss: 'an apple' },
+  ],
+  'ざ': [
+    { word: 'ざっし', romaji: 'zasshi', gloss: 'a magazine' },
+    { word: 'ざせき', romaji: 'zaseki', gloss: 'a seat' },
+  ],
+  'じ': [
+    { word: 'じかん', romaji: 'jikan', gloss: 'time' },
+    { word: 'にじ', romaji: 'niji', gloss: 'a rainbow' },
+  ],
+  'ず': [
+    { word: 'みず', romaji: 'mizu', gloss: 'water' },
+    { word: 'ちず', romaji: 'chizu', gloss: 'a map' },
+  ],
+  'ぜ': [
+    { word: 'ぜんぶ', romaji: 'zenbu', gloss: 'all of it' },
+    { word: 'かぜ', romaji: 'kaze', gloss: 'wind' },
+  ],
+  'ぞ': [
+    { word: 'ぞう', romaji: 'zō', gloss: 'an elephant' },
+    { word: 'かぞく', romaji: 'kazoku', gloss: 'family' },
+  ],
+  'だ': [
+    { word: 'だいがく', romaji: 'daigaku', gloss: 'a university' },
+    { word: 'からだ', romaji: 'karada', gloss: 'the body' },
+  ],
+  'ぢ': [
+    { word: 'はなぢ', romaji: 'hanaji', gloss: 'a nosebleed' },
+    { word: 'ちぢむ', romaji: 'chijimu', gloss: 'to shrink' },
+  ],
+  'づ': [
+    { word: 'つづく', romaji: 'tsuzuku', gloss: 'to continue' },
+    { word: 'みかづき', romaji: 'mikazuki', gloss: 'a crescent moon' },
+  ],
+  'で': [
+    { word: 'でんわ', romaji: 'denwa', gloss: 'a telephone' },
+    { word: 'うで', romaji: 'ude', gloss: 'an arm' },
+  ],
+  'ど': [
+    { word: 'どうぶつ', romaji: 'dōbutsu', gloss: 'an animal' },
+    { word: 'まど', romaji: 'mado', gloss: 'a window' },
+  ],
+  'ば': [
+    { word: 'かばん', romaji: 'kaban', gloss: 'a bag' },
+    { word: 'そば', romaji: 'soba', gloss: 'buckwheat noodles' },
+  ],
+  'び': [
+    { word: 'びょういん', romaji: 'byōin', gloss: 'a hospital' },
+    { word: 'ゆび', romaji: 'yubi', gloss: 'a finger' },
+  ],
+  'ぶ': [
+    { word: 'ぶた', romaji: 'buta', gloss: 'a pig' },
+    { word: 'こんぶ', romaji: 'konbu', gloss: 'kelp' },
+  ],
+  'べ': [
+    { word: 'べんきょう', romaji: 'benkyō', gloss: 'study' },
+    { word: 'たべる', romaji: 'taberu', gloss: 'to eat' },
+  ],
+  'ぼ': [
+    { word: 'ぼうし', romaji: 'bōshi', gloss: 'a hat' },
+    { word: 'とんぼ', romaji: 'tonbo', gloss: 'a dragonfly' },
+  ],
+  'ぱ': [
+    { word: 'かんぱい', romaji: 'kanpai', gloss: 'cheers' },
+    { word: 'いっぱい', romaji: 'ippai', gloss: 'full' },
+  ],
+  'ぴ': [
+    { word: 'えんぴつ', romaji: 'enpitsu', gloss: 'a pencil' },
+    { word: 'ぴったり', romaji: 'pittari', gloss: 'exactly' },
+  ],
+  'ぷ': [
+    { word: 'おんぷ', romaji: 'onpu', gloss: 'a musical note' },
+    { word: 'てんぷら', romaji: 'tenpura', gloss: 'tempura' },
+  ],
+  'ぺ': [
+    { word: 'ぺこぺこ', romaji: 'peko peko', gloss: 'hungry' },
+    { word: 'ぺらぺら', romaji: 'pera pera', gloss: 'fluently' },
+  ],
+  'ぽ': [
+    { word: 'さんぽ', romaji: 'sanpo', gloss: 'a walk' },
+    { word: 'しっぽ', romaji: 'shippo', gloss: 'a tail' },
+  ],
 };
 
 /**
@@ -465,6 +565,24 @@ export const CONFUSIONS: KanaConfusionTable = {
   ],
   'ん': [
     { glyph: 'そ', romaji: 'so', note: 'so is angular' },
+  ],
+  'ば': [
+    { glyph: 'ぱ', romaji: 'pa', note: 'pa has a small circle' },
+  ],
+  'ぱ': [
+    { glyph: 'ば', romaji: 'ba', note: 'ba has two accent ticks' },
+  ],
+  'じ': [
+    { glyph: 'ぢ', romaji: 'ji', note: 'same sound, derived from chi' },
+  ],
+  'ぢ': [
+    { glyph: 'じ', romaji: 'ji', note: 'same sound, derived from shi' },
+  ],
+  'ず': [
+    { glyph: 'づ', romaji: 'zu', note: 'same sound, derived from tsu' },
+  ],
+  'づ': [
+    { glyph: 'ず', romaji: 'zu', note: 'same sound, derived from su' },
   ],
 };
 

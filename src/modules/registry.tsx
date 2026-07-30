@@ -59,7 +59,11 @@ export function KanaIntroductionRenderer({
         style={styles.center}
         chip={{ label: item.content.primaryAnswer, tone: 'ink', corner: 'bottomRight' }}>
         {showOrder ? (
-          <StrokeOrderDiagram glyph={glyph} size={square} />
+          <StrokeOrderDiagram
+            glyph={glyph}
+            size={square}
+            mark={item.content.mark}
+          />
         ) : (
           <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
             {glyph}

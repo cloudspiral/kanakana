@@ -3,7 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createInitialSnapshot } from '@/data/initialState';
 import { BUNDLED_MANIFEST } from '@/domain/curriculum';
-import type { LearnerSnapshot, ReviewAttempt } from '@/domain/types';
+import type {
+  DrawingEvent,
+  LearnerSnapshot,
+  ReviewAttempt,
+} from '@/domain/types';
 
 const invoke = vi.fn();
 
@@ -42,8 +46,14 @@ function snapshotWith(outbox: ReviewAttempt[]): LearnerSnapshot {
 
 function acceptAll() {
   invoke.mockImplementation(
-    (_name: string, options: { body: { events: ReviewAttempt[] } }) =>
-      Promise.resolve({
+    (name: string, options: { body: { events: (ReviewAttempt | DrawingEvent)[] } }) =>
+      Promise.resolve(name === 'submit-drawings' ? {
+        data: {
+          acceptedEventIds: options.body.events.map((event) => event.eventId),
+          canonicalCounts: { kana_a: 7 },
+        },
+        error: null,
+      } : {
         data: {
           acceptedEventIds: options.body.events.map((event) => event.eventId),
           canonicalStates: [],
@@ -66,10 +76,16 @@ describe('review outbox submission', () => {
       BUNDLED_MANIFEST,
     );
 
-    expect(invoke).toHaveBeenCalledTimes(3);
+    const reviewCalls = invoke.mock.calls.filter(
+      (call) => call[0] === 'submit-reviews',
+    );
+    expect(reviewCalls).toHaveLength(3);
     expect(
-      invoke.mock.calls.map((call) => call[1].body.events.length),
+      reviewCalls.map((call) => call[1].body.events.length),
     ).toEqual([50, 50, 20]);
+    expect(invoke).toHaveBeenLastCalledWith('submit-drawings', {
+      body: { events: [] },
+    });
     expect(result.acceptedCount).toBe(120);
     expect(result.pendingCount).toBe(0);
     expect(result.cloudStatus).toBe('synced');
@@ -99,7 +115,9 @@ describe('review outbox submission', () => {
       BUNDLED_MANIFEST,
     );
 
-    expect(invoke).toHaveBeenCalledTimes(2);
+    expect(
+      invoke.mock.calls.filter((call) => call[0] === 'submit-reviews'),
+    ).toHaveLength(2);
     expect(result.cloudStatus).toBe('error');
     expect(result.acceptedCount).toBe(50);
     expect(result.pendingCount).toBe(70);
@@ -108,16 +126,24 @@ describe('review outbox submission', () => {
 
   it('drops events the server will never take', async () => {
     const events = outboxOf(3);
-    invoke.mockResolvedValue({
-      data: {
-        acceptedEventIds: ['event-0'],
-        canonicalStates: [],
-        rejected: [
-          { eventId: 'event-1', reason: 'unknown_item_or_skill', permanent: true },
-          { eventId: 'event-2', reason: 'deadlock detected', permanent: false },
-        ],
-      },
-      error: null,
+    invoke.mockImplementation((name: string) => {
+      if (name === 'submit-drawings') {
+        return Promise.resolve({
+          data: { acceptedEventIds: [], canonicalCounts: {} },
+          error: null,
+        });
+      }
+      return Promise.resolve({
+        data: {
+          acceptedEventIds: ['event-0'],
+          canonicalStates: [],
+          rejected: [
+            { eventId: 'event-1', reason: 'unknown_item_or_skill', permanent: true },
+            { eventId: 'event-2', reason: 'deadlock detected', permanent: false },
+          ],
+        },
+        error: null,
+      });
     });
 
     const result = await syncService.sync(snapshotWith(events), BUNDLED_MANIFEST);
@@ -139,8 +165,40 @@ describe('review outbox submission', () => {
       BUNDLED_MANIFEST,
     );
 
-    expect(invoke.mock.calls[0][1].body.events[0].sessionId).not.toBe(
+    const reviewCall = invoke.mock.calls.find(
+      (call) => call[0] === 'submit-reviews',
+    )!;
+    expect(reviewCall[1].body.events[0].sessionId).not.toBe(
       'practice',
     );
+  });
+
+  it('batches offline drawing events and returns canonical totals', async () => {
+    acceptAll();
+    const drawingOutbox: DrawingEvent[] = Array.from(
+      { length: 61 },
+      (_, index) => ({
+        eventId: `drawing-${index}`,
+        itemId: 'kana_a',
+        source: 'practice',
+        sessionId: `drawing-session-${index}`,
+        occurredAt: '2026-07-29T00:00:00.000Z',
+      }),
+    );
+
+    const result = await syncService.sync(
+      { ...createInitialSnapshot(), drawingOutbox },
+      BUNDLED_MANIFEST,
+    );
+
+    const drawingCalls = invoke.mock.calls.filter(
+      (call) => call[0] === 'submit-drawings',
+    );
+    expect(drawingCalls.map((call) => call[1].body.events.length)).toEqual([
+      50, 11,
+    ]);
+    expect(result.acceptedDrawingEventIds).toHaveLength(61);
+    expect(result.pendingDrawingCount).toBe(0);
+    expect(result.canonicalDrawingCounts).toEqual({ kana_a: 7 });
   });
 });

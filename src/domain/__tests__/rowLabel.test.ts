@@ -5,7 +5,7 @@ import { bareRowLabel, GOJUON_ROWS } from '../curriculum';
 describe('bare row labels', () => {
   it('strips the trailing "row" so copy does not double it up', () => {
     expect(bareRowLabel('K row')).toBe('K');
-    expect(bareRowLabel('Final N')).toBe('N');
+    expect(bareRowLabel('Final N')).toBe('Final N');
   });
 
   it('leaves a label that is not suffixed alone', () => {

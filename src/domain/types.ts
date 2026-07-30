@@ -2,6 +2,7 @@ import type { Rating, State } from 'ts-fsrs';
 
 export type LearningItemKind = 'hiragana' | 'katakana' | 'kanji' | 'vocabulary';
 export type SkillId = 'kana_reading' | (string & {});
+export type DerivedMark = 'dakuten' | 'handakuten';
 export type ModuleType =
   | 'kana-introduction-v1'
   | 'kana-reading-input-v1'
@@ -9,19 +10,27 @@ export type ModuleType =
   | 'session-summary-v1'
   | (string & {});
 
+export interface LearningItemContent {
+  glyph: string;
+  primaryAnswer: string;
+  acceptedAnswers: string[];
+  rowId: string;
+  rowLabel: string;
+  column: number;
+  /** Base item this voiced form is derived from. */
+  derivedFrom?: string;
+  /** Voiced forms derived from this base item; は has both ば and ぱ. */
+  derivedForms?: string[];
+  /** The mark added to the base glyph for this derived form. */
+  mark?: DerivedMark;
+  [key: string]: unknown;
+}
+
 export interface LearningItem {
   id: string;
   kind: LearningItemKind;
   schemaVersion: number;
-  content: {
-    glyph: string;
-    primaryAnswer: string;
-    acceptedAnswers: string[];
-    rowId: string;
-    rowLabel: string;
-    column: number;
-    [key: string]: unknown;
-  };
+  content: LearningItemContent;
 }
 
 export interface SkillDefinition {
@@ -80,6 +89,23 @@ export interface ReviewAttempt {
   exerciseVersion: number;
   reviewedAt: string;
   expectedStateVersion: number;
+}
+
+export type DrawingSource = 'lesson' | 'review' | 'practice';
+
+/**
+ * A completed drawing, intentionally separate from a graded review.
+ *
+ * Practice events count work without carrying any FSRS evidence. Lesson and
+ * review drawings are also represented on the server from their accepted
+ * writing review event, using the same event ID for idempotency.
+ */
+export interface DrawingEvent {
+  eventId: string;
+  itemId: string;
+  source: DrawingSource;
+  sessionId: string;
+  occurredAt: string;
 }
 
 export interface LearnerSkillState {
@@ -160,6 +186,10 @@ export interface LearnerSnapshot {
   settings: LearnerSettings;
   skillStates: Record<string, LearnerSkillState>;
   reviewOutbox: ReviewAttempt[];
+  /** Server-confirmed completed drawing totals by item ID. */
+  drawingCounts: Record<string, number>;
+  /** Completed lesson or free-practice drawings waiting to sync. */
+  drawingOutbox: DrawingEvent[];
   activeSession: ActivePracticeSession | null;
   lastSummary: {
     sessionId: string;
@@ -195,6 +225,10 @@ export interface SyncResult {
    * say. Dropped from the outbox unaccepted, since retrying cannot help.
    */
   discardedEventIds: string[];
+  pendingDrawingCount: number;
+  acceptedDrawingEventIds: string[];
+  discardedDrawingEventIds: string[];
+  canonicalDrawingCounts: Record<string, number>;
   canonicalStates: LearnerSkillState[];
   guestId?: string;
   cloudStatus: SyncMetadata['cloudStatus'];

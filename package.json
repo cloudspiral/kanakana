@@ -53,7 +53,7 @@
     "android": "expo start --android",
     "audio:build": "python3 scripts/build-kana-audio.py",
     "bake:strokes": "node scripts/bake-kanjivg.mjs",
-    "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/submit-reviews/index.ts",
+    "check:edge": "deno check --config supabase/functions/deno.json supabase/functions/submit-reviews/index.ts supabase/functions/submit-drawings/index.ts",
     "export:web": "expo export --clear --platform web",
     "fonts:subset": "bash scripts/subset-kana-fonts.sh",
     "ios": "expo start --ios",

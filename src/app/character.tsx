@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Crypto from 'expo-crypto';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
@@ -11,7 +12,8 @@ import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { CONFUSIONS, WORDS, strokeNoteFor } from '@/domain/kanaContent';
-import { bondFor, inkStrength, isIntroduced } from '@/domain/ink';
+import { visibleDrawingCount } from '@/domain/drawings';
+import { bondFor, inkColor, inkStrength, isIntroduced } from '@/domain/ink';
 import { WRITING_SKILL } from '@/domain/scheduler';
 import { strokeCount } from '@/domain/strokes';
 import { learnerStateKey, type LearnerSkillState } from '@/domain/types';
@@ -37,14 +39,17 @@ function returnsIn(state: LearnerSkillState | undefined): string {
 export default function CharacterRoute() {
   const app = useApp();
   const router = useRouter();
-  const params = useLocalSearchParams<{ glyph?: string }>();
+  const params = useLocalSearchParams<{ glyph?: string; parentGlyph?: string }>();
 
   /**
    * The link promises the chart, so it has to land there — a plain back() would
    * step to the previous character when you arrived via a mix-up chip. dismissTo
    * pops to the chart if it is behind us and opens it if it is not.
    */
-  const backToChart = () => router.dismissTo('/progress');
+  const parentGlyph =
+    typeof params.parentGlyph === 'string' ? params.parentGlyph : undefined;
+  const leaveProfile = () =>
+    parentGlyph ? router.back() : router.dismissTo('/progress');
 
   if (!app.ready) {
     return <LoadingScreen />;
@@ -59,13 +64,21 @@ export default function CharacterRoute() {
     return (
       <AppScreen scroll={false} contentStyle={styles.missing}>
         <AppText variant="sectionTitle">That kana is not in this set.</AppText>
-        <Button label="Back to your kana" onPress={backToChart} />
+        <Button label="Back to your kana" onPress={leaveProfile} />
       </AppScreen>
     );
   }
 
   const reading = app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')];
   const writing = app.snapshot.skillStates[learnerStateKey(item.id, WRITING_SKILL)];
+  const derivedParent = item.content.derivedFrom
+    ? app.manifest.items.find(
+        (candidate) => candidate.id === item.content.derivedFrom,
+      )
+    : undefined;
+  const derivedChildren = (item.content.derivedForms ?? [])
+    .map((id) => app.manifest.items.find((candidate) => candidate.id === id))
+    .filter((candidate) => candidate !== undefined);
   const bond = bondFor(reading);
   const words = WORDS[glyph] ?? [];
   const confusions = CONFUSIONS[glyph] ?? [];
@@ -76,9 +89,11 @@ export default function CharacterRoute() {
     <AppScreen>
       <Pressable
         accessibilityRole="button"
-        onPress={backToChart}
+        onPress={leaveProfile}
         style={styles.back}>
-        <AppText style={styles.backLabel}>← Your kana</AppText>
+        <AppText style={styles.backLabel}>
+          ← {parentGlyph ?? 'Your kana'}
+        </AppText>
       </Pressable>
 
       <View style={styles.header}>
@@ -97,6 +112,73 @@ export default function CharacterRoute() {
         </View>
       </View>
 
+      {derivedParent ? (
+        <View style={styles.relationship}>
+          <AppText variant="kicker">Derived from</AppText>
+          <RelationshipRow
+            glyph={derivedParent.content.glyph}
+            answer={derivedParent.content.primaryAnswer}
+            detail={
+              item.content.mark === 'dakuten'
+                ? 'Add two voiced ticks ゛'
+                : 'Add the P-row circle ゜'
+            }
+            color={inkColor(
+              app.snapshot.skillStates[
+                learnerStateKey(derivedParent.id, 'kana_reading')
+              ],
+            )}
+            onPress={() =>
+              router.push({
+                pathname: '/character',
+                params: { glyph: derivedParent.content.glyph },
+              })
+            }
+          />
+        </View>
+      ) : derivedChildren.length > 0 ? (
+        <View style={styles.relationship}>
+          <AppText variant="kicker">
+            {derivedChildren.length === 2 ? 'Takes both marks' : 'Takes a mark'}
+          </AppText>
+          {derivedChildren.map((child, index) => {
+            const childState =
+              app.snapshot.skillStates[
+                learnerStateKey(child.id, 'kana_reading')
+              ];
+            return (
+              <View
+                key={child.id}
+                style={index > 0 ? styles.relationshipDivided : undefined}>
+                <RelationshipRow
+                  glyph={child.content.glyph}
+                  answer={child.content.primaryAnswer}
+                  detail={
+                    child.content.mark === 'dakuten'
+                      ? 'Voiced ゛'
+                      : 'P-row ゜'
+                  }
+                  color={
+                    isIntroduced(childState)
+                      ? inkColor(childState)
+                      : Colors.ink
+                  }
+                  onPress={() =>
+                    router.push({
+                      pathname: '/character',
+                      params: {
+                        glyph: child.content.glyph,
+                        parentGlyph: glyph,
+                      },
+                    })
+                  }
+                />
+              </View>
+            );
+          })}
+        </View>
+      ) : null}
+
       {canHear ? (
         <Pill
           label="Hear it"
@@ -113,14 +195,21 @@ export default function CharacterRoute() {
         <Meter label="Writing it" value={inkStrength(writing)} tone={Colors.accent} />
         <View style={styles.figures}>
           <Figure label="times seen" value={String(reading?.reps ?? 0)} />
-          <Figure label="times drawn" value={String(writing?.reps ?? 0)} />
+          <Figure
+            label="times drawn"
+            value={String(visibleDrawingCount(app.snapshot, item.id))}
+          />
           <Figure label="next return" value={returnsIn(reading)} />
         </View>
       </View>
 
       <AppText style={styles.sectionTitle}>The shape</AppText>
       <View style={styles.diagramRow}>
-        <StrokeOrderDiagram glyph={glyph} size={DIAGRAM_SIZE} />
+        <StrokeOrderDiagram
+          glyph={glyph}
+          size={DIAGRAM_SIZE}
+          mark={item.content.mark}
+        />
         {strokeNote ? (
           <AppText variant="bodySmall" style={styles.diagramNote}>
             {strokeNote}
@@ -183,9 +272,51 @@ export default function CharacterRoute() {
         label={`Draw ${glyph}`}
         arrow
         style={styles.draw}
-        onPress={() => router.push({ pathname: '/trace', params: { glyph } })}
+        onPress={() =>
+          router.push({
+            pathname: '/trace',
+            params: {
+              glyph,
+              source: 'practice',
+              eventId: Crypto.randomUUID(),
+              sessionId: Crypto.randomUUID(),
+            },
+          })
+        }
       />
+      <AppText variant="bodySmall" style={styles.practiceOnly}>
+        Practice only — nothing is scheduled here.
+      </AppText>
     </AppScreen>
+  );
+}
+
+function RelationshipRow({
+  glyph,
+  answer,
+  detail,
+  color,
+  onPress,
+}: {
+  glyph: string;
+  answer: string;
+  detail: string;
+  color: string;
+  onPress(): void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${glyph}, ${answer}, ${detail}`}
+      onPress={onPress}
+      style={styles.relationshipRow}>
+      <Kana style={[styles.relationshipGlyph, { color }]}>{glyph}</Kana>
+      <View style={styles.relationshipCopy}>
+        <AppText style={styles.relationshipAnswer}>{answer}</AppText>
+        <AppText variant="bodySmall">{detail}</AppText>
+      </View>
+      <AppText style={styles.relationshipArrow}>→</AppText>
+    </Pressable>
   );
 }
 
@@ -229,6 +360,44 @@ const styles = StyleSheet.create({
   headerCopy: { flex: 1, gap: 4 },
   bondDetail: { fontFamily: Fonts.serif, fontSize: 19, lineHeight: 24, color: Colors.ink },
   hear: { alignSelf: 'flex-start', marginBottom: Spacing.md },
+  relationship: {
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    backgroundColor: Colors.card,
+    paddingHorizontal: Spacing.card,
+    paddingTop: Spacing.card,
+    marginBottom: Spacing.md,
+  },
+  relationshipDivided: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.ruleSoft,
+  },
+  relationshipRow: {
+    minHeight: 68,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  relationshipGlyph: {
+    width: 42,
+    fontFamily: Fonts.kanaLight,
+    fontSize: 34,
+    lineHeight: 44,
+  },
+  relationshipCopy: {
+    flex: 1,
+  },
+  relationshipAnswer: {
+    fontFamily: Fonts.serif,
+    fontSize: 18,
+    lineHeight: 22,
+    color: Colors.ink,
+  },
+  relationshipArrow: {
+    color: Colors.accent,
+    fontSize: 18,
+  },
 
   card: {
     borderWidth: 1,
@@ -300,6 +469,10 @@ const styles = StyleSheet.create({
     borderColor: Colors.rule,
     borderRadius: Radius.rect,
     backgroundColor: Colors.card,
+  },
+  practiceOnly: {
+    textAlign: 'center',
+    marginTop: -Spacing.xs,
   },
   chipGlyph: { fontSize: 26, lineHeight: 32 },
   draw: { marginTop: Spacing.section },
