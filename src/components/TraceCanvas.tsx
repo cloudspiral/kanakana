@@ -13,10 +13,6 @@ import type { TraceController } from '@/hooks/useTrace';
  * points keep the proportions they were tuned at on any screen size.
  */
 const STROKE_WIDTH = 12;
-const HINT_WIDTH = 9;
-const HINT_DASH = '9,8';
-const HINT_COLOR = 'rgba(188, 62, 39, 0.42)';
-
 function toPath(points: readonly Point[]): string {
   if (points.length === 0) {
     return '';
@@ -37,11 +33,6 @@ interface TraceCanvasProps {
   size: number;
   /** Draw the whole character faintly underneath. */
   ghost?: boolean;
-  /**
-   * Allow the next-stroke hint. Off during a review: the hint is the shape,
-   * and showing it would hand over the answer being asked for.
-   */
-  hints?: boolean;
   /** Reject input and dim the surface — used while the model is unavailable. */
   disabled?: boolean;
 }
@@ -50,7 +41,6 @@ export function TraceCanvas({
   trace,
   size,
   ghost = true,
-  hints = true,
   disabled = false,
 }: TraceCanvasProps) {
   // Read through a ref inside the responder: PanResponder captures its handlers
@@ -62,8 +52,7 @@ export function TraceCanvas({
   // "not drawable yet", so it belongs to the unavailable-model case only. A
   // finished character stays at full strength — it is the learner's work.
   const unavailable = disabled || !trace.ready;
-  const blocked =
-    unavailable || trace.awaitingCall || Boolean(trace.result);
+  const blocked = unavailable || Boolean(trace.result);
   const blockedRef = useRef(blocked);
   blockedRef.current = blocked;
 
@@ -95,19 +84,25 @@ export function TraceCanvas({
             y: locationY / sizeRef.current,
           });
         },
+        // Keep the drawing surface's responder when another React Native view
+        // asks for it. Forced browser/OS cancellation can still happen, and is
+        // handled below without committing a partial stroke.
+        onPanResponderTerminationRequest: () => false,
         onPanResponderRelease: () => traceRef.current.endStroke(),
-        onPanResponderTerminate: () => traceRef.current.endStroke(),
+        onPanResponderTerminate: () => traceRef.current.cancelStroke(),
       }),
     [],
   );
-
-  const nextModelStroke = trace.model?.[trace.done.length];
 
   return (
     <View
       style={[StyleSheet.absoluteFill, unavailable && styles.dimmed]}
       {...responder.panHandlers}>
       <Svg
+        // Every path and numbered marker is instructional paint. The parent
+        // View owns drawing input, so the SVG must never become a dead touch
+        // target when a stroke begins directly on a start number.
+        pointerEvents="none"
         width={size}
         height={size}
         viewBox={`0 0 ${STROKE_REFERENCE} ${STROKE_REFERENCE}`}>
@@ -129,63 +124,17 @@ export function TraceCanvas({
             ))
           : null}
 
-        {/* The hint sits under the ink so a drawn stroke covers it. */}
-        {hints && trace.hint && nextModelStroke ? (
-          <>
-            <Path
-              d={toPath(nextModelStroke)}
-              stroke={HINT_COLOR}
-              strokeWidth={HINT_WIDTH}
-              strokeDasharray={HINT_DASH}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-            {ghost ? null : (
-              <StrokeStartNumber
-                point={nextModelStroke[0]}
-                number={trace.done.length + 1}
-              />
-            )}
-          </>
-        ) : null}
-
-        {trace.done.map((stroke, index) =>
-          stroke.drawn ? (
-            <Path
-              key={index}
-              d={toPath(stroke.drawn)}
-              stroke={Colors.ink}
-              strokeWidth={STROKE_WIDTH}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          ) : trace.model?.[index] ? (
-            // Drawn in after four misses.
-            <Path
-              key={index}
-              d={toPath(trace.model[index])}
-              stroke={Colors.ink}
-              strokeWidth={STROKE_WIDTH}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          ) : null,
-        )}
-
-        {/* A pending close call is drawn in vermillion over the dashed model. */}
-        {trace.pendingCall ? (
+        {trace.done.map((stroke, index) => (
           <Path
-            d={toPath(trace.pendingCall)}
-            stroke={Colors.accent}
+            key={index}
+            d={toPath(stroke.drawn)}
+            stroke={Colors.ink}
             strokeWidth={STROKE_WIDTH}
             strokeLinecap="round"
             strokeLinejoin="round"
             fill="none"
           />
-        ) : null}
+        ))}
 
         {trace.live && trace.live.length > 1 ? (
           <Path

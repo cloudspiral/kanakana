@@ -84,7 +84,6 @@ export function KanaWritingInput({
             trace={trace}
             size={square}
             ghost={Boolean(result)}
-            hints={false}
           />
         }
       />

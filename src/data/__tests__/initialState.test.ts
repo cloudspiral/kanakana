@@ -30,6 +30,18 @@ describe('hydrating a stored snapshot', () => {
     expect('activityEvents' in hydrated).toBe(false);
   });
 
+  it('drops the retired tracing-guide preference', () => {
+    const hydrated = hydrateSnapshot({
+      settings: {
+        soundEnabled: false,
+        tracingGuideEnabled: false,
+      },
+    });
+
+    expect(hydrated.settings.soundEnabled).toBe(false);
+    expect('tracingGuideEnabled' in hydrated.settings).toBe(false);
+  });
+
   it('uses legacy writing repetitions until canonical drawing counts sync', () => {
     const itemId = 'hiragana-vowels-a';
     let writing = applyReview(

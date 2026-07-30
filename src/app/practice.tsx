@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import {
   AccessibilityInfo,
   Pressable,
@@ -132,12 +132,7 @@ export default function PracticeRoute() {
   }
 
   if (!session || !step || !item) {
-    return (
-      <AppScreen scroll={false} contentStyle={styles.centered}>
-        <AppText variant="sectionTitle">This practice is complete.</AppText>
-        <Button label="See summary" arrow onPress={() => router.replace('/summary')} />
-      </AppScreen>
-    );
+    return <Redirect href={app.snapshot.lastSummary ? '/summary' : '/'} />;
   }
 
   const square = Math.min(
@@ -437,10 +432,6 @@ function FeedbackOverlay({
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    justifyContent: 'center',
-    gap: Spacing.lg,
-  },
   content: {
     flex: 1,
     paddingBottom: Spacing.gutter,

@@ -53,21 +53,38 @@ describe('kana grid lenses', () => {
     expect(voicedLensAvailable(BUNDLED_MANIFEST, snapshot)).toBe(true);
   });
 
-  it('blanks unsupported and unintroduced cells in each voiced lens', () => {
+  it('shows every supported voiced cell and only blanks unsupported rows', () => {
     const snapshot = introduced('が', 'ぱ');
     const voiced = kanaGridRows(BUNDLED_MANIFEST, snapshot, 'dakuten');
     expect(voiced.find((row) => row.id === 'k')!.cells[0].glyph).toBe('が');
-    expect(voiced.find((row) => row.id === 'k')!.cells[1].glyph).toBeUndefined();
+    expect(voiced.find((row) => row.id === 'k')!.cells[1].glyph).toBe('ぎ');
+    expect(
+      voiced.flatMap((row) => row.cells).filter((cell) => cell.glyph),
+    ).toHaveLength(20);
     expect(voiced.find((row) => row.id === 'n')!.cells.every((cell) => !cell.glyph)).toBe(true);
     expect(voiced.find((row) => row.id === 'k')!.label).toBe('G ゛');
 
     const pRow = kanaGridRows(BUNDLED_MANIFEST, snapshot, 'handakuten');
     expect(pRow.find((row) => row.id === 'h')!.cells[0].glyph).toBe('ぱ');
     expect(
+      pRow.flatMap((row) => row.cells).filter((cell) => cell.glyph),
+    ).toHaveLength(5);
+    expect(
       pRow
         .filter((row) => row.id !== 'h')
         .every((row) => row.cells.every((cell) => !cell.glyph)),
     ).toBe(true);
     expect(lensProgress(BUNDLED_MANIFEST, snapshot, 'handakuten').total).toBe(5);
+  });
+
+  it('keeps the complete P-row visible before any P kana is introduced', () => {
+    const snapshot = introduced('が');
+    const pRow = kanaGridRows(BUNDLED_MANIFEST, snapshot, 'handakuten');
+
+    expect(
+      pRow
+        .find((row) => row.id === 'h')!
+        .cells.map((cell) => cell.glyph),
+    ).toEqual(['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ']);
   });
 });

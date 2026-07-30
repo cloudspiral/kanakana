@@ -9,7 +9,7 @@ interface GuideSquareProps extends PropsWithChildren {
   size: number;
   /** Override the width. Onboarding's hero is full-bleed at 290 tall, not square. */
   width?: number | `${number}%`;
-  /** Genkō-yōshi cross-hairs. Off when the tracing guide setting is disabled. */
+  /** Genkō-yōshi cross-hairs. */
   guides?: boolean;
   /** Emphasised 1px ink border rather than the default rule border. */
   emphasis?: boolean;

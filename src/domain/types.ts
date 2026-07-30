@@ -162,11 +162,6 @@ export interface ActivePracticeSession {
 
 export interface LearnerSettings {
   hapticsEnabled: boolean;
-  /**
-   * Show the faint character underneath while tracing. On by default; the
-   * learner turns it off when they are ready to write from memory.
-   */
-  tracingGuideEnabled: boolean;
   /** Play the recorded pronunciation when a character appears or is tapped. */
   soundEnabled: boolean;
 }

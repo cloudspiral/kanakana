@@ -61,8 +61,7 @@ export default function SettingsRoute() {
 
   return (
     <AppScreen bottomNav={<BottomNav />}>
-      <AppText variant="kicker">You</AppText>
-      <AppText style={styles.title}>A quiet place to practise</AppText>
+      <AppText variant="kicker">Settings</AppText>
 
       <View style={styles.card}>
         <SettingRow
@@ -76,12 +75,6 @@ export default function SettingsRoute() {
           body="A subtle confirmation after each answer, on devices that support it."
           value={app.snapshot.settings.hapticsEnabled}
           onToggle={(next) => void app.updateSettings({ hapticsEnabled: next })}
-        />
-        <SettingRow
-          title="Tracing guide"
-          body="Show the faint kana underneath while you draw. Turn it off when you're ready to write from memory."
-          value={app.snapshot.settings.tracingGuideEnabled}
-          onToggle={(next) => void app.updateSettings({ tracingGuideEnabled: next })}
         />
         <View style={styles.explainer}>
           <AppText style={styles.rowTitle}>How this works</AppText>
@@ -143,13 +136,6 @@ export default function SettingsRoute() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontFamily: Fonts.serif,
-    fontSize: 32,
-    lineHeight: 35,
-    color: Colors.ink,
-    marginTop: 7,
-  },
   card: {
     marginTop: Spacing.card,
     borderWidth: 1,

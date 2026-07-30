@@ -100,8 +100,17 @@ export default function TraceRoute() {
 
   const { result } = trace;
   const verdict = result ? RESULTS[result.verdict] : null;
-  const allDrawn = trace.done.length >= trace.strokeTotal && trace.strokeTotal > 0;
-  const note = trace.note ?? (allDrawn ? 'All strokes drawn.' : strokeNoteFor(glyph));
+  const expectedCountReached =
+    trace.done.length >= trace.strokeTotal && trace.strokeTotal > 0;
+  const strokeStatus =
+    trace.done.length < trace.strokeTotal
+      ? `Stroke ${trace.done.length + 1} of ${trace.strokeTotal}`
+      : `${trace.done.length} drawn · ${trace.strokeTotal} in guide`;
+  const note =
+    trace.note ??
+    (expectedCountReached
+      ? 'Keep drawing if you need to, or submit when you are ready.'
+      : strokeNoteFor(glyph));
 
   return (
     <AppScreen scroll={false} contentStyle={styles.screen}>
@@ -109,50 +118,21 @@ export default function TraceRoute() {
         <AppText variant="kicker">Trace it</AppText>
         <AppText variant="meterLabel">
           {trace.ready
-            ? `Stroke ${trace.strokeNumber} of ${trace.strokeTotal}`
+            ? strokeStatus
             : 'Loading strokes…'}
         </AppText>
       </View>
 
       <GuideSquare
         size={square}
-        guides={app.snapshot.settings.tracingGuideEnabled}
         chip={romaji ? { label: romaji, tone: 'ink' } : undefined}
         style={styles.square}
         overlay={
-          <TraceCanvas
-            trace={trace}
-            size={square}
-            ghost={app.snapshot.settings.tracingGuideEnabled}
-          />
+          <TraceCanvas trace={trace} size={square} />
         }
       />
 
-      {/* While a close call is pending the ordinary controls must not render.
-          Three competing dark CTAs on screen at once let a tap grade a
-          1-of-3-stroke attempt as clean. This gate is one of two guards; the
-          other is the arithmetic in traceResult. */}
-      {trace.awaitingCall ? (
-        <View style={styles.callBlock}>
-          <AppText variant="bodySmall" style={styles.callCopy}>
-            Your stroke is in red over the dashed model. Too close for us to judge
-            — you decide.
-          </AppText>
-          <View style={styles.callActions}>
-            <Button
-              label="Not good enough"
-              variant="secondary"
-              style={styles.callButton}
-              onPress={() => trace.resolveCall(false)}
-            />
-            <Button
-              label="Count it"
-              style={styles.callButton}
-              onPress={() => trace.resolveCall(true)}
-            />
-          </View>
-        </View>
-      ) : result ? (
+      {result ? (
         <View style={styles.resultBlock}>
           <AppText style={[styles.resultLabel, { color: verdict?.accent }]}>
             {verdict?.label}
@@ -184,11 +164,6 @@ export default function TraceRoute() {
         <>
           <View style={styles.controls}>
             <Pill label="Undo stroke" disabled={!trace.canUndo} onPress={trace.undo} />
-            <Pill
-              label="Show next stroke"
-              active={trace.hint}
-              onPress={trace.toggleHint}
-            />
             <Pill label="Clear all" disabled={!trace.canUndo} onPress={trace.clear} />
           </View>
 
@@ -200,9 +175,9 @@ export default function TraceRoute() {
 
           {source === 'lesson' ? (
             <Button
-              label={allDrawn ? 'Complete trace' : 'Finish every stroke'}
-              arrow={allDrawn}
-              disabled={!allDrawn}
+              label={expectedCountReached ? 'Complete trace' : 'Finish every stroke'}
+              arrow={expectedCountReached}
+              disabled={!expectedCountReached}
               onPress={trace.finish}
             />
           ) : trace.canUndo ? (
@@ -242,20 +217,6 @@ const styles = StyleSheet.create({
   note: {
     textAlign: 'center',
     minHeight: 40,
-  },
-
-  callBlock: {
-    gap: Spacing.sm,
-  },
-  callCopy: {
-    textAlign: 'center',
-  },
-  callActions: {
-    flexDirection: 'row',
-    gap: Spacing.xs,
-  },
-  callButton: {
-    flex: 1,
   },
 
   resultBlock: {

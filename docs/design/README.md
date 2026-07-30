@@ -116,7 +116,7 @@ cards, `20–22px` between sections. Borders are `1px` (`rule`) or `1px` `ink` f
 the emphasised primary card. **No shadows anywhere** — separation is by border
 and paper tone only.
 
-Bottom nav: three text-only tabs (`TODAY` / `INK` / `YOU`), active marked by a
+Bottom nav: three text-only tabs (`TODAY` / `INK` / `SETTINGS`), active marked by a
 `16×2px` `accent` underline. Min 44px touch targets throughout.
 
 ---
@@ -187,27 +187,34 @@ it" with a 3-bar icon, and "{n} strokes"); a centred stroke note (see
 
 ### 5. Practice — Trace  ← the core new screen
 
-Kicker "TRACE IT" + right-aligned "Stroke {i} of {n}" (or "Loading strokes…").
+Kicker "TRACE IT" + right-aligned "Stroke {i} of {n}" while below the guide
+count. At or above it, show "{drawn} drawn · {n} in guide" (or "Loading
+strokes…" while unavailable).
 
-The 262px square contains, in z-order: guide lines; the whole-character ghost at
-10% `ink` (toggleable); a canvas at native ×2 resolution; a flush-corner `ink`
-romaji chip.
+The 262px square contains, in z-order: guide lines; the whole-character model
+at 10% `ink`; numbered start markers; the learner's ink; and a flush-corner
+`ink` romaji chip.
 
 Canvas rendering:
-- accepted strokes: `ink`, `lineWidth 12`, round cap/join
+- retained strokes: `ink`, `lineWidth 12`, round cap/join
 - the live stroke: same
-- a pending close-call stroke: `accent`
-- the **hint**: the *next stroke only*, `lineWidth 9`, `rgba(188,62,39,.42)`,
-  dashed `[9,8]`, plus its order number in `accent` at the exact start point
+- the model: 10% `ink`, `lineWidth 12`, with its order number at each start point
 
-Controls row (pills): **Undo stroke** / **Show next stroke** (fills `accentSoft`
-when active) / **Clear all** / **Sound**.
+Controls row (pills): **Undo stroke** / **Clear all**.
 
-Below: a live note line, then the CTA ("Done" when strokes exist, otherwise a
-muted "Skip drawing").
+Every real stroke stays on the canvas and advances the learner, including
+strokes beyond the model's expected count. A wrong order, direction, shape, or
+extra stroke produces only an advisory note. It never rejects, deletes,
+recolors, or replaces their ink. **Undo stroke** removes both that ink and its
+eventual order/direction penalty. Reaching the expected count enables
+**Complete trace** but never disables drawing. The whole-character result is
+calculated only when the learner presses it.
 
 **While the model is loading**, the canvas and controls drop to 40%/45% opacity
 and pointer input is rejected — do not let the square look drawable before it is.
+Only a genuine pointer release commits a stroke. If the responder is cancelled
+by the browser or OS, discard the live fragment instead of grading it as a
+finished stroke.
 
 ### 6. Practice — Recall
 
@@ -222,9 +229,8 @@ link.
 The sound is shown while the answer stays hidden. The learner may undo and
 clear freely; reaching the expected stroke count does **not** submit anything.
 Every raw stroke stays on the page: there are no retries, direction/order
-corrections, hints, or forced strokes while drawing. Those interventions belong
-only to guided practice and the first teaching encounter. **Check** is the only
-grading action, matching the reading review.
+corrections, warnings, or grading while drawing. **Check** is the only grading
+action, matching the reading review.
 
 After Check, reveal the numbered model behind the learner's ink, show the two
 result meters, and state **YES** or **NOT YET**. The left button overrides the
@@ -248,6 +254,9 @@ A 60px `card` tick tile; serif title varying by session kind ("Reviews done" /
 copy; a `card` list of only the non-zero outcome rows (introduced /
 strengthened / returning soon / shapes drawn) with serif numerals; "Keep going"
 + "Back to today".
+
+Completing the final practice step navigates directly here. Do not insert a
+separate "This practice is complete / See summary" handoff screen.
 
 ### 10. Ink map — `app/progress.tsx`
 
@@ -284,11 +293,15 @@ character's profile.
 
 Pinned footer: a 58px sound button + "Draw {glyph} →".
 
-### 11. You / Settings — `app/settings.tsx`
+### 11. Settings — `app/settings.tsx`
 
-Toggles for **Play sounds** and **Tracing guide** (44×26px, `ink` when on); a
-"How this works" card; **"Skip ahead one day"** (demo tool, see below); "Restart
-this demo"; footer "Kanakana · hiragana · katakana coming".
+Toggles for **Play sounds** and **Haptic feedback** (44×26px, `ink` when on); a
+"How this works" card; reset progress; pronunciation attribution; footer
+"Kanakana · hiragana · katakana coming".
+
+Tracing guidance is not configurable. Learning and free practice always show
+the model and genkō-yōshi guides; writing reviews hide the answer until Check,
+then reveal the numbered model for comparison.
 
 ---
 
@@ -326,54 +339,43 @@ best = min(fwd, rev)
 
 - **accept** if `best ≤ TOL` **and not backwards**
 - **backwards** if `rev < fwd × 0.75`
-- **out of order** if some *later* model stroke scores better than the expected
-  one by ≥25% — and then name which stroke it actually was
+- **out of order** if another model stroke scores better than the expected one
+  by ≥25% — and then name which stroke it actually was
 
 `TOL = 46px on a 262px square` ≈ **17.5% of the square's edge**. Scale it with
 the rendered square; do not hard-code 46.
 
-### Escalation
+### Guided feedback
 
-| misses | behaviour |
-| --- | --- |
-| 1 | note naming the specific error |
-| 2 | hint: the next stroke only, dashed, with its order number at the start point |
-| marginal (`TOL`…`TOL×1.7`) **and** order correct | **close-call self-grade** |
-| 4 | stroke is drawn in, session continues |
+Marginal strokes in the correct order and direction advance silently with
+guided leniency (`TOL×1.7`). Other non-tap strokes also remain and advance, even
+after the model's expected count, but show a note naming a wrong order,
+backwards direction, distant shape, or extra stroke.
+Feedback is advisory: there is no miss counter, red mode, progressive hint,
+automatic deletion, or forced model stroke. The numbered model is already
+visible, and the learner chooses whether to undo and redraw.
 
-**Nothing ever blocks.** This is load-bearing: it is why the check can be
-strict about direction without being punishing.
+The whole-character grade uses only the strokes still on the canvas. Retaining
+an order/direction warning lowers that metric; undoing the stroke removes both
+its ink and its penalty. Shape quality is calculated from the retained strokes
+at **Complete trace**, never from mistakes the learner corrected first.
 
-### Close-call self-grade
+Writing reviews do not run the per-stroke judge at all. They keep every raw
+stroke and let the whole-character **Check** calculate shape, order, and
+direction for the single decision screen; drawing a stroke never submits or
+gives feedback. The review result is the only surface that offers **Count it**.
 
-When the score is marginal but the order is right, the recogniser genuinely
-cannot tell. Rather than guess, draw the attempt in `accent` over the dashed
-model and ask: *"Your stroke is in red over the dashed model. Too close for us to
-judge — you decide."* → **"Not good enough"** / **"Count it"**.
-
-That immediate prompt applies to standalone tracing. During a writing review,
-do not run the per-stroke judge at all. Keep every raw stroke and let the
-whole-character **Check** calculate shape, order, and direction for the single
-decision screen; drawing a stroke never submits or gives feedback.
-
-**Critical invariant, and the source of the worst bug found in testing:** while a
-close call is pending, the ordinary trace controls **must not render**. Three
-competing dark CTAs appeared simultaneously and tapping the wrong one graded a
-1-of-3-stroke attempt as "Clean, 100%". Two independent guards:
-1. the controls and the results panel are both gated on `!pendingCall`
-2. `finalScore()` divides by `max(gradedStrokes, model.length)`, so undrawn
-   strokes score zero and an incomplete character is **arithmetically incapable**
-   of reporting as clean. It reports `partial` ("Stopped part-way · 1 of 3
-   strokes").
+`finalScore()` divides by `max(gradedStrokes, model.length)`, so undrawn strokes
+score zero and an incomplete character cannot report as clean.
 
 ### Result metrics
 
 Two, and **both must read higher-is-better**: `Stroke accuracy` (mean per-stroke
 closeness over the whole character) and `Order & direction`
-(`1 − (slips + forced) / strokes`). An earlier pairing mixed directions between
+(`1 − slips / expected strokes`). An earlier pairing mixed directions between
 adjacent bars and was unreadable.
 
-Verdicts: `clean` / `loose` / `order` / `guided` / `partial` — copy in
+Verdicts: `clean` / `loose` / `order` / `partial` — copy in
 `RESULTS` in the prototype.
 
 ---
@@ -438,9 +440,9 @@ drawn      int
 avgMs      int      — rolling recall latency
 ```
 
-Session-local: `steps[]`, `index`, `answer`, `feedback`, `done[]` (accepted
-strokes as point arrays), `misses`, `forced`, `orderSlips`, `hint`, `note`,
-`pendingCall`, `traceResult`, `outcomes`.
+Session-local: `steps[]`, `index`, `answer`, `feedback`, `done[]` (retained
+strokes with any order/direction warning attached), `note`, `traceResult`,
+`outcomes`.
 
 **Architectural note learned the hard way:** route *every* step change through a
 single `advance(overrideSteps?)` that owns both the model load and all
@@ -489,7 +491,7 @@ is unchanged.
 ## Suggested order
 
 1. Tokens + `Typography`/`Surface`/`Buttons`/`BottomNav` restyle (unblocks everything).
-2. Home, Ink map, You — the flat-radius, no-shadow system on known screens.
+2. Home, Ink map, Settings — the flat-radius, no-shadow system on known screens.
 3. The character profile screen (new route).
 4. Pre-bake KanjiVG polylines to JSON; build the trace canvas and matcher; unit-test
    accept / backwards / out-of-order / marginal against fixture polylines.

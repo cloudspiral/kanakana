@@ -19,6 +19,15 @@ export function hydrateSnapshot(stored: unknown): LearnerSnapshot {
   // what actually clears it from snapshots written before it was removed —
   // otherwise the spread below would carry it forward for good.
   delete partial.activityEvents;
+  const storedSettings = {
+    ...partial.settings,
+  } as Partial<LearnerSnapshot['settings']> & {
+    tracingGuideEnabled?: unknown;
+  };
+  // Guided tracing now always teaches with the model visible; write reviews
+  // always hide it until Check. Drop the retired preference while hydrating so
+  // old snapshots do not carry an inert setting forever.
+  delete storedSettings.tracingGuideEnabled;
   const legacyDrawingCounts =
     partial.drawingCounts ??
     Object.fromEntries(
@@ -30,7 +39,7 @@ export function hydrateSnapshot(stored: unknown): LearnerSnapshot {
     ...initial,
     ...partial,
     schemaVersion: initial.schemaVersion,
-    settings: { ...initial.settings, ...partial.settings },
+    settings: { ...initial.settings, ...storedSettings },
     drawingCounts: legacyDrawingCounts,
     drawingOutbox: partial.drawingOutbox ?? [],
     sync: { ...initial.sync, ...partial.sync },
@@ -44,7 +53,6 @@ export function createInitialSnapshot(): LearnerSnapshot {
     completedUnitIds: [],
     settings: {
       hapticsEnabled: true,
-      tracingGuideEnabled: true,
       soundEnabled: true,
     },
     skillStates: {},

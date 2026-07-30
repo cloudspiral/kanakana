@@ -117,10 +117,11 @@ export function kanaGridRows(
         };
       }
 
-      const child = children.find(
-        (item) =>
-          item.content.mark === lens && introduced(snapshot, item.id),
-      );
+      // Once the voiced lenses are unlocked, show their complete alphabets.
+      // Mastery belongs in the cell's ink opacity, not in whether the cell
+      // exists at all; otherwise unintroduced kana disappear instead of
+      // appearing faintly like they do in the plain grid.
+      const child = children.find((item) => item.content.mark === lens);
       return child
         ? {
             column,

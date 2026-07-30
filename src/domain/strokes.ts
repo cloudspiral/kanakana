@@ -3,10 +3,9 @@ import { KANA_STROKES, type ModelPoint } from './generated/kanaStrokes';
 /**
  * Stroke matching for the `kana_writing` skill.
  *
- * One stroke is graded at a time against the expected model stroke, following
- * the approach hanzi-writer established for Chinese. Direction and order are
- * judged, not forgiven: a dictionary recogniser should tolerate wrong stroke
- * order, but a teacher should not — see docs/design/stroke-check-notes.md.
+ * One stroke is compared at a time against the expected model stroke. Guided
+ * tracing keeps every stroke and uses the comparison for non-blocking feedback;
+ * whole-character reviews grade only after Check.
  *
  * Every constant below was tuned against real drawing input in the design
  * prototype. Change them only with evidence.
@@ -33,20 +32,14 @@ export const MATCH_SAMPLES = 16;
  */
 export const STROKE_TOLERANCE = 46 / 262;
 
-/** Upper edge of the marginal band that triggers a close-call self-grade. */
-export const MARGINAL_FACTOR = 1.7;
+/** Extra leniency while the model is visible in guided tracing. */
+export const GUIDED_TOLERANCE_FACTOR = 1.7;
 
 /** Reversed scoring this much better than forwards means it was drawn backwards. */
 export const BACKWARDS_FACTOR = 0.75;
 
-/** A later stroke scoring this much better means the learner drew that one instead. */
+/** Another stroke scoring this much better means the learner drew that one instead. */
 export const OUT_OF_ORDER_FACTOR = 0.75;
-
-/** Misses before the next-stroke hint appears. */
-export const HINT_AFTER = 2;
-
-/** Misses before the stroke is drawn in and the session moves on. Nothing ever blocks. */
-export const FORCE_AFTER = 4;
 
 /** Per-stroke closeness reaches zero at this multiple of the tolerance. */
 const ACCURACY_SPAN = 1.6;
@@ -143,29 +136,19 @@ export function strokeCount(glyph: string): number {
   return KANA_STROKES[glyph]?.strokes.length ?? 0;
 }
 
-export type StrokeReason = 'outOfOrder' | 'backwards' | 'shape';
+export type StrokeReason = 'outOfOrder' | 'backwards' | 'shape' | 'extra';
 
 export type StrokeDecision =
   /** Close enough and in the right direction. */
   | { kind: 'accepted'; score: number }
-  /**
-   * Marginal shape, right order: the recogniser genuinely cannot tell. Rather
-   * than guess, the caller can either ask immediately or keep the stroke
-   * provisionally until a whole-character Check.
-   */
-  | { kind: 'closeCall'; score: number; misses: number }
-  /** Four misses. The stroke is drawn in and the session continues. */
-  | { kind: 'forced'; score: number; misses: number; note: string; slip: boolean }
-  /** Try again, with a note and — after two misses — the next-stroke hint. */
+  /** Keep the stroke, advance, and show this feedback without blocking input. */
   | {
-      kind: 'retry';
+      kind: 'warning';
       score: number;
-      misses: number;
       note: string;
       slip: boolean;
-      hint: boolean;
       reason: StrokeReason;
-      /** 1-based stroke the attempt actually resembled, when out of order. */
+      /** 1-based stroke the attempt most resembled, when out of order. */
       actualStroke?: number;
     };
 
@@ -176,8 +159,6 @@ export interface JudgeInput {
   model: readonly (readonly Point[])[];
   /** Index of the stroke the learner is meant to be drawing. */
   expectedIndex: number;
-  /** Misses already accumulated on this stroke. */
-  misses: number;
 }
 
 /**
@@ -188,94 +169,93 @@ export function judgeStroke({
   drawn,
   model,
   expectedIndex,
-  misses,
 }: JudgeInput): StrokeDecision | null {
-  const expected = model[expectedIndex];
-  if (!expected || drawn.length < 2) {
+  if (drawn.length < 2) {
     return null;
+  }
+
+  const expected = model[expectedIndex];
+  if (!expected) {
+    return {
+      kind: 'warning',
+      score: 1,
+      note: 'That is an extra stroke — keep it or undo it before you submit.',
+      slip: true,
+      reason: 'extra',
+    };
   }
 
   const mine = compare(drawn, expected);
 
-  // Which remaining stroke does this actually look most like?
+  // Which model stroke does this actually look most like?
   let bestIndex = expectedIndex;
   let bestScore = mine.best;
-  for (let later = expectedIndex + 1; later < model.length; later += 1) {
-    const candidate = compare(drawn, model[later]);
+  for (let candidateIndex = 0; candidateIndex < model.length; candidateIndex += 1) {
+    if (candidateIndex === expectedIndex) {
+      continue;
+    }
+    const candidate = compare(drawn, model[candidateIndex]);
     if (candidate.best < bestScore * OUT_OF_ORDER_FACTOR) {
       bestScore = candidate.best;
-      bestIndex = later;
+      bestIndex = candidateIndex;
     }
   }
 
   const backwards = mine.rev < mine.fwd * BACKWARDS_FACTOR;
 
-  if (mine.best <= STROKE_TOLERANCE && !backwards) {
+  // The model is visible during guided tracing, so a reasonably close stroke
+  // in the correct order and direction should advance without asking the
+  // learner to grade it. Reviews use whole-character grading after Check.
+  if (
+    mine.best <= STROKE_TOLERANCE * GUIDED_TOLERANCE_FACTOR &&
+    !backwards &&
+    bestIndex === expectedIndex
+  ) {
     return { kind: 'accepted', score: mine.best };
   }
 
-  const nextMisses = misses + 1;
-  let note = 'Not that stroke yet — try again.';
+  let note = 'That stroke is far from the guide — undo it if you want another try.';
   let reason: StrokeReason = 'shape';
   let slip = false;
   let actualStroke: number | undefined;
 
   if (bestIndex !== expectedIndex) {
-    note = `That is stroke ${bestIndex + 1}. Japanese builds this kana in order — stroke ${expectedIndex + 1} comes first.`;
+    note = `That looks like stroke ${bestIndex + 1}, not stroke ${expectedIndex + 1} — undo it if you want another try.`;
     reason = 'outOfOrder';
     slip = true;
     actualStroke = bestIndex + 1;
   } else if (backwards) {
-    note = 'Right shape, drawn backwards — begin at the numbered marker and pull the other way.';
+    note = 'Right shape, drawn backwards — undo it and pull from the numbered marker if you want another try.';
     reason = 'backwards';
     slip = true;
   }
 
-  if (!slip && mine.best <= STROKE_TOLERANCE * MARGINAL_FACTOR) {
-    return { kind: 'closeCall', score: mine.best, misses: nextMisses };
-  }
-
-  if (nextMisses >= FORCE_AFTER) {
-    return {
-      kind: 'forced',
-      score: mine.best,
-      misses: nextMisses,
-      note: 'Drawn in for you — watch the start number and the direction.',
-      slip,
-    };
-  }
-
   return {
-    kind: 'retry',
+    kind: 'warning',
     score: mine.best,
-    misses: nextMisses,
     note,
     slip,
-    hint: nextMisses >= HINT_AFTER,
     reason,
     actualStroke,
   };
 }
 
-export type TraceVerdict = 'clean' | 'loose' | 'order' | 'guided' | 'partial';
+export type TraceVerdict = 'clean' | 'loose' | 'order' | 'partial';
 
 /** One entry per stroke the learner got through, in order. */
 export interface CompletedStroke {
-  /** What they drew. Absent for a stroke that was drawn in for them. */
-  drawn?: readonly Point[];
-  /** True when the stroke was forced after four misses. */
-  forced?: boolean;
-  /** True when the learner resolved a close call in their own favour. */
-  selfGraded?: boolean;
+  /** What the learner drew. */
+  drawn: readonly Point[];
+  /** This retained stroke was drawn out of order or in the wrong direction. */
+  orderSlip?: boolean;
 }
 
 export interface TraceResult {
   /** Mean per-stroke closeness across the whole character. Higher is better. */
   accuracy: number;
-  /** 1 − (slips + forced) / strokes. Higher is better. */
+  /** 1 − slips / strokes. Higher is better. */
   orderAndDirection: number;
   orderSlips: number;
-  forced: number;
   complete: boolean;
   strokes: number;
   expected: number;
@@ -285,8 +265,6 @@ export interface TraceResult {
 export interface TraceResultInput {
   completed: readonly CompletedStroke[];
   model: readonly (readonly Point[])[];
-  orderSlips: number;
-  forced: number;
 }
 
 /**
@@ -300,18 +278,15 @@ export function reviewTraceResult({
   completed,
   model,
 }: Pick<TraceResultInput, 'completed' | 'model'>): TraceResult {
-  let orderSlips = 0;
-
-  completed.forEach((stroke, expectedIndex) => {
+  const graded = completed.map((stroke, expectedIndex): CompletedStroke => {
     const drawn = stroke.drawn;
     const expected = model[expectedIndex];
 
     // Extra, empty, or otherwise ungradeable strokes cannot be in the correct
     // place and direction. Missing strokes are handled by traceResult's
     // incomplete verdict.
-    if (!drawn || drawn.length < 2 || !expected) {
-      orderSlips += 1;
-      return;
+    if (drawn.length < 2 || !expected) {
+      return { ...stroke, orderSlip: true };
     }
 
     const expectedComparison = compare(drawn, expected);
@@ -335,16 +310,12 @@ export function reviewTraceResult({
       bestIndex !== expectedIndex &&
       bestScore < expectedComparison.best * OUT_OF_ORDER_FACTOR;
 
-    if (backwards || outOfOrder) {
-      orderSlips += 1;
-    }
+    return { ...stroke, orderSlip: backwards || outOfOrder };
   });
 
   return traceResult({
-    completed,
+    completed: graded,
     model,
-    orderSlips,
-    forced: 0,
   });
 }
 
@@ -362,41 +333,37 @@ export function reviewTraceResult({
 export function traceResult({
   completed,
   model,
-  orderSlips,
-  forced,
 }: TraceResultInput): TraceResult {
   const expected = model.length;
+  const orderSlips = completed.filter((stroke) => stroke.orderSlip).length;
 
   let total = 0;
   completed.forEach((stroke, index) => {
-    if (stroke.forced || !stroke.drawn || !model[index]) {
+    if (!model[index]) {
       return;
     }
     const { best } = compare(stroke.drawn, model[index]);
     total += Math.max(0, 1 - best / (STROKE_TOLERANCE * ACCURACY_SPAN));
   });
 
-  const graded = completed.filter((stroke) => !stroke.forced).length || 1;
+  const graded = completed.length || 1;
   const complete = completed.length >= expected;
   const accuracy = total / Math.max(graded, expected);
   const orderAndDirection =
-    1 - Math.min(1, (orderSlips + forced) / Math.max(1, expected));
+    1 - Math.min(1, orderSlips / Math.max(1, expected));
 
   const verdict: TraceVerdict = !complete
     ? 'partial'
-    : forced > 0
-      ? 'guided'
-      : orderSlips > 0
-        ? 'order'
-        : accuracy >= CLEAN_ACCURACY
-          ? 'clean'
-          : 'loose';
+    : orderSlips > 0
+      ? 'order'
+      : accuracy >= CLEAN_ACCURACY
+        ? 'clean'
+        : 'loose';
 
   return {
     accuracy,
     orderAndDirection,
     orderSlips,
-    forced,
     complete,
     strokes: completed.length,
     expected,

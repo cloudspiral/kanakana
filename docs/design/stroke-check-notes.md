@@ -22,11 +22,10 @@ Two gotchas for whoever ports this:
 
 ## Algorithm
 
-Per-stroke, one stroke at a time — the approach `hanzi-writer` established for
-Chinese (MIT, ~10kb gzipped, `Make Me a Hanzi` data). Its quiz options map
-almost 1:1 onto the pedagogy we want, and are worth copying by name:
-`leniency`, `showHintAfterMisses` (default 3), `markStrokeCorrectAfterMisses`,
-`acceptBackwardsStrokes` (default **false**).
+Per-stroke, one stroke at a time — adapted from the template-matching approach
+`hanzi-writer` established for Chinese (MIT, ~10kb gzipped, `Make Me a Hanzi`
+data). We use its leniency idea, but our guided surface deliberately keeps
+ownership of correction with the learner.
 
 On pointer-up the drawn polyline is resampled to 17 evenly-spaced points and
 compared to the expected model stroke, resampled the same way:
@@ -35,28 +34,37 @@ compared to the expected model stroke, resampled the same way:
 - `rev` = same with the model reversed
 - accept if `min(fwd, rev) ≤ TOL` (46px on a 262px square) **and not backwards**
 - `rev < fwd × 0.75` ⇒ drawn **backwards**
-- if a *later* model stroke scores better than the expected one by 25%+ ⇒ drawn
+- if another model stroke scores better than the expected one by 25%+ ⇒ drawn
   **out of order**, and we can name which stroke it actually was
 
-### Escalation ladder
+### Guided feedback
 
-| misses | behaviour |
-| --- | --- |
-| 1 | note explaining what was wrong |
-| 2 | **progressive hint** — the next stroke only, dashed, with its order number at the start point |
-| 4 | stroke is **drawn in** and the session moves on |
+The full faint model and numbered start points stay visible. Every non-tap
+stroke is retained in ink and advances, even when it is backwards, out of
+order, far from the guide, or beyond the expected stroke count. A specific note
+explains the problem, but input is never rejected, deleted, recolored, or
+replaced with a model stroke. Reaching the model count enables submission; it
+never disables drawing. There is no miss ladder, progressive hint, or red mode.
 
-Nothing ever blocks. The forced-stroke count feeds the result but never stops
-progress.
+The learner decides whether to use **Undo stroke**. Undo removes the retained
+stroke and its associated order/direction warning. The whole-character grade is
+computed only when the learner presses **Complete trace**, from the strokes
+that remain at that moment. Corrected mistakes therefore have no effect on the
+grade.
+
+A responder cancellation is not a learner-finished stroke. Browser/OS
+termination discards only the live fragment; a genuine pointer release retains
+the stroke.
 
 ## Decisions
 
-1. **Backwards strokes are rejected, not flagged.** Earlier they were accepted
-   with a warning, which meant the learner never rebuilt the motor pattern —
-   the entire point of writing practice. hanzi-writer defaults the same way.
-2. **The hint shows one stroke, never the whole character**, and always with its
-   **order number at the start point**. One marker communicates both where the
-   stroke begins and when it is drawn; direction follows from it.
+1. **Warnings are advisory.** Wrong order and backwards direction are named
+   immediately during guided learning, but the stroke stays. The learner can
+   undo and rebuild the motor pattern or keep going and let the final grade
+   reflect it.
+2. **The whole model stays visible**, with an **order number at every start
+   point**. One marker communicates both where each stroke begins and when it
+   is drawn; direction follows from it. A separate hint mode adds nothing.
 3. **Both metrics read higher-is-better.** `Stroke accuracy` (mean per-stroke
    closeness) and `Order & direction` (1 − slips/strokes). The earlier pair
    ("shape covered" up-is-good, "ink off-shape" up-is-bad) forced the reader to
@@ -71,11 +79,11 @@ progress.
    that its recogniser "can handle wrong stroke order and small mistakes" —
    correct for a *dictionary*, wrong for a *teacher*. We deliberately notice
    what a lookup tool forgives.
-7. **Reviews are exams; guided tracing is tutoring.** The per-stroke escalation
-   ladder runs only while teaching or practising a kana. A writing review keeps
-   every raw stroke without retries, order/direction warnings, hints, or forced
-   strokes. Its explicit Check action grades the complete attempt and reveals
-   all feedback at once.
+7. **Reviews are exams; guided tracing is tutoring.** Guided learning may name
+   a problem while leaving correction to the learner. A writing review is
+   completely silent while drawing: it keeps every raw stroke without retries
+   or feedback. Its explicit Check action grades the complete attempt and
+   reveals all feedback at once.
 
 ## Prior art worth reading before extending this
 
@@ -104,12 +112,11 @@ progress.
 Reviewed **Kana — Hiragana and Katakana** (App to Learn, 12K ratings / 4.8, free,
 7 years of changelog). Three things adopted, one thing deliberately not.
 
-**Adopted — self-grade on a close call.** Their most-praised detail: "if the app
-can't detect if it's right, it gives you the model and asks you." When our
-per-stroke score lands in the marginal band (`TOL` … `TOL × 1.7`) *and* order is
-correct, we no longer guess or silently draw the stroke in — the attempt is
-drawn in vermillion over the dashed model and the learner calls it. Honest about
-recogniser limits, and self-assessment is itself a skill.
+**Adapted — self-grade only after a writing review.** Their app asks learners to
+resolve ambiguous handwriting. We keep that principle on the whole-character
+review result, where the numbered model and grades make **Count it** an informed
+override. Guided tracing instead accepts a marginal stroke when order and
+direction are correct; learning should not stop for a self-grade dialog.
 
 **Adopted — typo override.** Their v2.6 lets you edit a wrong result "useful if
 you mistyped". A one-character slip should never tell the scheduler you have

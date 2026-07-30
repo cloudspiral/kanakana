@@ -81,11 +81,27 @@ function Onboarding() {
 
           <View style={styles.copyBlock}>
             <AppText variant="kicker">Read and write from day one</AppText>
-            <AppText variant="display">Learn kana that actually sticks.</AppText>
+            <AppText variant="display">Meet the kana</AppText>
             <AppText variant="body" color={Colors.inkMuted}>
-              Forty-six characters, and they never leave you. Every Japanese word
-              you&rsquo;ll ever read is built from them — so you&rsquo;ll see each
-              one, hear it, and draw it until it&rsquo;s yours.
+              More than most languages, learning Japanese is a journey through
+              symbols. Thousands upon thousands of them. The acquisition and
+              retention of these symbols is, for those of us in the
+              English-speaking world, not something our ABCs prepared us for.
+              <br />
+              <br />
+              But every journey through these symbols begins with the kana, a
+              set of 46 glyphs that represent 46 basic sounds. Though this
+              syllabary is not much bigger than the English alphabet, the relationship you develop with them is quite
+              different. Like any bonds, these are stronger through
+              adversity, and they will be your anchors in the
+              vast sea of complex symbols that further awaits.
+              <br />
+              <br />
+              Most of us don&rsquo;t remember what it felt like to learn our ABCs
+              for the first time. With Kanakana, I hope you too can experience
+              the magic of getting to know a group of symbols for the first time
+              again. Wherever your Japanese journey ends up taking you, you have
+              come to the right place to begin.
             </AppText>
           </View>
 
@@ -94,7 +110,6 @@ function Onboarding() {
       ) : (
         <View style={styles.onboardingBody}>
           <View style={styles.copyBlock}>
-            <AppText variant="kicker">Three moves, over and over</AppText>
             <AppText variant="screenTitle">Meet it, draw it, recall it.</AppText>
           </View>
 
@@ -116,7 +131,7 @@ function Onboarding() {
             />
             <MoveRow
               title="Recall it later"
-              body="Misses come back after a little space — never as a penalty."
+              body="Misses come back right before you're about to forget them."
               tile={<AppText style={styles.moveRomaji}>ki</AppText>}
             />
           </View>

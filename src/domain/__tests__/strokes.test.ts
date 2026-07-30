@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { BUNDLED_MANIFEST } from '../curriculum';
 import { KANA_STROKES } from '../generated/kanaStrokes';
 import {
-  FORCE_AFTER,
   MATCH_SAMPLES,
   STROKE_TOLERANCE,
   compare,
@@ -110,20 +109,18 @@ describe('judgeStroke', () => {
       drawn: model[0],
       model,
       expectedIndex: 0,
-      misses: 0,
     });
     expect(decision).toMatchObject({ kind: 'accepted' });
   });
 
-  it('rejects the right shape drawn backwards rather than quietly accepting it', () => {
+  it('flags the right shape drawn backwards without rejecting the stroke', () => {
     const model = modelOf(SINGLE);
     const decision = judgeStroke({
       drawn: [...model[0]].reverse(),
       model,
       expectedIndex: 0,
-      misses: 0,
     });
-    expect(decision).toMatchObject({ kind: 'retry', reason: 'backwards', slip: true });
+    expect(decision).toMatchObject({ kind: 'warning', reason: 'backwards', slip: true });
   });
 
   it('names the stroke actually drawn when the order is wrong', () => {
@@ -132,10 +129,9 @@ describe('judgeStroke', () => {
       drawn: model[3],
       model,
       expectedIndex: 0,
-      misses: 0,
     });
     expect(decision).toMatchObject({
-      kind: 'retry',
+      kind: 'warning',
       reason: 'outOfOrder',
       slip: true,
       actualStroke: 4,
@@ -143,45 +139,66 @@ describe('judgeStroke', () => {
     expect((decision as { note: string }).note).toContain('stroke 4');
   });
 
-  it('asks the learner to call a marginal stroke instead of guessing', () => {
+  it('accepts a marginal guided stroke without asking the learner to grade it', () => {
     const model = modelOf(SINGLE);
-    // Offset by more than the tolerance but inside the marginal band.
+    // Offset by more than the strict tolerance but inside guided leniency.
     const offset = STROKE_TOLERANCE * 1.3;
     const decision = judgeStroke({
       drawn: shift(model[0], offset),
       model,
       expectedIndex: 0,
-      misses: 0,
     });
-    expect(decision).toMatchObject({ kind: 'closeCall' });
+    expect(decision).toMatchObject({ kind: 'accepted' });
   });
 
-  it('shows the hint from the second miss', () => {
+  it('warns about a far-off shape without entering a hint mode', () => {
     const model = modelOf(SINGLE);
     const wild = shift(model[0], 0.9);
-    expect(
-      judgeStroke({ drawn: wild, model, expectedIndex: 0, misses: 0 }),
-    ).toMatchObject({ kind: 'retry', hint: false });
-    expect(
-      judgeStroke({ drawn: wild, model, expectedIndex: 0, misses: 1 }),
-    ).toMatchObject({ kind: 'retry', hint: true });
+    expect(judgeStroke({ drawn: wild, model, expectedIndex: 0 })).toMatchObject({
+      kind: 'warning',
+      reason: 'shape',
+      slip: false,
+    });
   });
 
-  it('never blocks: the stroke is drawn in after four misses', () => {
-    const model = modelOf(SINGLE);
+  it('recognises an earlier stroke drawn later as out of order', () => {
+    const model = modelOf(MULTI);
     const decision = judgeStroke({
-      drawn: shift(model[0], 0.9),
+      drawn: model[0],
       model,
-      expectedIndex: 0,
-      misses: FORCE_AFTER - 1,
+      expectedIndex: 3,
     });
-    expect(decision).toMatchObject({ kind: 'forced' });
+    expect(decision).toMatchObject({
+      kind: 'warning',
+      reason: 'outOfOrder',
+      actualStroke: 1,
+      slip: true,
+    });
+  });
+
+  it('keeps strokes drawn after the guide count as graded extras', () => {
+    const model = modelOf(SINGLE);
+    expect(
+      judgeStroke({
+        drawn: model[0],
+        model,
+        expectedIndex: model.length,
+      }),
+    ).toMatchObject({
+      kind: 'warning',
+      reason: 'extra',
+      slip: true,
+    });
   });
 
   it('ignores a stray tap', () => {
     const model = modelOf(SINGLE);
     expect(
-      judgeStroke({ drawn: [{ x: 0.5, y: 0.5 }], model, expectedIndex: 0, misses: 0 }),
+      judgeStroke({
+        drawn: [{ x: 0.5, y: 0.5 }],
+        model,
+        expectedIndex: 0,
+      }),
     ).toBeNull();
   });
 });
@@ -202,8 +219,6 @@ describe('traceResult', () => {
     const result = traceResult({
       completed: [{ drawn: model[0] }],
       model,
-      orderSlips: 0,
-      forced: 0,
     });
     expect(result.verdict).toBe('partial');
     expect(result.complete).toBe(false);
@@ -215,8 +230,6 @@ describe('traceResult', () => {
     const result = traceResult({
       completed: model.map((stroke) => ({ drawn: stroke })),
       model,
-      orderSlips: 0,
-      forced: 0,
     });
     expect(result.verdict).toBe('clean');
     // Not exactly 1: re-resampling a polyline that approximates a curve moves
@@ -225,22 +238,36 @@ describe('traceResult', () => {
     expect(result.orderAndDirection).toBe(1);
   });
 
-  it('reports guidance and slips ahead of accuracy', () => {
+  it('reports retained order slips ahead of accuracy', () => {
     const model = modelOf(MULTI);
-    const completed = model.map((stroke, index) =>
-      index === 0 ? { forced: true } : { drawn: stroke },
-    );
-    expect(
-      traceResult({ completed, model, orderSlips: 0, forced: 1 }).verdict,
-    ).toBe('guided');
     expect(
       traceResult({
-        completed: model.map((stroke) => ({ drawn: stroke })),
+        completed: model.map((stroke, index) => ({
+          drawn: stroke,
+          orderSlip: index === 0,
+        })),
         model,
-        orderSlips: 1,
-        forced: 0,
       }).verdict,
     ).toBe('order');
+  });
+
+  it('drops a warned stroke from the grade when that stroke is undone', () => {
+    const model = modelOf(MULTI);
+    const withWarning = model.map((stroke, index) => ({
+      drawn: stroke,
+      orderSlip: index === model.length - 1,
+    }));
+
+    expect(traceResult({ completed: withWarning, model }).orderSlips).toBe(1);
+    const afterUndo = withWarning.slice(0, -1);
+    expect(traceResult({ completed: afterUndo, model }).orderSlips).toBe(0);
+
+    const redrawn = [...afterUndo, { drawn: model[model.length - 1] }];
+    expect(traceResult({ completed: redrawn, model })).toMatchObject({
+      orderSlips: 0,
+      orderAndDirection: 1,
+      verdict: 'clean',
+    });
   });
 
   it('keeps both metrics reading higher-is-better', () => {
@@ -248,17 +275,37 @@ describe('traceResult', () => {
     const good = traceResult({
       completed: model.map((stroke) => ({ drawn: stroke })),
       model,
-      orderSlips: 0,
-      forced: 0,
     });
     const sloppy = traceResult({
-      completed: model.map((stroke) => ({ drawn: shift(stroke, 0.12) })),
+      // These warnings remain because the learner chose not to undo them.
+      completed: model.map((stroke, index) => ({
+        drawn: shift(stroke, 0.12),
+        orderSlip: index < 2,
+      })),
       model,
-      orderSlips: 2,
-      forced: 0,
     });
     expect(good.accuracy).toBeGreaterThan(sloppy.accuracy);
     expect(good.orderAndDirection).toBeGreaterThan(sloppy.orderAndDirection);
+  });
+
+  it('counts retained extra strokes against the final guided grade', () => {
+    const model = modelOf(MULTI);
+    const clean = traceResult({
+      completed: model.map((stroke) => ({ drawn: stroke })),
+      model,
+    });
+    const withExtra = traceResult({
+      completed: [
+        ...model.map((stroke) => ({ drawn: stroke })),
+        { drawn: model[0], orderSlip: true },
+      ],
+      model,
+    });
+
+    expect(withExtra.strokes).toBe(model.length + 1);
+    expect(withExtra.accuracy).toBeLessThan(clean.accuracy);
+    expect(withExtra.orderAndDirection).toBeLessThan(clean.orderAndDirection);
+    expect(withExtra.verdict).toBe('order');
   });
 });
 

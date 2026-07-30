@@ -52,7 +52,7 @@ export interface StrokeVerdict {
  * The five outcomes the trace grader can reach. `partial` is not a failure —
  * it means too few strokes were drawn to judge anything.
  */
-export type StrokeVerdictId = 'clean' | 'loose' | 'order' | 'guided' | 'partial';
+export type StrokeVerdictId = 'clean' | 'loose' | 'order' | 'partial';
 
 /** Stroke notes by glyph. Partial: see the note on MEET_HINTS. */
 export type KanaStrokeNoteTable = Readonly<Partial<Record<string, string>>>;
@@ -610,12 +610,6 @@ export const RESULTS: StrokeVerdictTable = {
     accent: '#8A6A1F',
     copy:
       'Japanese builds each kana in a fixed sequence, and readers can see when it is off. Watch the dot — it marks where each stroke begins.',
-  },
-  guided: {
-    label: 'Guided through it',
-    accent: '#BC3E27',
-    copy:
-      'Some strokes were drawn in for you. No harm done — this one just needs a few more passes with the hint on.',
   },
   partial: {
     label: 'Stopped part-way',

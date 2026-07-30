@@ -143,10 +143,9 @@ describe('kana content tables', () => {
     }
   });
 
-  it('carries copy for all five trace verdicts', () => {
+  it('carries copy for all four trace verdicts', () => {
     expect(Object.keys(RESULTS).sort()).toEqual([
       'clean',
-      'guided',
       'loose',
       'order',
       'partial',
