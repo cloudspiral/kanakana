@@ -13,6 +13,8 @@ import { StatusBar } from 'expo-status-bar';
 import { AppProvider } from '@/context/AppContext';
 import { Colors } from '@/constants/theme';
 
+import '../global.css';
+
 void SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {

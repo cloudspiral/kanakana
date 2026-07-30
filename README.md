@@ -42,6 +42,20 @@ npm run serve:web
 
 Open `http://127.0.0.1:8081`. The local server supports direct reloads of Expo Router paths such as `/practice`.
 
+## Production web
+
+The stable hiring-partner URL is [kanakana.expo.app](https://kanakana.expo.app).
+Automatic production deployment is defined in `.eas/workflows/deploy-web.yml`
+and uses the EAS `production` environment. Once the GitHub repository is
+connected in the EAS project settings, pushes to `main` deploy the latest web
+export to that same URL.
+
+For a manual production deployment:
+
+```bash
+npx eas-cli@latest workflow:run .eas/workflows/deploy-web.yml
+```
+
 ## Local Supabase
 
 Docker must be running.
