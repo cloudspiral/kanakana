@@ -8,6 +8,10 @@ concurrency:
   cancel_in_progress: true
   group: ${{ workflow.filename }}-${{ github.ref }}
 
+defaults:
+  tools:
+    node: 24.18.0
+
 jobs:
   deploy_web:
     name: Deploy web
