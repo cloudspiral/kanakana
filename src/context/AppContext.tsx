@@ -35,8 +35,10 @@ import {
   buildLessonSession,
   buildReviewSession,
   currentStep,
-  insertRecheck,
   localDateKey,
+  recordAttempt,
+  resolveReviewSessionId,
+  unique,
 } from '@/domain/session';
 import {
   learnerStateKey,
@@ -103,10 +105,6 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function unique(items: string[]): string[] {
-  return [...new Set(items)];
-}
-
 function getPinnedManifest(snapshot: LearnerSnapshot): CurriculumManifest {
   if (snapshot.cachedManifest) {
     return snapshot.cachedManifest;
@@ -154,12 +152,17 @@ export function AppProvider({ children }: PropsWithChildren) {
         state,
       ]),
     );
-    const acceptedIds = new Set(result.acceptedEventIds);
+    // Discarded events leave the queue alongside the accepted ones: the server
+    // will never take them, so holding on would stall everything behind them.
+    const settledIds = new Set([
+      ...result.acceptedEventIds,
+      ...result.discardedEventIds,
+    ]);
     const next: LearnerSnapshot = {
       ...syncing,
       skillStates: { ...syncing.skillStates, ...canonicalByKey },
       reviewOutbox: syncing.reviewOutbox.filter(
-        (event) => !acceptedIds.has(event.eventId),
+        (event) => !settledIds.has(event.eventId),
       ),
       sync: {
         cloudStatus: result.cloudStatus,
@@ -259,16 +262,6 @@ export function AppProvider({ children }: PropsWithChildren) {
         ...current,
         activeSession: session,
         lastSummary: null,
-        activityEvents: [
-          ...current.activityEvents,
-          {
-            id: session.id,
-            type: 'module_started',
-            sessionId: session.id,
-            moduleId: unit.modules[0]?.id,
-            occurredAt: new Date().toISOString(),
-          },
-        ],
       });
     },
     [persist],
@@ -347,15 +340,6 @@ export function AppProvider({ children }: PropsWithChildren) {
           outcomes: session.outcomes,
           completedAt,
         },
-        activityEvents: [
-          ...current.activityEvents,
-          {
-            id: `complete-${session.id}`,
-            type: 'session_completed',
-            sessionId: session.id,
-            occurredAt: completedAt,
-          },
-        ],
       });
       void syncNow();
       return true;
@@ -383,22 +367,34 @@ export function AppProvider({ children }: PropsWithChildren) {
         ]),
       },
     };
-    const next = {
-      ...current,
-      activityEvents: [
-        ...current.activityEvents,
-        {
-          id: activeStep.id,
-          type: 'item_exposed' as const,
-          sessionId: session.id,
-          moduleId: activeStep.moduleId,
-          itemId: activeStep.itemId,
-          occurredAt: now,
-        },
-      ],
-    };
-    return finishIfComplete(nextSession, next);
+    return finishIfComplete(nextSession, current);
   }, [finishIfComplete]);
+
+  /**
+   * The two things every graded answer owes the learner, whichever skill was
+   * asked: the feel of the verdict, and a chance to get the work off the device.
+   */
+  const afterAnswer = useCallback(
+    (next: LearnerSnapshot, correct: boolean, sessionComplete: boolean) => {
+      if (snapshotRef.current.settings.hapticsEnabled) {
+        void Haptics.notificationAsync(
+          correct
+            ? Haptics.NotificationFeedbackType.Success
+            : Haptics.NotificationFeedbackType.Warning,
+        );
+      }
+      // A completed session syncs on its own; mid-session this keeps a long
+      // queue from only ever draining at the end.
+      if (
+        !sessionComplete &&
+        next.reviewOutbox.length > 0 &&
+        next.reviewOutbox.length % 5 === 0
+      ) {
+        void syncNow();
+      }
+    },
+    [syncNow],
+  );
 
   const answerCurrent = useCallback(
     async (
@@ -441,29 +437,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         reviewedAt,
       );
 
-      let nextSession: ActivePracticeSession = {
-        ...session,
-        currentIndex: session.currentIndex + 1,
-        updatedAt: reviewedAt.toISOString(),
-        outcomes: {
-          ...session.outcomes,
-          strengthenedItemIds: correct
-            ? unique([
-                ...session.outcomes.strengthenedItemIds,
-                activeStep.itemId,
-              ])
-            : session.outcomes.strengthenedItemIds,
-          againItemIds: correct
-            ? session.outcomes.againItemIds
-            : unique([...session.outcomes.againItemIds, activeStep.itemId]),
-          correctAttempts:
-            session.outcomes.correctAttempts + (correct ? 1 : 0),
-          totalAttempts: session.outcomes.totalAttempts + 1,
-        },
-      };
-      if (!correct) {
-        nextSession = insertRecheck(nextSession, activeStep);
-      }
+      const nextSession = recordAttempt(
+        session,
+        activeStep,
+        correct,
+        reviewedAt,
+      );
 
       const event = {
         eventId: activeStep.id,
@@ -496,20 +475,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       }
 
       const sessionComplete = await finishIfComplete(nextSession, next);
-      if (
-        !sessionComplete &&
-        next.reviewOutbox.length > 0 &&
-        next.reviewOutbox.length % 5 === 0
-      ) {
-        void syncNow();
-      }
-      if (snapshotRef.current.settings.hapticsEnabled) {
-        void Haptics.notificationAsync(
-          correct
-            ? Haptics.NotificationFeedbackType.Success
-            : Haptics.NotificationFeedbackType.Warning,
-        );
-      }
+      afterAnswer(next, correct, sessionComplete);
       return {
         correct,
         classification,
@@ -517,7 +483,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         sessionComplete,
       };
     },
-    [finishIfComplete, syncNow],
+    [afterAnswer, finishIfComplete],
   );
 
   const answerWriting = useCallback(
@@ -543,25 +509,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         reviewedAt,
       );
 
-      let nextSession: ActivePracticeSession = {
-        ...session,
-        currentIndex: session.currentIndex + 1,
-        updatedAt: reviewedAt.toISOString(),
-        outcomes: {
-          ...session.outcomes,
-          strengthenedItemIds: correct
-            ? unique([...session.outcomes.strengthenedItemIds, activeStep.itemId])
-            : session.outcomes.strengthenedItemIds,
-          againItemIds: correct
-            ? session.outcomes.againItemIds
-            : unique([...session.outcomes.againItemIds, activeStep.itemId]),
-          correctAttempts: session.outcomes.correctAttempts + (correct ? 1 : 0),
-          totalAttempts: session.outcomes.totalAttempts + 1,
-        },
-      };
-      if (!correct) {
-        nextSession = insertRecheck(nextSession, activeStep);
-      }
+      const nextSession = recordAttempt(
+        session,
+        activeStep,
+        correct,
+        reviewedAt,
+      );
 
       const next: LearnerSnapshot = {
         ...current,
@@ -587,6 +540,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       };
 
       const sessionComplete = await finishIfComplete(nextSession, next);
+      afterAnswer(next, correct, sessionComplete);
       return {
         correct,
         classification: correct ? 'exact' : 'incorrect',
@@ -594,7 +548,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         sessionComplete,
       };
     },
-    [finishIfComplete],
+    [afterAnswer, finishIfComplete],
   );
 
   const recordWritingPractice = useCallback(
@@ -621,7 +575,7 @@ export function AppProvider({ children }: PropsWithChildren) {
           ...current.reviewOutbox,
           {
             eventId: Crypto.randomUUID(),
-            sessionId: current.activeSession?.id ?? 'practice',
+            sessionId: resolveReviewSessionId(current.activeSession?.id),
             itemId,
             skillId: WRITING_SKILL,
             answer: '',

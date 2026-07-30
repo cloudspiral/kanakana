@@ -62,21 +62,6 @@ export interface CurriculumManifest {
   units: CurriculumUnit[];
 }
 
-export type ActivityEventType =
-  | 'module_started'
-  | 'item_exposed'
-  | 'module_completed'
-  | 'session_completed';
-
-export interface ActivityEvent {
-  id: string;
-  type: ActivityEventType;
-  sessionId: string;
-  moduleId?: string;
-  itemId?: string;
-  occurredAt: string;
-}
-
 export type AnswerClassification =
   | 'exact'
   | 'accepted_alias'
@@ -175,7 +160,6 @@ export interface LearnerSnapshot {
   settings: LearnerSettings;
   skillStates: Record<string, LearnerSkillState>;
   reviewOutbox: ReviewAttempt[];
-  activityEvents: ActivityEvent[];
   activeSession: ActivePracticeSession | null;
   lastSummary: {
     sessionId: string;
@@ -206,6 +190,11 @@ export interface SyncResult {
   pendingCount: number;
   acceptedCount: number;
   acceptedEventIds: string[];
+  /**
+   * Events the server refused for good — an item withdrawn from the curriculum,
+   * say. Dropped from the outbox unaccepted, since retrying cannot help.
+   */
+  discardedEventIds: string[];
   canonicalStates: LearnerSkillState[];
   guestId?: string;
   cloudStatus: SyncMetadata['cloudStatus'];

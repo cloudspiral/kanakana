@@ -12,7 +12,13 @@ export function hydrateSnapshot(stored: unknown): LearnerSnapshot {
   if (!stored || typeof stored !== 'object') {
     return initial;
   }
-  const partial = stored as Partial<LearnerSnapshot>;
+  const partial: Partial<LearnerSnapshot> & { activityEvents?: unknown } = {
+    ...(stored as Partial<LearnerSnapshot>),
+  };
+  // activityEvents was a local trail nothing ever read. Dropping it on load is
+  // what actually clears it from snapshots written before it was removed —
+  // otherwise the spread below would carry it forward for good.
+  delete partial.activityEvents;
   return {
     ...initial,
     ...partial,
@@ -33,7 +39,6 @@ export function createInitialSnapshot(): LearnerSnapshot {
     },
     skillStates: {},
     reviewOutbox: [],
-    activityEvents: [],
     activeSession: null,
     lastSummary: null,
     cachedManifest: null,
