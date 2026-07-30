@@ -56,18 +56,18 @@ function Onboarding() {
   }
 
   return (
-    <AppScreen scroll={false}>
+    <AppScreen scroll={page === 0}>
       <View style={styles.headerRow}>
         <Wordmark />
         <StepIndicator step={page} />
       </View>
 
       {page === 0 ? (
-        <View style={styles.onboardingBody}>
-          {/* Full-bleed at 290 tall rather than square — the practice screens
-              are the ones that use a true square. */}
+        <View style={[styles.onboardingBody, styles.firstOnboardingBody]}>
+          {/* A shallow full-width banner leaves room for the longer welcome
+              copy. Practice screens are the ones that use a true square. */}
           <GuideSquare
-            size={290}
+            size={190}
             width="100%"
             chip={{ label: 'a', tone: 'accent', corner: 'bottomRight' }}
             overlay={
@@ -76,11 +76,10 @@ function Onboarding() {
                 <Kana style={[styles.cornerKana, styles.cornerKanaBottomRight]}>ら</Kana>
               </>
             }>
-            <Kana size="hero">あ</Kana>
+            <Kana style={styles.onboardingHeroKana}>あ</Kana>
           </GuideSquare>
 
           <View style={styles.copyBlock}>
-            <AppText variant="kicker">Read and write from day one</AppText>
             <AppText variant="display">Meet the kana</AppText>
             <AppText variant="body" color={Colors.inkMuted}>
               More than most languages, learning Japanese is a journey through
@@ -341,20 +340,30 @@ const styles = StyleSheet.create({
     gap: Spacing.gutter,
     paddingBottom: Spacing.gutter,
   },
+  firstOnboardingBody: {
+    justifyContent: 'flex-start',
+    gap: Spacing.md,
+    paddingBottom: Spacing.md,
+  },
+  onboardingHeroKana: {
+    fontFamily: Fonts.kanaThin,
+    fontSize: 128,
+    lineHeight: 128,
+  },
   cornerKana: {
     position: 'absolute',
     fontFamily: Fonts.kanaLight,
-    fontSize: 44,
-    lineHeight: 54,
+    fontSize: 36,
+    lineHeight: 44,
     color: 'rgba(27, 26, 23, 0.14)',
   },
   cornerKanaTopLeft: {
-    left: 26,
-    top: 24,
+    left: 22,
+    top: 18,
   },
   cornerKanaBottomRight: {
-    right: 26,
-    bottom: 22,
+    right: 22,
+    bottom: 16,
   },
   copyBlock: {
     gap: Spacing.sm,

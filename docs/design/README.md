@@ -135,10 +135,12 @@ guides in `guide`, あ at 168px centred, small faint か / ら at 44px in the to
 and bottom-right corners at 14% opacity, and a flush-corner `accent` chip reading
 "a".
 
-Then kicker "READ AND WRITE FROM DAY ONE"; display heading "Learn kana that
-actually sticks."; body: *"Forty-six characters, and they never leave you. Every
-Japanese word you'll ever read is built from them — so you'll see each one, hear
-it, and draw it until it's yours."*
+Then display heading "Meet the kana" followed by the introductory body copy.
+There is no kicker above the heading.
+Page one uses a 190px-tall full-width hero banner, a 16px vertical section gap,
+and 16px bottom padding. The longer welcome copy scrolls on shorter screens
+rather than shrinking its body type or CTA touch target. Its body is top-aligned
+so tall copy cannot center itself upward over the wordmark.
 
 Primary CTA: full-width `ink` fill, "See how it works" + peach `→`.
 
