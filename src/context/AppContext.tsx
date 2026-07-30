@@ -41,6 +41,7 @@ import {
   recordAttempt,
   unique,
 } from '@/domain/session';
+import { mergeCompletedSync } from '@/domain/syncMerge';
 import {
   learnerStateKey,
   type ActivePracticeSession,
@@ -58,6 +59,11 @@ interface AnswerResult {
   classification: AnswerClassification;
   primaryAnswer: string;
   sessionComplete: boolean;
+}
+
+interface SyncSummary {
+  pending: number;
+  accepted: number;
 }
 
 interface AppContextValue {
@@ -95,7 +101,7 @@ interface AppContextValue {
   resetProgress(): Promise<void>;
   freshGuest(): Promise<void>;
   seedReturningLearner(): Promise<void>;
-  syncNow(): Promise<{ pending: number; accepted: number }>;
+  syncNow(): Promise<SyncSummary>;
   refreshDiagnostics(): Promise<void>;
 }
 
@@ -125,6 +131,7 @@ export function AppProvider({ children }: PropsWithChildren) {
     answer: string;
     responseMs: number;
   } | null>(null);
+  const syncInFlight = useRef<Promise<SyncSummary> | null>(null);
 
   const persist = useCallback(async (next: LearnerSnapshot) => {
     snapshotRef.current = next;
@@ -136,77 +143,53 @@ export function AppProvider({ children }: PropsWithChildren) {
     setRepositoryDiagnostics(await learningRepository.diagnostics());
   }, []);
 
-  const syncNow = useCallback(async () => {
-    const current = snapshotRef.current;
-    const syncing = {
-      ...current,
-      sync: { ...current.sync, cloudStatus: 'syncing' as const },
-    };
-    snapshotRef.current = syncing;
-    setSnapshot(syncing);
-    const result = await syncService.sync(syncing, getPinnedManifest(syncing));
-    const canonicalByKey = Object.fromEntries(
-      result.canonicalStates.map((state) => [
-        learnerStateKey(state.itemId, state.skillId),
-        state,
-      ]),
-    );
-    // Discarded events leave the queue alongside the accepted ones: the server
-    // will never take them, so holding on would stall everything behind them.
-    const settledIds = new Set([
-      ...result.acceptedEventIds,
-      ...result.discardedEventIds,
-    ]);
-    // Drawing batches are idempotent, so keep the complete local batch until
-    // every sync channel succeeds. If reviews fail after drawings land, this
-    // avoids briefly dropping the visible count before canonical totals can be
-    // adopted safely.
-    const drawingsFullySynced = result.cloudStatus === 'synced';
-    const settledDrawingIds = new Set(
-      drawingsFullySynced
-        ? [
-            ...result.acceptedDrawingEventIds,
-            ...result.discardedDrawingEventIds,
-          ]
-        : [],
-    );
-    const next: LearnerSnapshot = {
-      ...syncing,
-      skillStates: { ...syncing.skillStates, ...canonicalByKey },
-      reviewOutbox: syncing.reviewOutbox.filter(
-        (event) => !settledIds.has(event.eventId),
-      ),
-      drawingCounts: drawingsFullySynced
-        ? result.canonicalDrawingCounts
-        : syncing.drawingCounts,
-      drawingOutbox: syncing.drawingOutbox.filter(
-        (event) => !settledDrawingIds.has(event.eventId),
-      ),
-      sync: {
-        cloudStatus: result.cloudStatus,
-        guestId: result.guestId ?? syncing.sync.guestId,
-        lastSyncAt:
-          result.cloudStatus === 'synced'
-            ? new Date().toISOString()
-            : syncing.sync.lastSyncAt,
-        lastError: result.error,
-        acceptedCount:
-          syncing.sync.acceptedCount +
+  const syncNow = useCallback((): Promise<SyncSummary> => {
+    if (syncInFlight.current) {
+      return syncInFlight.current;
+    }
+
+    const operation = (async () => {
+      const current = snapshotRef.current;
+      const syncing = {
+        ...current,
+        sync: { ...current.sync, cloudStatus: 'syncing' as const },
+      };
+      snapshotRef.current = syncing;
+      setSnapshot(syncing);
+      const result = await syncService.sync(
+        syncing,
+        getPinnedManifest(syncing),
+      );
+      // The learner may have answered more prompts while the network request
+      // was in flight. Merge into that newest snapshot instead of persisting
+      // the stale copy that was originally sent to the server.
+      const next = mergeCompletedSync(snapshotRef.current, result);
+      await persist(next);
+      const drawingsFullySynced = result.cloudStatus === 'synced';
+      return {
+        pending: next.reviewOutbox.length + next.drawingOutbox.length,
+        accepted:
           result.acceptedCount +
           (drawingsFullySynced
             ? result.acceptedDrawingEventIds.length
             : 0),
+      };
+    })();
+
+    syncInFlight.current = operation;
+    void operation.then(
+      () => {
+        if (syncInFlight.current === operation) {
+          syncInFlight.current = null;
+        }
       },
-    };
-    await persist(next);
-    return {
-      pending: next.reviewOutbox.length + next.drawingOutbox.length,
-      accepted:
-        result.acceptedCount +
-        (drawingsFullySynced
-          ? result.acceptedDrawingEventIds.length
-          : 0),
-    };
+      () => {
+        if (syncInFlight.current === operation) {
+          syncInFlight.current = null;
+        }
+      },
+    );
+    return operation;
   }, [persist]);
 
   useEffect(() => {

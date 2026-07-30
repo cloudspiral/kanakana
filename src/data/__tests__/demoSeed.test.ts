@@ -41,6 +41,22 @@ describe('returning learner demo seed', () => {
     ).toHaveLength(3);
 
     const session = buildReviewSession(BUNDLED_MANIFEST, due, now);
+    const sequence = session.steps.map((step) => ({
+      glyph: BUNDLED_MANIFEST.items.find((item) => item.id === step.itemId)!
+        .content.glyph,
+      skillId: step.skillId,
+    }));
+    expect(sequence.slice(5, 8)).toEqual([
+      { glyph: 'き', skillId: 'kana_reading' },
+      { glyph: 'が', skillId: 'kana_reading' },
+      { glyph: 'か', skillId: 'kana_writing' },
+    ]);
+    expect(
+      session.steps.every(
+        (step, index, steps) =>
+          index === 0 || step.itemId !== steps[index - 1].itemId,
+      ),
+    ).toBe(true);
     expect(
       session.steps
         .filter((step) => step.skillId === WRITING_SKILL)
