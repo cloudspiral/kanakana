@@ -13,7 +13,7 @@ import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { CONFUSIONS, WORDS, strokeNoteFor } from '@/domain/kanaContent';
 import { visibleDrawingCount } from '@/domain/drawings';
-import { bondFor, inkColor, inkStrength, isIntroduced } from '@/domain/ink';
+import { bondFor, inkStrength, isIntroduced } from '@/domain/ink';
 import { WRITING_SKILL } from '@/domain/scheduler';
 import { strokeCount } from '@/domain/strokes';
 import { learnerStateKey, type LearnerSkillState } from '@/domain/types';
@@ -123,11 +123,6 @@ export default function CharacterRoute() {
                 ? 'Add two voiced ticks ゛'
                 : 'Add the P-row circle ゜'
             }
-            color={inkColor(
-              app.snapshot.skillStates[
-                learnerStateKey(derivedParent.id, 'kana_reading')
-              ],
-            )}
             onPress={() =>
               router.push({
                 pathname: '/character',
@@ -141,41 +136,30 @@ export default function CharacterRoute() {
           <AppText variant="kicker">
             {derivedChildren.length === 2 ? 'Takes both marks' : 'Takes a mark'}
           </AppText>
-          {derivedChildren.map((child, index) => {
-            const childState =
-              app.snapshot.skillStates[
-                learnerStateKey(child.id, 'kana_reading')
-              ];
-            return (
-              <View
-                key={child.id}
-                style={index > 0 ? styles.relationshipDivided : undefined}>
-                <RelationshipRow
-                  glyph={child.content.glyph}
-                  answer={child.content.primaryAnswer}
-                  detail={
-                    child.content.mark === 'dakuten'
-                      ? 'Voiced ゛'
-                      : 'P-row ゜'
-                  }
-                  color={
-                    isIntroduced(childState)
-                      ? inkColor(childState)
-                      : Colors.ink
-                  }
-                  onPress={() =>
-                    router.push({
-                      pathname: '/character',
-                      params: {
-                        glyph: child.content.glyph,
-                        parentGlyph: glyph,
-                      },
-                    })
-                  }
-                />
-              </View>
-            );
-          })}
+          {derivedChildren.map((child, index) => (
+            <View
+              key={child.id}
+              style={index > 0 ? styles.relationshipDivided : undefined}>
+              <RelationshipRow
+                glyph={child.content.glyph}
+                answer={child.content.primaryAnswer}
+                detail={
+                  child.content.mark === 'dakuten'
+                    ? 'Voiced ゛'
+                    : 'P-row ゜'
+                }
+                onPress={() =>
+                  router.push({
+                    pathname: '/character',
+                    params: {
+                      glyph: child.content.glyph,
+                      parentGlyph: glyph,
+                    },
+                  })
+                }
+              />
+            </View>
+          ))}
         </View>
       ) : null}
 
@@ -284,9 +268,6 @@ export default function CharacterRoute() {
           })
         }
       />
-      <AppText variant="bodySmall" style={styles.practiceOnly}>
-        Practice only — nothing is scheduled here.
-      </AppText>
     </AppScreen>
   );
 }
@@ -295,13 +276,11 @@ function RelationshipRow({
   glyph,
   answer,
   detail,
-  color,
   onPress,
 }: {
   glyph: string;
   answer: string;
   detail: string;
-  color: string;
   onPress(): void;
 }) {
   return (
@@ -310,7 +289,7 @@ function RelationshipRow({
       accessibilityLabel={`${glyph}, ${answer}, ${detail}`}
       onPress={onPress}
       style={styles.relationshipRow}>
-      <Kana style={[styles.relationshipGlyph, { color }]}>{glyph}</Kana>
+      <Kana style={styles.relationshipGlyph}>{glyph}</Kana>
       <View style={styles.relationshipCopy}>
         <AppText style={styles.relationshipAnswer}>{answer}</AppText>
         <AppText variant="bodySmall">{detail}</AppText>
@@ -384,6 +363,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.kanaLight,
     fontSize: 34,
     lineHeight: 44,
+    color: Colors.ink,
   },
   relationshipCopy: {
     flex: 1,
@@ -469,10 +449,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.rule,
     borderRadius: Radius.rect,
     backgroundColor: Colors.card,
-  },
-  practiceOnly: {
-    textAlign: 'center',
-    marginTop: -Spacing.xs,
   },
   chipGlyph: { fontSize: 26, lineHeight: 32 },
   draw: { marginTop: Spacing.section },

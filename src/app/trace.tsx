@@ -5,11 +5,12 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
 import { Button, Pill } from '@/components/Buttons';
+import { GradeMeters } from '@/components/GradeMeters';
 import { GuideSquare } from '@/components/GuideSquare';
 import { LoadingScreen } from '@/components/LoadingScreen';
 import { TraceCanvas } from '@/components/TraceCanvas';
 import { AppText } from '@/components/Typography';
-import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Colors, Fonts, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { RESULTS, strokeNoteFor } from '@/domain/kanaContent';
 import { useTrace } from '@/hooks/useTrace';
@@ -157,10 +158,7 @@ export default function TraceRoute() {
             {verdict?.label}
           </AppText>
           <AppText variant="bodySmall">{verdict?.copy}</AppText>
-          <View style={styles.meters}>
-            <Meter label="Stroke accuracy" value={result.accuracy} />
-            <Meter label="Order & direction" value={result.orderAndDirection} />
-          </View>
+          <GradeMeters result={result} />
           {saveError ? (
             <AppText variant="bodySmall" style={styles.saveError}>
               {saveError}
@@ -222,21 +220,6 @@ export default function TraceRoute() {
   );
 }
 
-function Meter({ label, value }: { label: string; value: number }) {
-  const percent = Math.round(Math.max(0, Math.min(1, value)) * 100);
-  return (
-    <View style={styles.meter}>
-      <View style={styles.meterHead}>
-        <AppText variant="meterLabel">{label}</AppText>
-        <AppText style={styles.meterValue}>{percent}%</AppText>
-      </View>
-      <View style={styles.meterTrack}>
-        <View style={[styles.meterFill, { width: `${percent}%` }]} />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     gap: Spacing.md,
@@ -285,32 +268,5 @@ const styles = StyleSheet.create({
   },
   saveError: {
     color: Colors.accent,
-  },
-  meters: {
-    gap: Spacing.sm,
-  },
-  meter: {
-    gap: 5,
-  },
-  meterHead: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  meterValue: {
-    fontFamily: Fonts.serif,
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  meterTrack: {
-    height: 6,
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.wellFill,
-    overflow: 'hidden',
-  },
-  meterFill: {
-    height: '100%',
-    borderRadius: Radius.pill,
-    backgroundColor: Colors.ink,
   },
 });

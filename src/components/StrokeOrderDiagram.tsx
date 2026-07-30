@@ -1,50 +1,19 @@
-import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
+import { StrokeStartNumber, STROKE_REFERENCE } from './StrokeStartNumber';
 import { Colors } from '@/constants/theme';
 import { strokeModel, type Point } from '@/domain/strokes';
 import type { DerivedMark } from '@/domain/types';
 
-/** The design's reference square; geometry below is expressed in it. */
-const REFERENCE = 262;
-
 const STROKE_WIDTH = 12;
-const LABEL_RADIUS = 9;
-const LABEL_FONT_SIZE = 11;
-
-/**
- * How far the numbered badge sits from its stroke's first point, along the
- * reverse of the stroke's initial direction — so the label sits *before* the
- * stroke starts rather than on top of it.
- */
-const LABEL_OFFSET = 15;
 
 function toPath(points: readonly Point[]): string {
   return points
     .map(
       (point, index) =>
-        `${index === 0 ? 'M' : 'L'}${(point.x * REFERENCE).toFixed(2)},${(point.y * REFERENCE).toFixed(2)}`,
+        `${index === 0 ? 'M' : 'L'}${(point.x * STROKE_REFERENCE).toFixed(2)},${(point.y * STROKE_REFERENCE).toFixed(2)}`,
     )
     .join(' ');
-}
-
-/**
- * Where to park stroke `n`'s badge: back along the direction the stroke sets
- * off in, and clamped inside the square so a badge never falls off the edge.
- */
-function labelPosition(stroke: readonly Point[]): { x: number; y: number } {
-  const start = stroke[0];
-  const ahead = stroke[Math.min(3, stroke.length - 1)];
-  const dx = ahead.x - start.x;
-  const dy = ahead.y - start.y;
-  const length = Math.hypot(dx, dy) || 1;
-
-  const x = start.x * REFERENCE - (dx / length) * LABEL_OFFSET;
-  const y = start.y * REFERENCE - (dy / length) * LABEL_OFFSET;
-  const margin = LABEL_RADIUS + 1;
-  return {
-    x: Math.min(REFERENCE - margin, Math.max(margin, x)),
-    y: Math.min(REFERENCE - margin, Math.max(margin, y)),
-  };
 }
 
 interface StrokeOrderDiagramProps {
@@ -79,7 +48,10 @@ export function StrokeOrderDiagram({
   const firstMarkStroke = model.length - markStrokeCount;
 
   return (
-    <Svg width={size} height={size} viewBox={`0 0 ${REFERENCE} ${REFERENCE}`}>
+    <Svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${STROKE_REFERENCE} ${STROKE_REFERENCE}`}>
       {model.map((stroke, index) => (
         <Path
           key={`stroke-${index}`}
@@ -93,38 +65,13 @@ export function StrokeOrderDiagram({
       ))}
 
       {numbered
-        ? model.slice(0, firstMarkStroke).map((stroke, index) => {
-            const { x, y } = labelPosition(stroke);
-            return (
-              <Circle
-                key={`badge-${index}`}
-                cx={x}
-                cy={y}
-                r={LABEL_RADIUS}
-                fill={Colors.accent}
-              />
-            );
-          })
-        : null}
-
-      {numbered
-        ? model.slice(0, firstMarkStroke).map((stroke, index) => {
-            const { x, y } = labelPosition(stroke);
-            return (
-              <SvgText
-                key={`label-${index}`}
-                x={x}
-                y={y}
-                fill={Colors.paper}
-                fontSize={LABEL_FONT_SIZE}
-                fontWeight="500"
-                textAnchor="middle"
-                alignmentBaseline="central"
-              >
-                {index + 1}
-              </SvgText>
-            );
-          })
+        ? model.map((stroke, index) => (
+            <StrokeStartNumber
+              key={`start-${index}`}
+              point={stroke[0]}
+              number={index + 1}
+            />
+          ))
         : null}
     </Svg>
   );

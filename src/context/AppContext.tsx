@@ -15,6 +15,7 @@ import { AppState } from 'react-native';
 
 import { learningRepository } from '@/data/repository';
 import { createInitialSnapshot } from '@/data/initialState';
+import { createReturningLearnerSeed } from '@/data/demoSeed';
 import {
   BUNDLED_MANIFEST,
   getItem,
@@ -30,9 +31,7 @@ import {
 } from '@/domain/answers';
 import {
   applyReview,
-  dueItems,
   dueTargets,
-  weakItems,
 } from '@/domain/scheduler';
 import {
   buildLessonSession,
@@ -50,9 +49,7 @@ import {
   type DrawingEvent,
   type LearnerSettings,
   type LearnerSnapshot,
-  type LearningItem,
   type RepositoryDiagnostics,
-  type ReviewAttempt,
 } from '@/domain/types';
 import { syncService } from '@/services/sync';
 
@@ -73,8 +70,6 @@ interface AppContextValue {
   repositoryDiagnostics: RepositoryDiagnostics | null;
   completeOnboarding(): Promise<void>;
   startContinue(): Promise<'practice' | 'complete'>;
-  /** Massed practice on trouble spots. Distinct from the due queue. */
-  startWeakSpots(): Promise<'practice' | 'complete'>;
   startUnit(unitId: string): Promise<void>;
   answerCurrent(
     answer: string,
@@ -267,7 +262,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const manifest = useMemo(() => getPinnedManifest(snapshot), [snapshot]);
   const activeSession = snapshot.activeSession;
   const due = useMemo(
-    () => dueItems(manifest.items, snapshot.skillStates),
+    () => dueTargets(manifest.items, snapshot.skillStates),
     [manifest.items, snapshot.skillStates],
   );
   const nextUnit = manifest.units
@@ -326,29 +321,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     await startUnit(upcoming.id);
     return 'practice';
   }, [persist, startUnit]);
-
-  const startWeakSpots = useCallback(async (): Promise<'practice' | 'complete'> => {
-    const current = snapshotRef.current;
-    if (current.activeSession) {
-      return 'practice';
-    }
-    const currentManifest = getPinnedManifest(current);
-    const weak = weakItems(currentManifest.items, current.skillStates);
-    if (weak.length === 0) {
-      return 'complete';
-    }
-    // Safe to offer at any time: the early-review rule means answering ahead of
-    // schedule can only rescue an interval, never inflate it.
-    await persist({
-      ...current,
-      activeSession: buildReviewSession(
-        currentManifest,
-        weak.map((item) => ({ item, skillId: 'kana_reading' as const })),
-      ),
-      lastSummary: null,
-    });
-    return 'practice';
-  }, [persist]);
 
   const finishIfComplete = useCallback(
     async (session: ActivePracticeSession, current: LearnerSnapshot) => {
@@ -642,107 +614,13 @@ export function AppProvider({ children }: PropsWithChildren) {
     const current = snapshotRef.current;
     const currentManifest = getPinnedManifest(current);
     const guestId = await syncService.startFreshGuest();
-    const seeded: LearnerSnapshot = {
-      ...createInitialSnapshot(),
-      onboardingComplete: true,
-      completedUnitIds: currentManifest.units.slice(0, 3).map((unit) => unit.id),
-      settings: current.settings,
-      cachedManifest: current.cachedManifest,
-      sync: {
-        cloudStatus: guestId ? 'synced' : 'unconfigured',
-        guestId,
-        acceptedCount: 0,
-      },
-    };
-    const now = new Date();
-    const seedItems = currentManifest.items.slice(0, 15);
-    const sessionId = Crypto.randomUUID();
-    const outbox: ReviewAttempt[] = [];
-    seedItems.forEach((item: LearningItem, index) => {
-      const key = learnerStateKey(item.id, 'kana_reading');
-      const firstDate = new Date(now);
-      if (index % 4 === 0) {
-        firstDate.setDate(now.getDate() - 14);
-      } else if (index % 4 === 1) {
-        firstDate.setDate(now.getDate() - 2);
-      } else if (index % 4 === 2) {
-        firstDate.setDate(now.getDate() - 1);
-      }
-      const firstRating = index % 4 === 2 ? Rating.Again : Rating.Good;
-      const firstClassification =
-        firstRating === Rating.Good ? ('exact' as const) : ('incorrect' as const);
-      let state = applyReview(
-        undefined,
-        item.id,
-        'kana_reading',
-        firstRating,
-        firstDate,
-      );
-      outbox.push({
-        eventId: Crypto.randomUUID(),
-        sessionId,
-        itemId: item.id,
-        skillId: 'kana_reading',
-        answer:
-          firstRating === Rating.Good ? item.content.primaryAnswer : '',
-        classification: firstClassification,
-        rating: firstRating,
-        responseMs: 700 + index * 11,
-        exerciseVersion: 1,
-        reviewedAt: firstDate.toISOString(),
-        expectedStateVersion: 0,
-      });
-      if (index % 4 === 0) {
-        const secondDate = new Date(now);
-        secondDate.setDate(now.getDate() - 7);
-        const secondExpectedVersion = state.version;
-        state = applyReview(
-          state,
-          item.id,
-          'kana_reading',
-          Rating.Good,
-          secondDate,
-        );
-        outbox.push({
-          eventId: Crypto.randomUUID(),
-          sessionId,
-          itemId: item.id,
-          skillId: 'kana_reading',
-          answer: item.content.primaryAnswer,
-          classification: 'exact',
-          rating: Rating.Good,
-          responseMs: 610 + index * 7,
-          exerciseVersion: 1,
-          reviewedAt: secondDate.toISOString(),
-          expectedStateVersion: secondExpectedVersion,
-        });
-        const thirdExpectedVersion = state.version;
-        state = applyReview(
-          state,
-          item.id,
-          'kana_reading',
-          Rating.Good,
-          now,
-        );
-        outbox.push({
-          eventId: Crypto.randomUUID(),
-          sessionId,
-          itemId: item.id,
-          skillId: 'kana_reading',
-          answer: item.content.primaryAnswer,
-          classification: 'exact',
-          rating: Rating.Good,
-          responseMs: 540 + index * 5,
-          exerciseVersion: 1,
-          reviewedAt: now.toISOString(),
-          expectedStateVersion: thirdExpectedVersion,
-        });
-      }
-      seeded.skillStates[key] = state;
+    const seeded = createReturningLearnerSeed({
+      current,
+      manifest: currentManifest,
+      guestId,
+      now: new Date(),
+      createId: () => Crypto.randomUUID(),
     });
-    seeded.reviewOutbox = outbox.sort((left, right) =>
-      left.reviewedAt.localeCompare(right.reviewedAt),
-    );
     await persist(seeded);
     await syncNow();
   }, [persist, syncNow]);
@@ -757,7 +635,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     repositoryDiagnostics,
     completeOnboarding,
     startContinue,
-    startWeakSpots,
     startUnit,
     answerCurrent,
     answerWriting,

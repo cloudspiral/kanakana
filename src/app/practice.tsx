@@ -22,7 +22,7 @@ import { getItem } from '@/domain/curriculum';
 import { isNearMiss } from '@/domain/answers';
 import { currentStep } from '@/domain/session';
 import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
-import type { AnswerClassification, LearningItem, SkillId } from '@/domain/types';
+import type { AnswerClassification, LearningItem } from '@/domain/types';
 import {
   KanaIntroductionRenderer,
   KanaReadingInputRenderer,
@@ -34,8 +34,6 @@ interface Feedback {
   classification: AnswerClassification;
   primaryAnswer: string;
   item: LearningItem;
-  /** Which skill was graded — the overlay reports a drawing differently. */
-  skillId: SkillId;
   sessionComplete: boolean;
   revealed: boolean;
   responseMs: number;
@@ -161,14 +159,13 @@ export default function PracticeRoute() {
       const nextFeedback: Feedback = {
         ...result,
         item,
-        skillId: step.skillId,
         revealed,
         responseMs,
         answer,
       };
       setFeedback(nextFeedback);
-      // A correct answer needs no decision, so it clears itself. A miss waits —
-      // it carries the "draw it once" offer.
+      // A correct answer needs no decision, so it clears itself. A miss waits
+      // for Keep going or the narrow typo override.
       if (result.correct) {
         advanceTimer.current = setTimeout(
           () => advanceAfterFeedback(nextFeedback),
@@ -213,20 +210,12 @@ export default function PracticeRoute() {
         Date.now() - (questionStartedAt.current ?? Date.now()),
       );
       const result = await app.answerWriting(correct, responseMs);
-      const nextFeedback: Feedback = {
-        ...result,
-        item,
-        skillId: step.skillId,
-        revealed: false,
-        responseMs,
-        answer: '',
-      };
-      setFeedback(nextFeedback);
-      if (result.correct) {
-        advanceTimer.current = setTimeout(
-          () => advanceAfterFeedback(nextFeedback),
-          reducedMotion ? 0 : 900,
-        );
+      // The drawing screen already showed the model, grades and final verdict.
+      // Recording that decision advances directly instead of repeating it in
+      // the reading-answer feedback overlay.
+      questionStartedAt.current = Date.now();
+      if (result.sessionComplete) {
+        router.replace('/summary');
       }
     } finally {
       setSubmitting(false);
@@ -417,8 +406,7 @@ function FeedbackOverlay({
 
       {feedback.correct && feedback.responseMs > 0 ? (
         <AppText style={styles.overlaySpeed}>
-          {feedback.skillId === 'kana_writing' ? 'drawn' : 'read'} in{' '}
-          {(feedback.responseMs / 1000).toFixed(1)}s
+          read in {(feedback.responseMs / 1000).toFixed(1)}s
         </AppText>
       ) : null}
 

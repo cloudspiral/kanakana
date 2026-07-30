@@ -2,18 +2,18 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Pill } from './Buttons';
+import { GradeMeters } from './GradeMeters';
 import { GuideSquare } from './GuideSquare';
 import { SoundBars } from './SoundBars';
 import { TraceCanvas } from './TraceCanvas';
 import { AppText } from './Typography';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { RESULTS } from '@/domain/kanaContent';
 import type { TraceResult } from '@/domain/strokes';
 import type { LearningItem } from '@/domain/types';
 import { useTrace } from '@/hooks/useTrace';
 
 /** Verdicts we would call a pass. The learner can always disagree. */
-const PASSING = new Set(['clean', 'loose', 'order']);
+const PASSING = new Set(['clean', 'loose']);
 
 export function suggestsPass(result: TraceResult): boolean {
   return PASSING.has(result.verdict);
@@ -30,11 +30,13 @@ interface KanaWritingInputProps {
 
 /**
  * Review by writing: the learner is given the sound and has to produce the
- * shape. The character is deliberately never shown — no ghost and no
- * next-stroke hint — because either would be the answer.
+ * shape. The character stays hidden while the learner is drawing. Once the
+ * grader asks for a decision, the model appears behind their ink so the choice
+ * is informed rather than a guess.
  *
- * The recogniser's verdict is a suggestion, not a ruling: the learner makes the
- * final call, with our reading pre-selected as the primary action.
+ * The recogniser's verdict is a suggestion, not a ruling. A failing result
+ * continues as a miss by default, with "Count it" available as the same kind
+ * of explicit override as the reading review's typo action.
  */
 export function KanaWritingInput({
   item,
@@ -44,7 +46,7 @@ export function KanaWritingInput({
   onDecide,
 }: KanaWritingInputProps) {
   const glyph = item.content.glyph;
-  const trace = useTrace(glyph);
+  const trace = useTrace(glyph, { mode: 'review' });
 
   useEffect(() => {
     if (trace.glyph !== glyph) {
@@ -53,13 +55,16 @@ export function KanaWritingInput({
   }, [glyph, trace]);
 
   const { result } = trace;
-  const verdict = result ? RESULTS[result.verdict] : null;
   const pass = result ? suggestsPass(result) : false;
+  const decisionAccent = pass ? Colors.ink : Colors.accent;
 
   return (
     <View style={styles.wrap}>
-      <AppText variant="kicker" style={styles.center}>
-        Write it
+      <AppText
+        variant="kicker"
+        color={result ? decisionAccent : undefined}
+        style={styles.center}>
+        {result ? (pass ? 'Yes' : 'Not yet') : 'Write it'}
       </AppText>
 
       <View style={styles.prompt}>
@@ -72,64 +77,53 @@ export function KanaWritingInput({
       <GuideSquare
         size={square}
         style={styles.center}
+        borderColor={result ? decisionAccent : undefined}
+        borderWidth={result ? 1.5 : undefined}
         overlay={
-          <TraceCanvas trace={trace} size={square} ghost={false} hints={false} />
+          <TraceCanvas
+            trace={trace}
+            size={square}
+            ghost={Boolean(result)}
+            hints={false}
+          />
         }
       />
 
-      {trace.awaitingCall ? (
+      {result ? (
         <View style={styles.block}>
-          <AppText variant="bodySmall" style={styles.center}>
-            That stroke is right on the line and we cannot call it. You decide.
-          </AppText>
-          <View style={styles.row}>
-            <Button
-              label="Not good enough"
-              variant="secondary"
-              style={styles.flex}
-              onPress={() => trace.resolveCall(false)}
-            />
-            <Button
-              label="Count it"
-              style={styles.flex}
-              onPress={() => trace.resolveCall(true)}
-            />
-          </View>
-        </View>
-      ) : result ? (
-        <View style={styles.block}>
-          <AppText style={[styles.verdict, { color: verdict?.accent }]}>
-            {verdict?.label}
-          </AppText>
-          <AppText variant="bodySmall">
-            {pass
-              ? 'We would count that. Your call.'
-              : 'We would bring this one back. Your call.'}
-          </AppText>
-          {/* Our reading is the primary action; disagreeing is one tap away. */}
+          <GradeMeters result={result} />
+          {/* The grader's reading is primary; disagreeing is one tap away. */}
           <View style={styles.row}>
             {pass ? (
               <>
-                <Button label="Count it" style={styles.flex} onPress={() => onDecide(true)} />
                 <Button
-                  label="Not yet"
+                  label="Don't count it"
                   variant="secondary"
                   style={styles.flex}
                   onPress={() => onDecide(false)}
+                />
+                <Button
+                  label="Continue"
+                  arrow
+                  centerArrowLabel
+                  style={styles.flex}
+                  onPress={() => onDecide(true)}
                 />
               </>
             ) : (
               <>
                 <Button
-                  label="Bring it back"
-                  style={styles.flex}
-                  onPress={() => onDecide(false)}
-                />
-                <Button
-                  label="I knew it"
+                  label="Count it"
                   variant="secondary"
                   style={styles.flex}
                   onPress={() => onDecide(true)}
+                />
+                <Button
+                  label="Continue"
+                  arrow
+                  centerArrowLabel
+                  style={styles.flex}
+                  onPress={() => onDecide(false)}
                 />
               </>
             )}
@@ -144,15 +138,18 @@ export function KanaWritingInput({
           <AppText variant="bodySmall" style={styles.center}>
             {trace.note ?? 'Draw it from memory. Undo or clear as often as you like.'}
           </AppText>
-          {trace.canUndo ? (
-            <Button label="Done" arrow onPress={trace.finish} />
-          ) : (
+          <View style={styles.actions}>
+            <Button
+              disabled={!trace.canUndo}
+              label="Check"
+              onPress={trace.finish}
+            />
             <Button
               label="I can't remember it"
-              variant="secondary"
+              variant="link"
               onPress={() => onDecide(false)}
             />
-          )}
+          </View>
         </>
       )}
     </View>
@@ -189,17 +186,15 @@ const styles = StyleSheet.create({
   block: {
     gap: Spacing.sm,
   },
+  actions: {
+    gap: Spacing.xs,
+  },
   row: {
     flexDirection: 'row',
     gap: Spacing.xs,
   },
   flex: {
     flex: 1,
-  },
-  verdict: {
-    fontFamily: Fonts.serif,
-    fontSize: 22,
-    lineHeight: 26,
   },
 });
 

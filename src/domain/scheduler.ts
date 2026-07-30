@@ -6,7 +6,6 @@ import {
   type Card,
 } from 'ts-fsrs';
 
-import { inkStrength, isIntroduced } from './ink';
 import type {
   LearnerSkillState,
   LearningItem,
@@ -25,13 +24,6 @@ const REVIEW_SKILL: SkillId = 'kana_reading';
 
 /** The writing skill, scheduled independently of reading for the same character. */
 export const WRITING_SKILL: SkillId = 'kana_writing';
-
-
-/** A character is a weak spot below this ink strength, even with no lapses. */
-export const WEAK_STRENGTH_THRESHOLD = 0.62;
-
-/** Weak spots are massed practice, not a queue — six is a session, not a chore. */
-export const WEAK_ITEM_LIMIT = 6;
 
 function toCard(state?: LearnerSkillState): Card {
   if (!state) {
@@ -98,45 +90,6 @@ export function dueItems(
       const rightDue = states[learnerStateKey(right.id, skillId)].due;
       return leftDue.localeCompare(rightDue);
     });
-}
-
-/**
- * The characters the learner keeps missing.
- *
- * Deliberately *not* the due queue: these are introduced characters that are
- * not due yet but are still shaky — they have lapsed at least once, or their
- * ink has not darkened past {@link WEAK_STRENGTH_THRESHOLD}. Ranked by lapses
- * first and weakness second, so the nemesis characters lead.
- *
- * Practising them early is safe because {@link applyReview} refuses to let an
- * early success push a schedule further out.
- */
-export function weakItems(
-  items: LearningItem[],
-  states: Record<string, LearnerSkillState>,
-  now = new Date(),
-): LearningItem[] {
-  // Reading only for now: writing weakness would want its own copy tuned to
-  // stroke accuracy rather than recall.
-  const stateFor = (item: LearningItem) =>
-    states[learnerStateKey(item.id, REVIEW_SKILL)];
-  return items
-    .filter((item) => {
-      const state = stateFor(item);
-      if (!state || !isIntroduced(state) || new Date(state.due) <= now) {
-        return false;
-      }
-      return state.lapses >= 1 || inkStrength(state) < WEAK_STRENGTH_THRESHOLD;
-    })
-    .sort((left, right) => {
-      const leftState = stateFor(left);
-      const rightState = stateFor(right);
-      if (leftState.lapses !== rightState.lapses) {
-        return rightState.lapses - leftState.lapses;
-      }
-      return inkStrength(leftState) - inkStrength(rightState);
-    })
-    .slice(0, WEAK_ITEM_LIMIT);
 }
 
 export function stateLabel(

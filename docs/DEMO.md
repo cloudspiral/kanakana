@@ -30,6 +30,7 @@
 4. **Returning learner**
    - Long-press wordmark → **Seed returning learner**.
    - Home shows due work before the next row.
+   - **Begin review** includes three **Write it** drawing prompts.
    - Progress shows mixed Not started, Learning, Strong, and Due states.
    - Diagnostics shows zero pending events and cloud synced.
 

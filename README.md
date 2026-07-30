@@ -107,7 +107,8 @@ npm run export:web
 Set `EXPO_PUBLIC_DEMO_TOOLS=true` before bundling, then long-press the Kanakana wordmark.
 
 - **Fresh guest** clears local learning data, signs out, and creates a new anonymous identity.
-- **Seed returning learner** creates a new guest, generates deterministic historical review behavior, and syncs mixed mastery/due states.
+- **Seed returning learner** creates a new guest, generates deterministic reading
+  history plus three due writing cases, and syncs the mixed mastery/due states.
 - **Sync now** flushes the outbox and reports accepted/pending counts.
 - **Diagnostics** exposes guest ID, manifest, storage adapter, outbox size, last sync, and cloud status.
 

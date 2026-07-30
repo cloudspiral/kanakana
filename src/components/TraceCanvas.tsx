@@ -1,22 +1,20 @@
 import { useMemo, useRef } from 'react';
 import { PanResponder, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
+import { StrokeStartNumber, STROKE_REFERENCE } from './StrokeStartNumber';
 import { Colors } from '@/constants/theme';
 import type { Point } from '@/domain/strokes';
 import type { TraceController } from '@/hooks/useTrace';
 
 /**
  * The design's reference square. Geometry below is expressed in this space and
- * scaled by the SVG viewBox, so the stroke widths, dash pattern and start dot
- * keep the proportions they were tuned at on any screen size.
+ * scaled by the SVG viewBox, so stroke widths, dash patterns and numbered start
+ * points keep the proportions they were tuned at on any screen size.
  */
-const REFERENCE = 262;
-
 const STROKE_WIDTH = 12;
 const HINT_WIDTH = 9;
 const HINT_DASH = '9,8';
-const HINT_DOT_RADIUS = 7;
 const HINT_COLOR = 'rgba(188, 62, 39, 0.42)';
 
 function toPath(points: readonly Point[]): string {
@@ -26,7 +24,7 @@ function toPath(points: readonly Point[]): string {
   return points
     .map(
       (point, index) =>
-        `${index === 0 ? 'M' : 'L'}${(point.x * REFERENCE).toFixed(2)},${(point.y * REFERENCE).toFixed(2)}`,
+        `${index === 0 ? 'M' : 'L'}${(point.x * STROKE_REFERENCE).toFixed(2)},${(point.y * STROKE_REFERENCE).toFixed(2)}`,
     )
     .join(' ');
 }
@@ -109,7 +107,10 @@ export function TraceCanvas({
     <View
       style={[StyleSheet.absoluteFill, unavailable && styles.dimmed]}
       {...responder.panHandlers}>
-      <Svg width={size} height={size} viewBox={`0 0 ${REFERENCE} ${REFERENCE}`}>
+      <Svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${STROKE_REFERENCE} ${STROKE_REFERENCE}`}>
         {/* The ghost is drawn from the same model data as the matcher rather
             than as text. A Noto Sans JP glyph and a KanjiVG outline do not share
             metrics, so a text ghost sits visibly off the strokes being graded —
@@ -140,13 +141,12 @@ export function TraceCanvas({
               strokeLinejoin="round"
               fill="none"
             />
-            {/* Where a stroke begins is what beginners actually get wrong. */}
-            <Circle
-              cx={nextModelStroke[0].x * REFERENCE}
-              cy={nextModelStroke[0].y * REFERENCE}
-              r={HINT_DOT_RADIUS}
-              fill={Colors.accent}
-            />
+            {ghost ? null : (
+              <StrokeStartNumber
+                point={nextModelStroke[0]}
+                number={trace.done.length + 1}
+              />
+            )}
           </>
         ) : null}
 
@@ -197,6 +197,19 @@ export function TraceCanvas({
             fill="none"
           />
         ) : null}
+
+        {/* A revealed model teaches both order and starting position. Markers
+            sit above the learner's ink so the answer remains readable while
+            they compare their attempt. */}
+        {ghost && trace.model
+          ? trace.model.map((stroke, index) => (
+              <StrokeStartNumber
+                key={`ghost-start-${index}`}
+                point={stroke[0]}
+                number={index + 1}
+              />
+            ))
+          : null}
       </Svg>
     </View>
   );

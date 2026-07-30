@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   HINT_AFTER,
   judgeStroke,
+  reviewTraceResult,
   strokeModel,
   traceResult,
   type CompletedStroke,
@@ -60,6 +61,8 @@ export interface TraceController {
   hint: boolean;
   note: string | null;
   pendingCall: readonly Point[] | null;
+  /** Whole-character scores with a marginal stroke included provisionally. */
+  pendingResult: TraceResult | null;
   result: TraceResult | null;
   /** True while a close call is unresolved — ordinary controls must not render. */
   awaitingCall: boolean;
@@ -77,7 +80,19 @@ export interface TraceController {
   finish(): void;
 }
 
-export function useTrace(initialGlyph: string): TraceController {
+interface TraceOptions {
+  /**
+   * Guided tracing teaches one stroke at a time. Review capture behaves like
+   * an exam: every raw stroke stays on the page and nothing is judged until
+   * the learner explicitly checks the whole character.
+   */
+  mode?: 'guided' | 'review';
+}
+
+export function useTrace(
+  initialGlyph: string,
+  { mode = 'guided' }: TraceOptions = {},
+): TraceController {
   const [state, setState] = useState<TraceState>(() => emptyState(initialGlyph));
   const [live, setLive] = useState<Point[] | null>(null);
 
@@ -109,15 +124,18 @@ export function useTrace(initialGlyph: string): TraceController {
       }
       return {
         ...current,
-        result: traceResult({
-          completed: current.done,
-          model,
-          orderSlips: current.orderSlips,
-          forced: current.forced,
-        }),
+        result:
+          mode === 'review'
+            ? reviewTraceResult({ completed: current.done, model })
+            : traceResult({
+                completed: current.done,
+                model,
+                orderSlips: current.orderSlips,
+                forced: current.forced,
+              }),
       };
     });
-  }, [model]);
+  }, [mode, model]);
 
   const endStroke = useCallback(() => {
     const drawn = live;
@@ -130,6 +148,21 @@ export function useTrace(initialGlyph: string): TraceController {
       if (current.pendingCall || current.result) {
         return current;
       }
+
+      if (mode === 'review') {
+        // Reviews never interrupt, reject, hint, or identify a mistake while
+        // the learner is recalling the character. Check owns all grading.
+        return drawn.length < 2
+          ? current
+          : {
+              ...current,
+              done: [...current.done, { drawn }],
+              misses: 0,
+              hint: false,
+              note: null,
+            };
+      }
+
       const expectedIndex = current.done.length;
       const decision = judgeStroke({
         drawn,
@@ -178,7 +211,7 @@ export function useTrace(initialGlyph: string): TraceController {
           };
       }
     });
-  }, [live, model]);
+  }, [live, mode, model]);
 
   const undo = useCallback(() => {
     setState((current) =>
@@ -220,7 +253,7 @@ export function useTrace(initialGlyph: string): TraceController {
           ...current,
           pendingCall: null,
           hint: current.misses >= HINT_AFTER,
-          note: 'Have another go — start at the dot.',
+          note: 'Have another go — start at the numbered marker.',
         };
       }
       return {
@@ -235,6 +268,24 @@ export function useTrace(initialGlyph: string): TraceController {
   }, []);
 
   const strokeTotal = model?.length ?? 0;
+  const pendingResult = useMemo(
+    () =>
+      state.pendingCall && model
+        ? traceResult({
+            completed: [...state.done, { drawn: state.pendingCall }],
+            model,
+            orderSlips: state.orderSlips,
+            forced: state.forced,
+          })
+        : null,
+    [
+      model,
+      state.done,
+      state.forced,
+      state.orderSlips,
+      state.pendingCall,
+    ],
+  );
 
   return {
     glyph: state.glyph,
@@ -247,6 +298,7 @@ export function useTrace(initialGlyph: string): TraceController {
     hint: state.hint,
     note: state.note,
     pendingCall: state.pendingCall,
+    pendingResult,
     result: state.result,
     awaitingCall: Boolean(state.pendingCall),
     canUndo: state.done.length > 0,

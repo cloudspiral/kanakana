@@ -10,8 +10,7 @@ Two pieces of work, separable:
    vermillion accent, Instrument Serif + DM Sans, and memory strength rendered as
    *ink density* rather than bars or scores.
 2. **A new `kana_writing` skill** — real stroke-order-aware handwriting practice
-   on KanjiVG data, plus three scheduler features (weak spots, typo override,
-   review latency).
+   on KanjiVG data, plus typo override and review latency.
 
 (2) is the substantial engineering. It slots into the existing
 `SkillDefinition` / `LearnerSkillState` extension point that
@@ -155,7 +154,7 @@ this is the differentiator and the layout should say so. Copy:
 - Recall it later — "Misses come back after a little space — never as a penalty."
 
 Then the five vowels in a row (32px glyphs + romaji), then "Begin with the five
-vowels" (primary) and a text link "I've used Kanakana before".
+vowels" (primary).
 
 ### 3. Home / Today — `app/index.tsx`
 
@@ -170,13 +169,8 @@ numbers: *"{n} sounds are ready to come back."* / *"Ready for the {row} row."* /
 glyphs in a 2×2 grid at their current ink opacity, and a full-width `ink` footer
 button.
 
-**Weak spots row** (`card`, only when non-empty): count tile, "Weak spots", and
-"The ones you keep missing · け さ く か +2".
-
-**Brush practice row** (`card`): `accentSoft` tile with the first known glyph;
-"Draw {n} shapes you've met · 2 min", or *"Unlocks once you've met your first
-shapes"* when nothing is introduced (and the row must then fall through to a
-lesson, never a blank session).
+There is no secondary queue builder on Today. The SRS card owns the next
+scheduled action; optional drawing of one specific kana lives on its profile.
 
 **Your ink strip**: all 46 glyphs in a 10-column grid at 17px, each at its own
 ink opacity; caption "{n} of 46 · fainter is newer".
@@ -204,7 +198,7 @@ Canvas rendering:
 - the live stroke: same
 - a pending close-call stroke: `accent`
 - the **hint**: the *next stroke only*, `lineWidth 9`, `rgba(188,62,39,.42)`,
-  dashed `[9,8]`, plus a solid 7px `accent` **dot at its start point**
+  dashed `[9,8]`, plus its order number in `accent` at the exact start point
 
 Controls row (pills): **Undo stroke** / **Show next stroke** (fills `accentSoft`
 when active) / **Clear all** / **Sound**.
@@ -223,24 +217,39 @@ border that darkens on input); helper "Romaji · shi, chi, tsu and fu accept
 either spelling"; "Check" (muted until non-empty) and a "Show me the answer"
 link.
 
-### 7. Feedback overlay
+### 7. Practice — Write review
+
+The sound is shown while the answer stays hidden. The learner may undo and
+clear freely; reaching the expected stroke count does **not** submit anything.
+Every raw stroke stays on the page: there are no retries, direction/order
+corrections, hints, or forced strokes while drawing. Those interventions belong
+only to guided practice and the first teaching encounter. **Check** is the only
+grading action, matching the reading review.
+
+After Check, reveal the numbered model behind the learner's ink, show the two
+result meters, and state **YES** or **NOT YET**. The left button overrides the
+verdict; the right **Continue** button accepts it. Continue records the result
+and advances directly.
+
+### 8. Reading feedback overlay
 
 Full-bleed `paper`. Kicker ("YES" / "NOT YET" / "HERE IT IS"), a 262px square
 bordered `1.5px` in `ink` or `accent` with the glyph + romaji, one line of copy,
 and — on a correct answer — a small centred "read in 1.4s".
 
 On a miss: optional **"I typed it wrong — I knew this ↺"** row (see below),
-then "Draw it once to fix the shape" and a "Keep going" link.
+then a "Keep going" link. Writing reviews do not enter this overlay because
+their Check screen already communicated the result.
 
-### 8. Session summary
+### 9. Session summary
 
 A 60px `card` tick tile; serif title varying by session kind ("Reviews done" /
-"Weak spots, worked" / "Ink on paper" / "A new row is underway"); explanatory
+"Ink on paper" / "A new row is underway"); explanatory
 copy; a `card` list of only the non-zero outcome rows (introduced /
 strengthened / returning soon / shapes drawn) with serif numerals; "Keep going"
 + "Back to today".
 
-### 9. Ink map — `app/progress.tsx`
+### 10. Ink map — `app/progress.tsx`
 
 Kicker "YOUR INK", title "{n} of 46 characters", body *"These forty-six will
 carry every Japanese word you ever read. Tap one to see where you two stand."*
@@ -252,7 +261,7 @@ Then the gojūon grid in a `1px ink` card: A/I/U/E/O column heads, row labels in
 `inkMuted`, 43px rows, each cell a 25px glyph at its ink opacity with an optional
 36px `accent` ring. Empty positions render nothing. Every cell is tappable.
 
-### 10. Character profile  ← new screen (was a bottom sheet)
+### 11. Character profile  ← new screen (was a bottom sheet)
 
 Full screen, scrollable, with a pinned footer.
 
@@ -328,7 +337,7 @@ the rendered square; do not hard-code 46.
 | misses | behaviour |
 | --- | --- |
 | 1 | note naming the specific error |
-| 2 | hint: the next stroke only, dashed, with its start dot |
+| 2 | hint: the next stroke only, dashed, with its order number at the start point |
 | marginal (`TOL`…`TOL×1.7`) **and** order correct | **close-call self-grade** |
 | 4 | stroke is drawn in, session continues |
 
@@ -341,6 +350,11 @@ When the score is marginal but the order is right, the recogniser genuinely
 cannot tell. Rather than guess, draw the attempt in `accent` over the dashed
 model and ask: *"Your stroke is in red over the dashed model. Too close for us to
 judge — you decide."* → **"Not good enough"** / **"Count it"**.
+
+That immediate prompt applies to standalone tracing. During a writing review,
+do not run the per-stroke judge at all. Keep every raw stroke and let the
+whole-character **Check** calculate shape, order, and direction for the single
+decision screen; drawing a stroke never submits or gives feedback.
 
 **Critical invariant, and the source of the worst bug found in testing:** while a
 close call is pending, the ordinary trace controls **must not render**. Three
@@ -366,7 +380,7 @@ Verdicts: `clean` / `loose` / `order` / `guided` / `partial` — copy in
 
 ## Scheduler changes
 
-### Early reviews (the rule that makes weak spots safe)
+### Early reviews
 
 In `settle()`:
 
@@ -374,17 +388,8 @@ In `settle()`:
 > (**+0.08** vs +0.22) and **cannot push the next review further out**.
 > A miss always counts in full.
 
-So an early session can only ever *rescue* a schedule, never inflate it. FSRS
-applies the same principle. Surface it in the summary copy so the learner
-understands why practising ahead is not cheating.
-
-### Weak spots
-
-`weakItems()`: introduced, **not** already due, and (`lapses ≥ 1` or
-`strength < 0.62`); sorted by **lapses desc, then strength asc**; capped at **6**.
-
-This is deliberately *not* the due queue — it is massed practice on trouble
-spots, and it is the single most-requested thing in competitor reviews.
+This protects immediate rechecks and exact typo replays from inflating the
+schedule. It does not create a learner-selectable early-review queue.
 
 ### Typo override
 
@@ -489,4 +494,4 @@ is unchanged.
 4. Pre-bake KanjiVG polylines to JSON; build the trace canvas and matcher; unit-test
    accept / backwards / out-of-order / marginal against fixture polylines.
 5. `kana_writing` as a `SkillDefinition`; wire the trace step into sessions.
-6. Scheduler: early-review rule, weak spots, typo override, latency.
+6. Scheduler: early-review rule, typo override, latency.

@@ -98,7 +98,7 @@ export default function DemoRoute() {
               async () => {
                 await app.seedReturningLearner();
               },
-              'Seeded mixed learning and due states.',
+              'Seeded mixed reading, writing, and due states.',
             )
           }
           variant="secondary"

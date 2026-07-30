@@ -9,6 +9,7 @@ import {
   compare,
   judgeStroke,
   resample,
+  reviewTraceResult,
   strokeCount,
   strokeModel,
   traceResult,
@@ -258,5 +259,64 @@ describe('traceResult', () => {
     });
     expect(good.accuracy).toBeGreaterThan(sloppy.accuracy);
     expect(good.orderAndDirection).toBeGreaterThan(sloppy.orderAndDirection);
+  });
+});
+
+describe('reviewTraceResult', () => {
+  it('grades a correct raw review attempt only after all strokes are present', () => {
+    const model = modelOf(MULTI);
+    const result = reviewTraceResult({
+      completed: model.map((stroke) => ({ drawn: stroke })),
+      model,
+    });
+
+    expect(result.verdict).toBe('clean');
+    expect(result.orderSlips).toBe(0);
+    expect(result.orderAndDirection).toBe(1);
+  });
+
+  it('detects a backwards stroke from the completed review attempt', () => {
+    const model = modelOf(MULTI);
+    const result = reviewTraceResult({
+      completed: model.map((stroke, index) => ({
+        drawn: index === 0 ? [...stroke].reverse() : stroke,
+      })),
+      model,
+    });
+
+    expect(result.verdict).toBe('order');
+    expect(result.orderSlips).toBe(1);
+    expect(result.orderAndDirection).toBeLessThan(1);
+  });
+
+  it('detects strokes drawn in the wrong order after Check', () => {
+    const model = modelOf(MULTI);
+    const swapped = [...model];
+    [swapped[0], swapped[3]] = [swapped[3], swapped[0]];
+
+    const result = reviewTraceResult({
+      completed: swapped.map((stroke) => ({ drawn: stroke })),
+      model,
+    });
+
+    expect(result.verdict).toBe('order');
+    expect(result.orderSlips).toBeGreaterThanOrEqual(2);
+    expect(result.orderAndDirection).toBeLessThan(1);
+  });
+
+  it('counts extra raw strokes against the review result', () => {
+    const model = modelOf(MULTI);
+    const result = reviewTraceResult({
+      completed: [
+        ...model.map((stroke) => ({ drawn: stroke })),
+        { drawn: model[0] },
+      ],
+      model,
+    });
+
+    expect(result.complete).toBe(true);
+    expect(result.strokes).toBe(model.length + 1);
+    expect(result.orderSlips).toBe(1);
+    expect(result.verdict).toBe('order');
   });
 });

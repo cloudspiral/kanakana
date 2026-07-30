@@ -150,7 +150,8 @@ export type StrokeDecision =
   | { kind: 'accepted'; score: number }
   /**
    * Marginal shape, right order: the recogniser genuinely cannot tell. Rather
-   * than guess, the attempt is shown over the model and the learner calls it.
+   * than guess, the caller can either ask immediately or keep the stroke
+   * provisionally until a whole-character Check.
    */
   | { kind: 'closeCall'; score: number; misses: number }
   /** Four misses. The stroke is drawn in and the session continues. */
@@ -225,7 +226,7 @@ export function judgeStroke({
     slip = true;
     actualStroke = bestIndex + 1;
   } else if (backwards) {
-    note = 'Right shape, drawn backwards — begin at the dot and pull the other way.';
+    note = 'Right shape, drawn backwards — begin at the numbered marker and pull the other way.';
     reason = 'backwards';
     slip = true;
   }
@@ -239,7 +240,7 @@ export function judgeStroke({
       kind: 'forced',
       score: mine.best,
       misses: nextMisses,
-      note: 'Drawn in for you — watch the dot and the direction.',
+      note: 'Drawn in for you — watch the start number and the direction.',
       slip,
     };
   }
@@ -286,6 +287,65 @@ export interface TraceResultInput {
   model: readonly (readonly Point[])[];
   orderSlips: number;
   forced: number;
+}
+
+/**
+ * Grade a review attempt after the learner explicitly checks it.
+ *
+ * Unlike guided tracing, a review accepts every stroke while the learner is
+ * drawing. Order and direction therefore have to be inferred here from the
+ * complete raw attempt rather than accumulated from per-stroke interventions.
+ */
+export function reviewTraceResult({
+  completed,
+  model,
+}: Pick<TraceResultInput, 'completed' | 'model'>): TraceResult {
+  let orderSlips = 0;
+
+  completed.forEach((stroke, expectedIndex) => {
+    const drawn = stroke.drawn;
+    const expected = model[expectedIndex];
+
+    // Extra, empty, or otherwise ungradeable strokes cannot be in the correct
+    // place and direction. Missing strokes are handled by traceResult's
+    // incomplete verdict.
+    if (!drawn || drawn.length < 2 || !expected) {
+      orderSlips += 1;
+      return;
+    }
+
+    const expectedComparison = compare(drawn, expected);
+    const backwards =
+      expectedComparison.rev < expectedComparison.fwd * BACKWARDS_FACTOR;
+
+    let bestIndex = expectedIndex;
+    let bestScore = expectedComparison.best;
+    model.forEach((candidate, candidateIndex) => {
+      if (candidateIndex === expectedIndex) {
+        return;
+      }
+      const score = compare(drawn, candidate).best;
+      if (score < bestScore) {
+        bestIndex = candidateIndex;
+        bestScore = score;
+      }
+    });
+
+    const outOfOrder =
+      bestIndex !== expectedIndex &&
+      bestScore < expectedComparison.best * OUT_OF_ORDER_FACTOR;
+
+    if (backwards || outOfOrder) {
+      orderSlips += 1;
+    }
+  });
+
+  return traceResult({
+    completed,
+    model,
+    orderSlips,
+    forced: 0,
+  });
 }
 
 /**

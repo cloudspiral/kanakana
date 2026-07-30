@@ -11,10 +11,9 @@ import { AppText, Kana } from '@/components/Typography';
 import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { inkColor } from '@/domain/ink';
 import { bareRowLabel } from '@/domain/curriculum';
-import { dueTargets, weakItems } from '@/domain/scheduler';
-import { learnerStateKey, type CurriculumUnit, type LearningItem } from '@/domain/types';
+import { dueTargets } from '@/domain/scheduler';
+import { type CurriculumUnit, type LearningItem } from '@/domain/types';
 
 export default function HomeRoute() {
   const app = useApp();
@@ -133,14 +132,7 @@ function Onboarding() {
             ))}
           </View>
 
-          <View style={styles.onboardingActions}>
-            <Button label="Begin with the five vowels" arrow onPress={begin} />
-            <Button
-              label="I've used Kanakana before"
-              variant="link"
-              onPress={() => void app.completeOnboarding()}
-            />
-          </View>
+          <Button label="Begin with the five vowels" arrow onPress={begin} />
         </View>
       )}
     </AppScreen>
@@ -243,31 +235,11 @@ function Home() {
 
   const caughtUp = !hasActiveSession && !due.length && !nextUnit;
 
-  const weak = useMemo(
-    () => weakItems(app.manifest.items, app.snapshot.skillStates),
-    [app.manifest.items, app.snapshot.skillStates],
-  );
-  const weakLine = [
-    ...weak.slice(0, 4).map((item) => item.content.glyph),
-    ...(weak.length > 4 ? [`+${weak.length - 4}`] : []),
-  ].join(' ');
-
-  async function startWeak() {
-    const result = await app.startWeakSpots();
-    if (result === 'practice') {
-      router.push('/practice');
-    }
-  }
-
   async function startPrimary() {
     const result = await app.startContinue();
     if (result === 'practice') {
       router.push('/practice');
     }
-  }
-
-  function stateFor(item: LearningItem) {
-    return app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')];
   }
 
   return (
@@ -290,10 +262,7 @@ function Home() {
           </View>
           <View style={styles.primaryPreview}>
             {primary.preview.slice(0, 4).map((item) => (
-              <Kana
-                key={item.id}
-                style={styles.previewGlyph}
-                color={inkColor(stateFor(item))}>
+              <Kana key={item.id} style={styles.previewGlyph}>
                 {item.content.glyph}
               </Kana>
             ))}
@@ -322,30 +291,9 @@ function Home() {
         </Pressable>
       </View>
 
-      {/* Deliberately not the due queue — massed practice on the ones that keep
-          slipping. Hidden entirely when there is nothing shaky. */}
-      {weak.length > 0 ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void startWeak()}
-          style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
-          <View style={styles.weakTile}>
-            <AppText style={styles.weakCount}>{weak.length}</AppText>
-          </View>
-          <View style={styles.brushCopy}>
-            <AppText style={styles.brushTitle}>Weak spots</AppText>
-            <AppText style={styles.brushLine}>
-              The ones you keep missing · {weakLine}
-            </AppText>
-          </View>
-          <AppText style={styles.brushArrow} aria-hidden>
-            →
-          </AppText>
-        </Pressable>
-      ) : null}
-
-      {/* No brush-practice row: drawing a specific character belongs to that
-          character's own page, reached from the kana chart. */}
+      {/* The scheduler owns what comes next. Drawing a specific character is
+          still available from its kana-chart profile, but Today does not ask
+          the learner to construct a second queue. */}
     </AppScreen>
   );
 }
@@ -483,10 +431,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: Colors.inkMuted,
   },
-  onboardingActions: {
-    gap: 9,
-  },
-
   homeHeading: {
     gap: 9,
     marginTop: Spacing.lg,
@@ -559,57 +503,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 22,
     color: Colors.peach,
-  },
-
-  brushRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginTop: Spacing.stack,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.rule,
-    borderRadius: Radius.rect,
-    backgroundColor: Colors.card,
-  },
-  brushRowPressed: {
-    backgroundColor: Colors.wellFill,
-  },
-  weakTile: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.rule,
-    borderRadius: Radius.small,
-    backgroundColor: Colors.paper,
-  },
-  weakCount: {
-    fontFamily: Fonts.sansMedium,
-    fontSize: 13,
-    lineHeight: 17,
-    color: Colors.accent,
-  },
-  brushCopy: {
-    flex: 1,
-  },
-  brushTitle: {
-    fontFamily: Fonts.serif,
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  brushLine: {
-    fontSize: 12.5,
-    lineHeight: 17,
-    color: Colors.inkMuted,
-    marginTop: 1,
-  },
-  brushArrow: {
-    fontSize: 16,
-    lineHeight: 20,
-    color: Colors.inkMuted,
   },
 
 });

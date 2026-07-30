@@ -15,6 +15,8 @@ interface ButtonProps extends PressableProps {
   loading?: boolean;
   /** Show the peach arrow. Only legal on `primary` — it is the one `ink` fill. */
   arrow?: boolean;
+  /** Keep the label optically centered while the arrow stays right-aligned. */
+  centerArrowLabel?: boolean;
 }
 
 export function Button({
@@ -22,6 +24,7 @@ export function Button({
   variant = 'primary',
   loading,
   arrow = false,
+  centerArrowLabel = false,
   disabled,
   style,
   ...props
@@ -59,7 +62,11 @@ export function Button({
         // muted label. Do not add opacity here.
         inactive && styles.inactive,
         state.pressed && !inactive && (isPrimary ? styles.primaryPressed : styles.secondaryPressed),
-        arrow ? styles.withArrow : styles.centered,
+        arrow
+          ? centerArrowLabel
+            ? styles.centered
+            : styles.withArrow
+          : styles.centered,
         typeof style === 'function' ? style(state) : style,
       ]}>
       {loading ? (
@@ -73,7 +80,10 @@ export function Button({
           </AppText>
           {arrow ? (
             <AppText
-              style={inactive ? styles.inactiveArrow : styles.arrow}
+              style={[
+                inactive ? styles.inactiveArrow : styles.arrow,
+                centerArrowLabel && styles.centeredArrow,
+              ]}
               aria-hidden>
               →
             </AppText>
@@ -181,6 +191,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 20,
     color: Colors.peach,
+  },
+  centeredArrow: {
+    position: 'absolute',
+    right: 20,
   },
   inactiveArrow: {
     fontSize: 17,

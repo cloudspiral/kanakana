@@ -37,7 +37,7 @@ export default function ProgressRoute() {
   const rows = kanaGridRows(app.manifest, app.snapshot, activeLens);
 
   return (
-    <AppScreen bottomNav={<BottomNav />}>
+    <AppScreen bottomNav={<BottomNav />} contentStyle={styles.content}>
       {/* The legend is required — ink density is meaningless without it. */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -144,6 +144,9 @@ export default function ProgressRoute() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    flexGrow: 1,
+  },
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -195,6 +198,7 @@ const styles = StyleSheet.create({
   },
 
   grid: {
+    flexGrow: 1,
     marginTop: 14,
     paddingVertical: 14,
     paddingHorizontal: 10,
@@ -217,9 +221,10 @@ const styles = StyleSheet.create({
     color: Colors.inkMuted,
   },
   row: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
-    height: 43,
+    alignItems: 'stretch',
+    minHeight: 43,
   },
   rowLabel: {
     // 38 in the design, but "VOWELS" uppercased with tracking needs 46 — and
@@ -230,6 +235,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: Colors.inkMuted,
+    alignSelf: 'center',
   },
   rowCells: {
     flex: 1,
@@ -237,7 +243,7 @@ const styles = StyleSheet.create({
   },
   cell: {
     flex: 1,
-    height: 43,
+    minHeight: 43,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',

@@ -43,7 +43,7 @@ compared to the expected model stroke, resampled the same way:
 | misses | behaviour |
 | --- | --- |
 | 1 | note explaining what was wrong |
-| 2 | **progressive hint** — the next stroke only, dashed, with a dot at its start point |
+| 2 | **progressive hint** — the next stroke only, dashed, with its order number at the start point |
 | 4 | stroke is **drawn in** and the session moves on |
 
 Nothing ever blocks. The forced-stroke count feeds the result but never stops
@@ -55,8 +55,8 @@ progress.
    with a warning, which meant the learner never rebuilt the motor pattern —
    the entire point of writing practice. hanzi-writer defaults the same way.
 2. **The hint shows one stroke, never the whole character**, and always with its
-   **start dot**. Where a stroke begins is what beginners actually get wrong;
-   direction follows from it.
+   **order number at the start point**. One marker communicates both where the
+   stroke begins and when it is drawn; direction follows from it.
 3. **Both metrics read higher-is-better.** `Stroke accuracy` (mean per-stroke
    closeness) and `Order & direction` (1 − slips/strokes). The earlier pair
    ("shape covered" up-is-good, "ink off-shape" up-is-bad) forced the reader to
@@ -71,6 +71,11 @@ progress.
    that its recogniser "can handle wrong stroke order and small mistakes" —
    correct for a *dictionary*, wrong for a *teacher*. We deliberately notice
    what a lookup tool forgives.
+7. **Reviews are exams; guided tracing is tutoring.** The per-stroke escalation
+   ladder runs only while teaching or practising a kana. A writing review keeps
+   every raw stroke without retries, order/direction warnings, hints, or forced
+   strokes. Its explicit Check action grades the complete attempt and reveals
+   all feedback at once.
 
 ## Prior art worth reading before extending this
 
@@ -118,31 +123,14 @@ reading *speed* is the only remaining measure of fluency — which is the actual
 goal. Recall time is captured per review into a rolling `avgMs` and surfaced on
 the profile as plain language ("fluent — no longer decoding it").
 
-**Rejected — the quiz builder.** Their app offers custom quizzes, smart quizzes,
+**Rejected — quiz builders and manual weak-spot queues.** Their app offers custom quizzes, smart quizzes,
 flashcards, lists, study mode, free draw, customisable tables, separate scope
 editing, up to 1000 questions. The reviews show the cost: one reviewer
 misconfigured a quiz so its multiple-choice options gave the answer away ("I need
 to cover the screen with one hand"); another asks the app to "put together a quiz
 from all of our weaknesses instead… I like cutting the extra that isn't needed."
-We answer that with the scheduler, not a settings screen. **Their app opens on a
-control panel; ours opens on one decision.**
-
-### Weak spots
-
-That reviewer's request is now a real feature, and it is *not* the due queue.
-`weakItems()` ranks introduced-but-not-yet-due characters by **lapses first,
-then by weakness**, capped at 6.
-
-The pedagogical hazard is that practising early steals from the spacing effect.
-So the rule, enforced in `settle()`:
-
-> Answering before a card is due earns a smaller strength bump (0.08 vs 0.22)
-> and **cannot push the next review further out**. A miss always counts in full.
-
-So a weak-spots session can only ever *rescue* a schedule, never inflate it —
-which is what makes it safe to offer on the home screen, and it is stated in the
-session summary so the learner understands it too. (FSRS applies the same
-principle to early reviews.)
+We answer that with the SRS queue itself, not another learner-managed queue.
+**Their app opens on a control panel; ours opens on one decision.**
 
 ### Demo clock
 
