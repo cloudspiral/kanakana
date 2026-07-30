@@ -12,7 +12,6 @@ import { useApp } from '@/context/AppContext';
 import { inkColor } from '@/domain/ink';
 import {
   kanaGridRows,
-  lensProgress,
   voicedLensAvailable,
   type KanaLens,
 } from '@/domain/kanaGrid';
@@ -35,20 +34,10 @@ export default function ProgressRoute() {
 
   const showLens = voicedLensAvailable(app.manifest, app.snapshot);
   const activeLens = showLens ? lens : 'plain';
-  const progress = lensProgress(app.manifest, app.snapshot, activeLens);
   const rows = kanaGridRows(app.manifest, app.snapshot, activeLens);
 
   return (
     <AppScreen bottomNav={<BottomNav />}>
-      <AppText variant="kicker">Your kana</AppText>
-      <AppText style={styles.title}>
-        {progress.introduced} of {progress.total} {progress.label}
-      </AppText>
-      <AppText variant="bodySmall" style={styles.intro}>
-        These forty-six will carry every Japanese word you ever read. The darker
-        a kana, the better you know it. Tap one to see where you two stand.
-      </AppText>
-
       {/* The legend is required — ink density is meaningless without it. */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
@@ -155,16 +144,6 @@ export default function ProgressRoute() {
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontFamily: Fonts.serif,
-    fontSize: 32,
-    lineHeight: 35,
-    color: Colors.ink,
-    marginTop: 7,
-  },
-  intro: {
-    marginTop: 6,
-  },
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
