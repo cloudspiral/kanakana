@@ -19,3 +19,6 @@ enable_anonymous_sign_ins = true
 
 [functions.submit-reviews]
 verify_jwt = true
+
+[functions.submit-drawings]
+verify_jwt = true

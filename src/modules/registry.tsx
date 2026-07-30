@@ -44,6 +44,9 @@ export function KanaIntroductionRenderer({
   const glyph = item.content.glyph;
   const strokes = strokeCount(glyph);
   const [showOrder, setShowOrder] = useState(false);
+  const note = showOrder
+    ? 'Each number marks where that stroke begins.'
+    : strokeNoteFor(glyph);
 
   return (
     <View style={styles.renderer}>
@@ -56,7 +59,11 @@ export function KanaIntroductionRenderer({
         style={styles.center}
         chip={{ label: item.content.primaryAnswer, tone: 'ink', corner: 'bottomRight' }}>
         {showOrder ? (
-          <StrokeOrderDiagram glyph={glyph} size={square} />
+          <StrokeOrderDiagram
+            glyph={glyph}
+            size={square}
+            mark={item.content.mark}
+          />
         ) : (
           <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
             {glyph}
@@ -75,11 +82,11 @@ export function KanaIntroductionRenderer({
         />
       </View>
 
-      <AppText variant="bodySmall" style={styles.note}>
-        {showOrder
-          ? 'Each number marks where that stroke begins.'
-          : strokeNoteFor(glyph, strokes)}
-      </AppText>
+      {note ? (
+        <AppText variant="bodySmall" style={styles.note}>
+          {note}
+        </AppText>
+      ) : null}
 
       <Button label="Now draw it" arrow onPress={onContinue} />
     </View>

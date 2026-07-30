@@ -70,38 +70,31 @@ export type StrokeVerdictTable = Readonly<Record<StrokeVerdictId, StrokeVerdict>
  * Per-kana stroke notes shown when a character is first introduced.
  *
  * **Partial by design, not by omission.** The prototype only wrote these for the
- * first ten kana (the vowel and K rows) and fell back to a generic line for the
- * rest, so the type is `Partial`. Do not fill the gap with invented copy — use
- * `strokeNoteFor`, which reproduces the prototype's fallback exactly.
+ * first ten kana (the vowel and K rows), so the type is `Partial`. Do not fill
+ * the gap with invented copy — the remaining kana simply show no note.
+ *
+ * None of these state a stroke count: every screen that shows a note already
+ * shows the count beside it, on the pill or in the stroke-order diagram.
  */
 export const MEET_HINTS: KanaStrokeNoteTable = {
-  'あ': 'Three strokes. The last one curves back like a ribbon — that loop is what tells あ apart from お.',
-  'い': 'Two short strokes, both falling left to right. The shortest kana in the set.',
+  'あ': 'The last stroke curves back like a ribbon — that loop is what tells あ apart from お.',
+  'い': 'Both strokes fall left to right. The shortest kana in the set.',
   'う': 'A small tick, then one long curve. Keep the top stroke detached.',
   'え': 'A tick, then a shape like a folded flag. Compare it to ん later.',
   'お': 'Almost あ, but the loop opens the other way and it gains a flick on the right.',
-  'か': 'Three strokes. The long diagonal comes first, then the crossbar, then the flick.',
-  'き': 'Four strokes: two crossbars, then the long descent, then the curl.',
-  'く': 'One stroke. A single sharp corner, like the beak of a bird.',
-  'け': 'Three strokes. A vertical, then a lid, then a long right leg.',
-  'こ': 'Two strokes, both short and horizontal-ish. The easiest one in the row.',
+  'か': 'The long diagonal comes first, then the crossbar, then the flick.',
+  'き': 'Two crossbars, then the long descent, then the curl.',
+  'く': 'A single sharp corner, like the beak of a bird.',
+  'け': 'A vertical, then a lid, then a long right leg.',
+  'こ': 'Both strokes short and horizontal-ish. The easiest one in the row.',
 };
 
-/** The prototype's own wording for a stroke count: 'One stroke' or 'N strokes'. */
-function strokeCountText(strokes: number): string {
-  return strokes === 1 ? 'One stroke' : `${strokes} strokes`;
-}
-
 /**
- * The stroke note for a glyph, falling back to the prototype's generic line for
- * the 36 kana MEET_HINTS does not cover. Every kana therefore has a note, and no
- * caller has to handle `undefined`.
+ * The stroke note for a glyph, or `null` for the 36 kana MEET_HINTS does not
+ * cover. Callers render nothing rather than substituting a generic line.
  */
-export function strokeNoteFor(glyph: string, strokes: number): string {
-  return (
-    MEET_HINTS[glyph] ??
-    `${strokeCountText(strokes)}. Follow the faint guide, then try it once without.`
-  );
+export function strokeNoteFor(glyph: string): string | null {
+  return MEET_HINTS[glyph] ?? null;
 }
 
 /**
@@ -298,6 +291,106 @@ export const WORDS: KanaExampleWordTable = {
     { word: 'ほん', romaji: 'hon', gloss: 'book' },
     { word: 'にほん', romaji: 'nihon', gloss: 'Japan' },
   ],
+  'が': [
+    { word: 'えいが', romaji: 'eiga', gloss: 'a film' },
+    { word: 'がっこう', romaji: 'gakkō', gloss: 'school' },
+  ],
+  'ぎ': [
+    { word: 'ぎんこう', romaji: 'ginkō', gloss: 'a bank' },
+    { word: 'かぎ', romaji: 'kagi', gloss: 'a key' },
+  ],
+  'ぐ': [
+    { word: 'ぐあい', romaji: 'guai', gloss: 'condition' },
+    { word: 'かぐ', romaji: 'kagu', gloss: 'furniture' },
+  ],
+  'げ': [
+    { word: 'げんき', romaji: 'genki', gloss: 'well' },
+    { word: 'ひげ', romaji: 'hige', gloss: 'a beard' },
+  ],
+  'ご': [
+    { word: 'ごはん', romaji: 'gohan', gloss: 'a meal' },
+    { word: 'りんご', romaji: 'ringo', gloss: 'an apple' },
+  ],
+  'ざ': [
+    { word: 'ざっし', romaji: 'zasshi', gloss: 'a magazine' },
+    { word: 'ざせき', romaji: 'zaseki', gloss: 'a seat' },
+  ],
+  'じ': [
+    { word: 'じかん', romaji: 'jikan', gloss: 'time' },
+    { word: 'にじ', romaji: 'niji', gloss: 'a rainbow' },
+  ],
+  'ず': [
+    { word: 'みず', romaji: 'mizu', gloss: 'water' },
+    { word: 'ちず', romaji: 'chizu', gloss: 'a map' },
+  ],
+  'ぜ': [
+    { word: 'ぜんぶ', romaji: 'zenbu', gloss: 'all of it' },
+    { word: 'かぜ', romaji: 'kaze', gloss: 'wind' },
+  ],
+  'ぞ': [
+    { word: 'ぞう', romaji: 'zō', gloss: 'an elephant' },
+    { word: 'かぞく', romaji: 'kazoku', gloss: 'family' },
+  ],
+  'だ': [
+    { word: 'だいがく', romaji: 'daigaku', gloss: 'a university' },
+    { word: 'からだ', romaji: 'karada', gloss: 'the body' },
+  ],
+  'ぢ': [
+    { word: 'はなぢ', romaji: 'hanaji', gloss: 'a nosebleed' },
+    { word: 'ちぢむ', romaji: 'chijimu', gloss: 'to shrink' },
+  ],
+  'づ': [
+    { word: 'つづく', romaji: 'tsuzuku', gloss: 'to continue' },
+    { word: 'みかづき', romaji: 'mikazuki', gloss: 'a crescent moon' },
+  ],
+  'で': [
+    { word: 'でんわ', romaji: 'denwa', gloss: 'a telephone' },
+    { word: 'うで', romaji: 'ude', gloss: 'an arm' },
+  ],
+  'ど': [
+    { word: 'どうぶつ', romaji: 'dōbutsu', gloss: 'an animal' },
+    { word: 'まど', romaji: 'mado', gloss: 'a window' },
+  ],
+  'ば': [
+    { word: 'かばん', romaji: 'kaban', gloss: 'a bag' },
+    { word: 'そば', romaji: 'soba', gloss: 'buckwheat noodles' },
+  ],
+  'び': [
+    { word: 'びょういん', romaji: 'byōin', gloss: 'a hospital' },
+    { word: 'ゆび', romaji: 'yubi', gloss: 'a finger' },
+  ],
+  'ぶ': [
+    { word: 'ぶた', romaji: 'buta', gloss: 'a pig' },
+    { word: 'こんぶ', romaji: 'konbu', gloss: 'kelp' },
+  ],
+  'べ': [
+    { word: 'べんきょう', romaji: 'benkyō', gloss: 'study' },
+    { word: 'たべる', romaji: 'taberu', gloss: 'to eat' },
+  ],
+  'ぼ': [
+    { word: 'ぼうし', romaji: 'bōshi', gloss: 'a hat' },
+    { word: 'とんぼ', romaji: 'tonbo', gloss: 'a dragonfly' },
+  ],
+  'ぱ': [
+    { word: 'かんぱい', romaji: 'kanpai', gloss: 'cheers' },
+    { word: 'いっぱい', romaji: 'ippai', gloss: 'full' },
+  ],
+  'ぴ': [
+    { word: 'えんぴつ', romaji: 'enpitsu', gloss: 'a pencil' },
+    { word: 'ぴったり', romaji: 'pittari', gloss: 'exactly' },
+  ],
+  'ぷ': [
+    { word: 'おんぷ', romaji: 'onpu', gloss: 'a musical note' },
+    { word: 'てんぷら', romaji: 'tenpura', gloss: 'tempura' },
+  ],
+  'ぺ': [
+    { word: 'ぺこぺこ', romaji: 'peko peko', gloss: 'hungry' },
+    { word: 'ぺらぺら', romaji: 'pera pera', gloss: 'fluently' },
+  ],
+  'ぽ': [
+    { word: 'さんぽ', romaji: 'sanpo', gloss: 'a walk' },
+    { word: 'しっぽ', romaji: 'shippo', gloss: 'a tail' },
+  ],
 };
 
 /**
@@ -472,6 +565,24 @@ export const CONFUSIONS: KanaConfusionTable = {
   ],
   'ん': [
     { glyph: 'そ', romaji: 'so', note: 'so is angular' },
+  ],
+  'ば': [
+    { glyph: 'ぱ', romaji: 'pa', note: 'pa has a small circle' },
+  ],
+  'ぱ': [
+    { glyph: 'ば', romaji: 'ba', note: 'ba has two accent ticks' },
+  ],
+  'じ': [
+    { glyph: 'ぢ', romaji: 'ji', note: 'same sound, derived from chi' },
+  ],
+  'ぢ': [
+    { glyph: 'じ', romaji: 'ji', note: 'same sound, derived from shi' },
+  ],
+  'ず': [
+    { glyph: 'づ', romaji: 'zu', note: 'same sound, derived from tsu' },
+  ],
+  'づ': [
+    { glyph: 'ず', romaji: 'zu', note: 'same sound, derived from su' },
   ],
 };
 

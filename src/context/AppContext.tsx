@@ -20,6 +20,10 @@ import {
   getItem,
 } from '@/domain/curriculum';
 import {
+  completeLessonDrawing,
+  queuePracticeDrawing,
+} from '@/domain/drawings';
+import {
   classifyAnswer,
   isCorrectClassification,
   isNearMiss,
@@ -29,20 +33,21 @@ import {
   dueItems,
   dueTargets,
   weakItems,
-  WRITING_SKILL,
 } from '@/domain/scheduler';
 import {
   buildLessonSession,
   buildReviewSession,
   currentStep,
-  insertRecheck,
   localDateKey,
+  recordAttempt,
+  unique,
 } from '@/domain/session';
 import {
   learnerStateKey,
   type ActivePracticeSession,
   type AnswerClassification,
   type CurriculumManifest,
+  type DrawingEvent,
   type LearnerSettings,
   type LearnerSnapshot,
   type LearningItem,
@@ -71,7 +76,6 @@ interface AppContextValue {
   /** Massed practice on trouble spots. Distinct from the due queue. */
   startWeakSpots(): Promise<'practice' | 'complete'>;
   startUnit(unitId: string): Promise<void>;
-  advanceIntroduction(): Promise<boolean>;
   answerCurrent(
     answer: string,
     responseMs: number,
@@ -82,11 +86,10 @@ interface AppContextValue {
    * stroke geometry (and the learner's own call), not from a typed answer.
    */
   answerWriting(correct: boolean, responseMs: number): Promise<AnswerResult>;
-  /**
-   * Seed the writing schedule from the no-stakes practice trace after an
-   * introduction. Only ever recorded as a success, so practising cannot hurt.
-   */
-  recordWritingPractice(itemId: string): Promise<void>;
+  /** Persist one completed trace without conflating practice and scheduling. */
+  recordCompletedDrawing(
+    event: DrawingEvent,
+  ): Promise<{ sessionComplete: boolean }>;
   /**
    * Revert the last miss and count it as recalled. Offered only for a one-edit
    * slip, and never after the answer was revealed.
@@ -103,12 +106,11 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function unique(items: string[]): string[] {
-  return [...new Set(items)];
-}
-
 function getPinnedManifest(snapshot: LearnerSnapshot): CurriculumManifest {
-  if (snapshot.cachedManifest) {
+  if (
+    snapshot.cachedManifest &&
+    snapshot.cachedManifest.version >= BUNDLED_MANIFEST.version
+  ) {
     return snapshot.cachedManifest;
   }
   return BUNDLED_MANIFEST;
@@ -154,12 +156,36 @@ export function AppProvider({ children }: PropsWithChildren) {
         state,
       ]),
     );
-    const acceptedIds = new Set(result.acceptedEventIds);
+    // Discarded events leave the queue alongside the accepted ones: the server
+    // will never take them, so holding on would stall everything behind them.
+    const settledIds = new Set([
+      ...result.acceptedEventIds,
+      ...result.discardedEventIds,
+    ]);
+    // Drawing batches are idempotent, so keep the complete local batch until
+    // every sync channel succeeds. If reviews fail after drawings land, this
+    // avoids briefly dropping the visible count before canonical totals can be
+    // adopted safely.
+    const drawingsFullySynced = result.cloudStatus === 'synced';
+    const settledDrawingIds = new Set(
+      drawingsFullySynced
+        ? [
+            ...result.acceptedDrawingEventIds,
+            ...result.discardedDrawingEventIds,
+          ]
+        : [],
+    );
     const next: LearnerSnapshot = {
       ...syncing,
       skillStates: { ...syncing.skillStates, ...canonicalByKey },
       reviewOutbox: syncing.reviewOutbox.filter(
-        (event) => !acceptedIds.has(event.eventId),
+        (event) => !settledIds.has(event.eventId),
+      ),
+      drawingCounts: drawingsFullySynced
+        ? result.canonicalDrawingCounts
+        : syncing.drawingCounts,
+      drawingOutbox: syncing.drawingOutbox.filter(
+        (event) => !settledDrawingIds.has(event.eventId),
       ),
       sync: {
         cloudStatus: result.cloudStatus,
@@ -169,13 +195,22 @@ export function AppProvider({ children }: PropsWithChildren) {
             ? new Date().toISOString()
             : syncing.sync.lastSyncAt,
         lastError: result.error,
-        acceptedCount: syncing.sync.acceptedCount + result.acceptedCount,
+        acceptedCount:
+          syncing.sync.acceptedCount +
+          result.acceptedCount +
+          (drawingsFullySynced
+            ? result.acceptedDrawingEventIds.length
+            : 0),
       },
     };
     await persist(next);
     return {
-      pending: next.reviewOutbox.length,
-      accepted: result.acceptedCount,
+      pending: next.reviewOutbox.length + next.drawingOutbox.length,
+      accepted:
+        result.acceptedCount +
+        (drawingsFullySynced
+          ? result.acceptedDrawingEventIds.length
+          : 0),
     };
   }, [persist]);
 
@@ -259,16 +294,6 @@ export function AppProvider({ children }: PropsWithChildren) {
         ...current,
         activeSession: session,
         lastSummary: null,
-        activityEvents: [
-          ...current.activityEvents,
-          {
-            id: session.id,
-            type: 'module_started',
-            sessionId: session.id,
-            moduleId: unit.modules[0]?.id,
-            occurredAt: new Date().toISOString(),
-          },
-        ],
       });
     },
     [persist],
@@ -347,15 +372,6 @@ export function AppProvider({ children }: PropsWithChildren) {
           outcomes: session.outcomes,
           completedAt,
         },
-        activityEvents: [
-          ...current.activityEvents,
-          {
-            id: `complete-${session.id}`,
-            type: 'session_completed',
-            sessionId: session.id,
-            occurredAt: completedAt,
-          },
-        ],
       });
       void syncNow();
       return true;
@@ -363,42 +379,31 @@ export function AppProvider({ children }: PropsWithChildren) {
     [persist, syncNow],
   );
 
-  const advanceIntroduction = useCallback(async () => {
-    const current = snapshotRef.current;
-    const session = current.activeSession;
-    const activeStep = currentStep(session);
-    if (!session || !activeStep || activeStep.kind !== 'introduction') {
-      return false;
-    }
-    const now = new Date().toISOString();
-    const nextSession: ActivePracticeSession = {
-      ...session,
-      currentIndex: session.currentIndex + 1,
-      updatedAt: now,
-      outcomes: {
-        ...session.outcomes,
-        introducedItemIds: unique([
-          ...session.outcomes.introducedItemIds,
-          activeStep.itemId,
-        ]),
-      },
-    };
-    const next = {
-      ...current,
-      activityEvents: [
-        ...current.activityEvents,
-        {
-          id: activeStep.id,
-          type: 'item_exposed' as const,
-          sessionId: session.id,
-          moduleId: activeStep.moduleId,
-          itemId: activeStep.itemId,
-          occurredAt: now,
-        },
-      ],
-    };
-    return finishIfComplete(nextSession, next);
-  }, [finishIfComplete]);
+  /**
+   * The two things every graded answer owes the learner, whichever skill was
+   * asked: the feel of the verdict, and a chance to get the work off the device.
+   */
+  const afterAnswer = useCallback(
+    (next: LearnerSnapshot, correct: boolean, sessionComplete: boolean) => {
+      if (snapshotRef.current.settings.hapticsEnabled) {
+        void Haptics.notificationAsync(
+          correct
+            ? Haptics.NotificationFeedbackType.Success
+            : Haptics.NotificationFeedbackType.Warning,
+        );
+      }
+      // A completed session syncs on its own; mid-session this keeps a long
+      // queue from only ever draining at the end.
+      if (
+        !sessionComplete &&
+        next.reviewOutbox.length > 0 &&
+        next.reviewOutbox.length % 5 === 0
+      ) {
+        void syncNow();
+      }
+    },
+    [syncNow],
+  );
 
   const answerCurrent = useCallback(
     async (
@@ -441,29 +446,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         reviewedAt,
       );
 
-      let nextSession: ActivePracticeSession = {
-        ...session,
-        currentIndex: session.currentIndex + 1,
-        updatedAt: reviewedAt.toISOString(),
-        outcomes: {
-          ...session.outcomes,
-          strengthenedItemIds: correct
-            ? unique([
-                ...session.outcomes.strengthenedItemIds,
-                activeStep.itemId,
-              ])
-            : session.outcomes.strengthenedItemIds,
-          againItemIds: correct
-            ? session.outcomes.againItemIds
-            : unique([...session.outcomes.againItemIds, activeStep.itemId]),
-          correctAttempts:
-            session.outcomes.correctAttempts + (correct ? 1 : 0),
-          totalAttempts: session.outcomes.totalAttempts + 1,
-        },
-      };
-      if (!correct) {
-        nextSession = insertRecheck(nextSession, activeStep);
-      }
+      const nextSession = recordAttempt(
+        session,
+        activeStep,
+        correct,
+        reviewedAt,
+      );
 
       const event = {
         eventId: activeStep.id,
@@ -496,20 +484,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       }
 
       const sessionComplete = await finishIfComplete(nextSession, next);
-      if (
-        !sessionComplete &&
-        next.reviewOutbox.length > 0 &&
-        next.reviewOutbox.length % 5 === 0
-      ) {
-        void syncNow();
-      }
-      if (snapshotRef.current.settings.hapticsEnabled) {
-        void Haptics.notificationAsync(
-          correct
-            ? Haptics.NotificationFeedbackType.Success
-            : Haptics.NotificationFeedbackType.Warning,
-        );
-      }
+      afterAnswer(next, correct, sessionComplete);
       return {
         correct,
         classification,
@@ -517,7 +492,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         sessionComplete,
       };
     },
-    [finishIfComplete, syncNow],
+    [afterAnswer, finishIfComplete],
   );
 
   const answerWriting = useCallback(
@@ -543,25 +518,12 @@ export function AppProvider({ children }: PropsWithChildren) {
         reviewedAt,
       );
 
-      let nextSession: ActivePracticeSession = {
-        ...session,
-        currentIndex: session.currentIndex + 1,
-        updatedAt: reviewedAt.toISOString(),
-        outcomes: {
-          ...session.outcomes,
-          strengthenedItemIds: correct
-            ? unique([...session.outcomes.strengthenedItemIds, activeStep.itemId])
-            : session.outcomes.strengthenedItemIds,
-          againItemIds: correct
-            ? session.outcomes.againItemIds
-            : unique([...session.outcomes.againItemIds, activeStep.itemId]),
-          correctAttempts: session.outcomes.correctAttempts + (correct ? 1 : 0),
-          totalAttempts: session.outcomes.totalAttempts + 1,
-        },
-      };
-      if (!correct) {
-        nextSession = insertRecheck(nextSession, activeStep);
-      }
+      const nextSession = recordAttempt(
+        session,
+        activeStep,
+        correct,
+        reviewedAt,
+      );
 
       const next: LearnerSnapshot = {
         ...current,
@@ -587,6 +549,7 @@ export function AppProvider({ children }: PropsWithChildren) {
       };
 
       const sessionComplete = await finishIfComplete(nextSession, next);
+      afterAnswer(next, correct, sessionComplete);
       return {
         correct,
         classification: correct ? 'exact' : 'incorrect',
@@ -594,48 +557,37 @@ export function AppProvider({ children }: PropsWithChildren) {
         sessionComplete,
       };
     },
-    [finishIfComplete],
+    [afterAnswer, finishIfComplete],
   );
 
-  const recordWritingPractice = useCallback(
-    async (itemId: string) => {
+  const recordCompletedDrawing = useCallback(
+    async (event: DrawingEvent): Promise<{ sessionComplete: boolean }> => {
       const current = snapshotRef.current;
-      const stateKey = learnerStateKey(itemId, WRITING_SKILL);
-      // Practice is no-stakes: it can start the writing schedule but never
-      // damage one, so an existing state is left alone.
-      if (current.skillStates[stateKey]) {
-        return;
+
+      if (event.source !== 'lesson') {
+        await persist(queuePracticeDrawing(current, event));
+        void syncNow();
+        return { sessionComplete: false };
       }
-      const reviewedAt = new Date();
-      const nextState = applyReview(
-        undefined,
-        itemId,
-        WRITING_SKILL,
-        Rating.Good,
-        reviewedAt,
+
+      const completion = completeLessonDrawing(
+        current,
+        getPinnedManifest(current),
+        event,
       );
-      await persist({
-        ...current,
-        skillStates: { ...current.skillStates, [stateKey]: nextState },
-        reviewOutbox: [
-          ...current.reviewOutbox,
-          {
-            eventId: Crypto.randomUUID(),
-            sessionId: current.activeSession?.id ?? 'practice',
-            itemId,
-            skillId: WRITING_SKILL,
-            answer: '',
-            classification: 'exact' as const,
-            rating: Rating.Good,
-            responseMs: 0,
-            exerciseVersion: 1,
-            reviewedAt: reviewedAt.toISOString(),
-            expectedStateVersion: 0,
-          },
-        ],
-      });
+      if (completion.duplicate) {
+        return { sessionComplete: false };
+      }
+      const sessionComplete = await finishIfComplete(
+        completion.session,
+        completion.snapshot,
+      );
+      if (!sessionComplete) {
+        void syncNow();
+      }
+      return { sessionComplete };
     },
-    [persist],
+    [finishIfComplete, persist, syncNow],
   );
 
   const undoLastMiss = useCallback(async (): Promise<AnswerResult | null> => {
@@ -807,10 +759,9 @@ export function AppProvider({ children }: PropsWithChildren) {
     startContinue,
     startWeakSpots,
     startUnit,
-    advanceIntroduction,
     answerCurrent,
     answerWriting,
-    recordWritingPractice,
+    recordCompletedDrawing,
     undoLastMiss,
     closeSummary,
     updateSettings,

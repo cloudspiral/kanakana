@@ -8,22 +8,28 @@ The learner sees a simple guided journey. Internally, curriculum content, teachi
 flowchart LR
   Manifest["Versioned curriculum manifest"] --> Registry["Validated renderer registry"]
   Registry --> Lesson["Guided teaching modules"]
-  Lesson --> Events["Standardized activity + review events"]
+  Lesson --> Events["Review + completed-drawing events"]
   Events --> Local["Local transaction<br/>SQLite or browser storage"]
   Local --> UI["Immediate next prompt"]
-  Local --> Outbox["Durable review outbox"]
-  Outbox --> Edge["Authenticated submit-reviews function"]
-  Edge --> Grade["Canonical grading + FSRS"]
+  Local --> Outbox["Durable review + drawing outboxes"]
+  Outbox --> ReviewEdge["Authenticated submit-reviews"]
+  Outbox --> DrawingEdge["Authenticated submit-drawings"]
+  ReviewEdge --> Grade["Canonical grading + FSRS"]
   Grade --> RPC["Atomic idempotent Postgres RPC"]
   RPC --> State["Canonical item × skill state"]
+  ReviewEdge --> Counts["Canonical drawing counts"]
+  DrawingEdge --> Counts
   State --> Local
+  Counts --> Local
 ```
 
 ## Domain model
 
 `LearningItem` is generic and versioned. Hiragana content currently contains a glyph, Hepburn answer, accepted alternatives, and gojūon placement. A future kanji item can add meanings, multiple readings, components, and stroke resources without changing learner progress keys.
 
-`SkillDefinition` describes one independently scheduled competency. V1 has `kana_reading`. Future examples include audio recognition, handwriting production, kanji meaning recall, or vocabulary reading.
+`SkillDefinition` describes one independently scheduled competency. Curriculum
+v3 has `kana_reading` and `kana_writing`. Future examples include audio
+recognition, kanji meaning recall, or vocabulary reading.
 
 `LearnerSkillState` is uniquely addressed by:
 
@@ -68,6 +74,12 @@ At every answer, the app:
 
 Network failure leaves the outbox intact and never blocks practice.
 
+A completed lesson trace advances its introduction and seeds `kana_writing`
+once. Scheduled writing reviews then advance FSRS normally. A trace opened from
+a profile is different: it queues only a `DrawingEvent`, so it can increment
+`times drawn` across devices without creating or changing a schedule. The client
+shows the canonical server count plus unsynced local drawing/writing events.
+
 ## Server trust boundary
 
 The client cannot write `review_events` or `learner_skill_states` directly.
@@ -86,7 +98,16 @@ The client cannot write `review_events` or `learner_skill_states` directly.
 
 The RPC performs state transition and event insert in one database transaction. Event UUIDs make retries idempotent. The database stores correctness, classification, timing, version, and rating—never arbitrary typed answer text.
 
-RLS allows published curriculum reads and restricts every learner row to `auth.uid()`. Review history and mastery have SELECT-only client grants; mutation occurs through the authenticated security-definer RPC.
+`submit-drawings` accepts batches of completion metadata, derives ownership from
+the authenticated JWT, validates item IDs against the current published
+curriculum, and commits idempotently. It returns canonical per-item totals and
+never touches `learner_skill_states`. A database trigger counts accepted writing
+reviews, including historical backfill. No stroke path, point, or geometry is
+sent or stored.
+
+RLS allows published curriculum reads and restricts every learner row to
+`auth.uid()`. Review history, drawing history, and mastery have SELECT-only
+client grants; mutation occurs through authenticated security-definer RPCs.
 
 ## Scalability
 

@@ -5,6 +5,8 @@ import {
   buildLessonSession,
   buildReviewSession,
   insertRecheck,
+  recordAttempt,
+  resolveReviewSessionId,
 } from '../session';
 
 vi.mock('expo-crypto', () => {
@@ -77,14 +79,124 @@ describe('practice queue construction', () => {
       ).slice(0, 2),
     ];
     const session = buildReviewSession(
-    BUNDLED_MANIFEST,
-    items.map((item) => ({ item, skillId: 'kana_reading' as const })),
-  );
+      BUNDLED_MANIFEST,
+      items.map((item) => ({ item, skillId: 'kana_reading' as const })),
+    );
     const rows = session.steps.map(
       (step) =>
         BUNDLED_MANIFEST.items.find((item) => item.id === step.itemId)!.content
           .rowId,
     );
     expect(rows).toEqual(['vowels', 'k', 'vowels', 'k']);
+  });
+
+  it('keeps reading and writing distinct for the same kana', () => {
+    const [a, i] = BUNDLED_MANIFEST.items;
+    const session = buildReviewSession(BUNDLED_MANIFEST, [
+      { item: a, skillId: 'kana_reading' },
+      { item: a, skillId: 'kana_writing' },
+      { item: i, skillId: 'kana_reading' },
+    ]);
+
+    expect(
+      session.steps.map((step) => ({
+        itemId: step.itemId,
+        skillId: step.skillId,
+        moduleType: step.moduleType,
+      })),
+    ).toEqual([
+      {
+        itemId: a.id,
+        skillId: 'kana_reading',
+        moduleType: 'kana-reading-input-v1',
+      },
+      {
+        itemId: i.id,
+        skillId: 'kana_reading',
+        moduleType: 'kana-reading-input-v1',
+      },
+      {
+        itemId: a.id,
+        skillId: 'kana_writing',
+        moduleType: 'kana-writing-input-v1',
+      },
+    ]);
+  });
+});
+
+describe('grading a prompt', () => {
+  const reviewSession = () =>
+    buildReviewSession(
+      BUNDLED_MANIFEST,
+      BUNDLED_MANIFEST.items
+        .slice(0, 5)
+        .map((item) => ({ item, skillId: 'kana_reading' as const })),
+    );
+
+  it('tallies a hit and moves on', () => {
+    const session = reviewSession();
+    const graded = recordAttempt(session, session.steps[0], true);
+
+    expect(graded.currentIndex).toBe(1);
+    expect(graded.steps).toHaveLength(session.steps.length);
+    expect(graded.outcomes).toMatchObject({
+      strengthenedItemIds: [session.steps[0].itemId],
+      againItemIds: [],
+      correctAttempts: 1,
+      totalAttempts: 1,
+    });
+  });
+
+  it('re-queues a miss for a recheck without re-counting the item', () => {
+    const session = reviewSession();
+    const failed = session.steps[0];
+    const graded = recordAttempt(session, failed, false);
+
+    expect(graded.outcomes).toMatchObject({
+      strengthenedItemIds: [],
+      againItemIds: [failed.itemId],
+      correctAttempts: 0,
+      totalAttempts: 1,
+    });
+    // Three prompts intervene before the retry: it lands three past the one
+    // the learner is about to see, not three past the one they just missed.
+    const recheck = graded.steps[4];
+    expect(recheck.itemId).toBe(failed.itemId);
+    expect(recheck.isRecheck).toBe(true);
+    // A fresh step ID keeps the retry from colliding with the original review
+    // event, which the server keys on.
+    expect(recheck.id).not.toBe(failed.id);
+  });
+
+  it('counts a second miss of the same item once in the tally', () => {
+    const session = reviewSession();
+    const once = recordAttempt(session, session.steps[0], false);
+    const twice = recordAttempt(once, once.steps[1], false);
+
+    expect(twice.outcomes.againItemIds).toEqual([
+      session.steps[0].itemId,
+      once.steps[1].itemId,
+    ]);
+    expect(twice.outcomes.totalAttempts).toBe(2);
+  });
+});
+
+describe('review event session IDs', () => {
+  it('keeps the active practice session ID', () => {
+    const activeSessionId = 'bc6ccab1-dcac-47c2-9f35-b6397ccde601';
+
+    expect(resolveReviewSessionId(activeSessionId)).toBe(activeSessionId);
+  });
+
+  it('mints a session ID for standalone practice', () => {
+    const first = resolveReviewSessionId(undefined);
+    const second = resolveReviewSessionId(undefined);
+
+    expect(first).toMatch(/^test-id-\d+$/);
+    expect(second).not.toBe(first);
+  });
+
+  it('repairs the legacy practice placeholder', () => {
+    expect(resolveReviewSessionId('practice')).toMatch(/^test-id-\d+$/);
   });
 });

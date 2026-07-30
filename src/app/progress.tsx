@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useRouter } from 'expo-router';
@@ -8,8 +9,13 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { AppText, Kana } from '@/components/Typography';
 import { Colors, Fonts, Radius } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
-import { bareRowLabel, GOJUON_ROWS } from '@/domain/curriculum';
 import { inkColor } from '@/domain/ink';
+import {
+  kanaGridRows,
+  lensProgress,
+  voicedLensAvailable,
+  type KanaLens,
+} from '@/domain/kanaGrid';
 import { learnerStateKey } from '@/domain/types';
 
 const COLUMNS = [0, 1, 2, 3, 4];
@@ -22,19 +28,21 @@ const LEGEND_KNOWN = 'rgba(27, 26, 23, 0.95)';
 export default function ProgressRoute() {
   const app = useApp();
   const router = useRouter();
+  const [lens, setLens] = useState<KanaLens>('plain');
   if (!app.ready) {
     return <LoadingScreen />;
   }
 
-  const introduced = app.manifest.items.filter((item) =>
-    Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
-  ).length;
+  const showLens = voicedLensAvailable(app.manifest, app.snapshot);
+  const activeLens = showLens ? lens : 'plain';
+  const progress = lensProgress(app.manifest, app.snapshot, activeLens);
+  const rows = kanaGridRows(app.manifest, app.snapshot, activeLens);
 
   return (
     <AppScreen bottomNav={<BottomNav />}>
       <AppText variant="kicker">Your kana</AppText>
       <AppText style={styles.title}>
-        {introduced} of {app.manifest.items.length} kana
+        {progress.introduced} of {progress.total} {progress.label}
       </AppText>
       <AppText variant="bodySmall" style={styles.intro}>
         These forty-six will carry every Japanese word you ever read. The darker
@@ -53,6 +61,40 @@ export default function ProgressRoute() {
         </View>
       </View>
 
+      {showLens ? (
+        <View style={styles.lens} accessibilityRole="tablist">
+          {(
+            [
+              ['plain', 'Plain'],
+              ['dakuten', 'Voiced ゛'],
+              ['handakuten', 'P-row ゜'],
+            ] as const
+          ).map(([value, label], index) => {
+            const selected = activeLens === value;
+            return (
+              <Pressable
+                key={value}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                onPress={() => setLens(value)}
+                style={[
+                  styles.lensOption,
+                  index > 0 && styles.lensDivided,
+                  selected && styles.lensSelected,
+                ]}>
+                <AppText
+                  style={[
+                    styles.lensLabel,
+                    selected && styles.lensLabelSelected,
+                  ]}>
+                  {label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
       <View style={styles.grid}>
         <View style={styles.columnLabels}>
           {COLUMN_LABELS.map((column) => (
@@ -62,18 +104,21 @@ export default function ProgressRoute() {
           ))}
         </View>
 
-        {GOJUON_ROWS.map((row) => (
+        {rows.map((row) => (
           <View key={row.id} style={styles.row}>
+            {/* Not bareRowLabel: stripping "Final" off ん leaves a second row
+                labelled N, and in a chart that word is the whole distinction. */}
             <AppText numberOfLines={1} style={styles.rowLabel}>
-              {bareRowLabel(row.shortTitle)}
+              {row.label}
             </AppText>
             <View style={styles.rowCells}>
               {COLUMNS.map((column) => {
-                const item = app.manifest.items.find(
-                  (candidate) =>
-                    candidate.content.rowId === row.id &&
-                    candidate.content.column === column,
-                );
+                const cell = row.cells[column];
+                const item = cell.itemId
+                  ? app.manifest.items.find(
+                      (candidate) => candidate.id === cell.itemId,
+                    )
+                  : undefined;
                 // Gaps in the gojūon (ゐ, ゑ and friends) render as nothing.
                 if (!item) {
                   return <View key={column} style={styles.cell} />;
@@ -95,6 +140,9 @@ export default function ProgressRoute() {
                     <Kana size="gridCell" color={inkColor(state)}>
                       {item.content.glyph}
                     </Kana>
+                    {activeLens === 'plain' && cell.tick ? (
+                      <AppText style={styles.markTick}>{cell.tick}</AppText>
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -134,6 +182,38 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: Colors.inkMuted,
   },
+  lens: {
+    flexDirection: 'row',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: Colors.rule,
+    borderRadius: Radius.rect,
+    overflow: 'hidden',
+    backgroundColor: Colors.card,
+  },
+  lensOption: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  lensDivided: {
+    borderLeftWidth: 1,
+    borderLeftColor: Colors.rule,
+  },
+  lensSelected: {
+    backgroundColor: Colors.ink,
+  },
+  lensLabel: {
+    fontFamily: Fonts.sansMedium,
+    fontSize: 12,
+    lineHeight: 17,
+    color: Colors.inkMuted,
+  },
+  lensLabelSelected: {
+    color: Colors.paper,
+  },
 
   grid: {
     marginTop: 14,
@@ -146,7 +226,7 @@ const styles = StyleSheet.create({
   },
   columnLabels: {
     flexDirection: 'row',
-    marginLeft: 46,
+    marginLeft: 54,
     marginBottom: 6,
   },
   columnLabel: {
@@ -163,8 +243,9 @@ const styles = StyleSheet.create({
     height: 43,
   },
   rowLabel: {
-    // 38 in the design, but "VOWELS" uppercased with tracking needs 46.
-    width: 46,
+    // 38 in the design, but "VOWELS" uppercased with tracking needs 46 — and
+    // "FINAL N" needs a little more again.
+    width: 54,
     fontFamily: Fonts.sansMedium,
     fontSize: 10,
     letterSpacing: 0.8,
@@ -180,5 +261,15 @@ const styles = StyleSheet.create({
     height: 43,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  markTick: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    fontFamily: Fonts.kanaLight,
+    fontSize: 11,
+    lineHeight: 13,
+    color: Colors.accent,
   },
 });

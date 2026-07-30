@@ -1,26 +1,84 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUNDLED_MANIFEST, GOJUON_ROWS } from '../curriculum';
+import {
+  BUNDLED_MANIFEST,
+  CURRICULUM_ROWS,
+  DAKUTEN_KANA_COUNT,
+  HANDAKUTEN_KANA_COUNT,
+  TOTAL_KANA_COUNT,
+} from '../curriculum';
 import { curriculumManifestSchema, validateSupportedModules } from '../schemas';
 
 describe('bundled hiragana curriculum', () => {
-  it('contains all 46 unique basic modern hiragana', () => {
-    expect(BUNDLED_MANIFEST.items).toHaveLength(46);
+  it('contains 46 base and 25 independently scheduled derived kana', () => {
+    expect(BUNDLED_MANIFEST.version).toBe(3);
+    expect(BUNDLED_MANIFEST.items).toHaveLength(TOTAL_KANA_COUNT);
     expect(new Set(BUNDLED_MANIFEST.items.map((item) => item.id))).toHaveLength(
-      46,
+      TOTAL_KANA_COUNT,
     );
     expect(
       new Set(BUNDLED_MANIFEST.items.map((item) => item.content.glyph)),
+    ).toHaveLength(TOTAL_KANA_COUNT);
+    expect(
+      BUNDLED_MANIFEST.items.filter((item) => !item.content.derivedFrom),
     ).toHaveLength(46);
+    expect(
+      BUNDLED_MANIFEST.items.filter((item) => item.content.mark === 'dakuten'),
+    ).toHaveLength(DAKUTEN_KANA_COUNT);
+    expect(
+      BUNDLED_MANIFEST.items.filter(
+        (item) => item.content.mark === 'handakuten',
+      ),
+    ).toHaveLength(HANDAKUTEN_KANA_COUNT);
   });
 
-  it('keeps units in gojuon row order', () => {
+  it('interleaves voiced units immediately after their base rows', () => {
     expect(BUNDLED_MANIFEST.units.map((unit) => unit.id)).toEqual(
-      GOJUON_ROWS.map((row) => `unit-${row.id}`),
+      CURRICULUM_ROWS.map((row) => `unit-${row.id}`),
     );
     expect(BUNDLED_MANIFEST.units.map((unit) => unit.order)).toEqual(
-      GOJUON_ROWS.map((_, index) => index),
+      CURRICULUM_ROWS.map((_, index) => index),
     );
+    expect(BUNDLED_MANIFEST.units).toHaveLength(16);
+  });
+
+  it('keeps reciprocal base and derived links in the same grid cell', () => {
+    for (const item of BUNDLED_MANIFEST.items) {
+      if (item.content.derivedFrom) {
+        const parent = BUNDLED_MANIFEST.items.find(
+          (candidate) => candidate.id === item.content.derivedFrom,
+        );
+        expect(parent, item.id).toBeDefined();
+        expect(parent!.content.derivedForms).toContain(item.id);
+        expect(parent!.content.column).toBe(item.content.column);
+      }
+    }
+
+    const hRow = BUNDLED_MANIFEST.items.filter(
+      (item) => item.content.rowId === 'h' && !item.content.derivedFrom,
+    );
+    expect(hRow).toHaveLength(5);
+    for (const item of hRow) {
+      expect(item.content.derivedForms).toHaveLength(2);
+    }
+  });
+
+  it('uses Hepburn primaries with the requested accepted aliases', () => {
+    const byGlyph = Object.fromEntries(
+      BUNDLED_MANIFEST.items.map((item) => [item.content.glyph, item]),
+    );
+    expect(byGlyph['じ'].content).toMatchObject({
+      primaryAnswer: 'ji',
+      acceptedAnswers: ['ji', 'zi'],
+    });
+    expect(byGlyph['ぢ'].content).toMatchObject({
+      primaryAnswer: 'ji',
+      acceptedAnswers: ['ji', 'di'],
+    });
+    expect(byGlyph['づ'].content).toMatchObject({
+      primaryAnswer: 'zu',
+      acceptedAnswers: ['zu', 'du'],
+    });
   });
 
   it('targets generic item and skill pairs from every assessed module', () => {

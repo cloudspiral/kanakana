@@ -42,6 +42,13 @@ const requestSchema = z.object({
   events: z.array(eventSchema).min(1).max(50),
 });
 
+interface RejectedEvent {
+  eventId: string;
+  reason: string;
+  /** True when a retry can never succeed, so the client should stop sending it. */
+  permanent: boolean;
+}
+
 interface StateRow {
   item_id: string;
   skill_id: string;
@@ -213,12 +220,6 @@ Deno.serve(async (request) => {
     if (itemsError || skillsError) {
       throw itemsError ?? skillsError;
     }
-    if (items?.length !== itemIds.length || skills?.length !== skillIds.length) {
-      return Response.json(
-        { error: 'unknown_item_or_skill' },
-        { status: 400, headers: corsHeaders },
-      );
-    }
 
     const { data: initialStates, error: statesError } = await client
       .from('learner_skill_states')
@@ -238,14 +239,44 @@ Deno.serve(async (request) => {
         state,
       ]),
     );
+    const knownSkillIds = new Set(
+      ((skills ?? []) as { id: string }[]).map((skill) => skill.id),
+    );
     const acceptedEventIds: string[] = [];
+    const rejected: RejectedEvent[] = [];
+    /**
+     * item+skill keys whose chain has already broken in this batch. A later event
+     * for the same key is scheduled from the state the failed one would have
+     * written, so it has to wait for a retry rather than apply out of order.
+     */
+    const brokenChains = new Set<string>();
     const canonicalStates = new Map<
       string,
       ReturnType<typeof canonicalState>
     >();
 
     for (const event of body.events) {
-      const item = itemMap.get(event.itemId)!;
+      const key = stateKey(event.itemId, event.skillId);
+      const item = itemMap.get(event.itemId);
+
+      // Rejected one event at a time, not one batch at a time: an item dropped
+      // by a later release must not hold up every other event behind it.
+      if (!item || !knownSkillIds.has(event.skillId)) {
+        rejected.push({
+          eventId: event.eventId,
+          reason: 'unknown_item_or_skill',
+          permanent: true,
+        });
+        continue;
+      }
+      if (brokenChains.has(key)) {
+        rejected.push({
+          eventId: event.eventId,
+          reason: 'awaiting_earlier_event',
+          permanent: false,
+        });
+        continue;
+      }
 
       /**
        * Reading is re-graded here from the raw answer, so a client cannot claim
@@ -273,7 +304,6 @@ Deno.serve(async (request) => {
           );
       const correct = classificationIsCorrect(classification);
       const rating = correct ? Rating.Good : Rating.Again;
-      const key = stateKey(event.itemId, event.skillId);
       let previous = stateMap.get(key);
       let expectedVersion = previous?.version ?? 0;
       let scheduleAt = new Date(event.reviewedAt);
@@ -311,7 +341,13 @@ Deno.serve(async (request) => {
           .eq('skill_id', event.skillId)
           .single();
         if (refreshError) {
-          throw refreshError;
+          rejected.push({
+            eventId: event.eventId,
+            reason: refreshError.message,
+            permanent: false,
+          });
+          brokenChains.add(key);
+          continue;
         }
         previous = refreshed as StateRow;
         expectedVersion = previous.version;
@@ -328,8 +364,16 @@ Deno.serve(async (request) => {
         });
       }
 
+      // One event failing is not the batch failing. Keeping the rest moving is
+      // what stops a single unwritable event from stalling a whole queue.
       if (commit.error) {
-        throw commit.error;
+        rejected.push({
+          eventId: event.eventId,
+          reason: commit.error.message,
+          permanent: false,
+        });
+        brokenChains.add(key);
+        continue;
       }
       const committed = commit.data.state as StateRow;
       stateMap.set(key, committed);
@@ -341,6 +385,7 @@ Deno.serve(async (request) => {
       {
         acceptedEventIds,
         canonicalStates: [...canonicalStates.values()],
+        rejected,
       },
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );

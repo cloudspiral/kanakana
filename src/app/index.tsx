@@ -201,12 +201,16 @@ function Home() {
     ? `${weekday} · ${due.length} due`
     : `${weekday} · all clear`;
 
-  const headline = due.length
-    // "kana" is invariant in Japanese, so only the verb agrees.
-    ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
-    : nextUnit
-      ? `Ready for the ${nextRowLabel} row.`
-      : 'Every kana is in your ink.';
+  // An unfinished session is what the card offers, so the headline says so too
+  // rather than inviting a row the tap will not open.
+  const headline = hasActiveSession
+    ? 'Right where you left off.'
+    : due.length
+      // "kana" is invariant in Japanese, so only the verb agrees.
+      ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
+      : nextUnit
+        ? `Ready for the ${nextRowLabel} row.`
+        : 'Every kana is in your ink.';
 
   // Mirrors startContinue(): due reviews first, then the next row.
   const primary = hasActiveSession
@@ -238,10 +242,6 @@ function Home() {
           };
 
   const caughtUp = !hasActiveSession && !due.length && !nextUnit;
-
-  const brushGlyph = app.manifest.items.find((item) =>
-    Boolean(app.snapshot.skillStates[learnerStateKey(item.id, 'kana_reading')]?.reps),
-  )?.content.glyph;
 
   const weak = useMemo(
     () => weakItems(app.manifest.items, app.snapshot.skillStates),
@@ -344,32 +344,8 @@ function Home() {
         </Pressable>
       ) : null}
 
-      {/* Brush practice. Falls through to the lesson when nothing has been met
-          yet, rather than opening an empty drawing session. */}
-      <Pressable
-        accessibilityRole="button"
-        onPress={() =>
-          brushGlyph
-            ? router.push({ pathname: '/trace', params: { glyph: brushGlyph } })
-            : startPrimary()
-        }
-        style={({ pressed }) => [styles.brushRow, pressed && styles.brushRowPressed]}>
-        <View style={styles.brushTile}>
-          <Kana style={styles.brushGlyph}>{brushGlyph ?? 'あ'}</Kana>
-        </View>
-        <View style={styles.brushCopy}>
-          <AppText style={styles.brushTitle}>Brush practice</AppText>
-          <AppText style={styles.brushLine}>
-            {brushGlyph
-              ? `Draw a kana you've met · 2 min`
-              : 'Unlocks once you’ve met your first kana'}
-          </AppText>
-        </View>
-        <AppText style={styles.brushArrow} aria-hidden>
-          →
-        </AppText>
-      </Pressable>
-
+      {/* No brush-practice row: drawing a specific character belongs to that
+          character's own page, reached from the kana chart. */}
     </AppScreen>
   );
 }
@@ -401,9 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.gutter,
     paddingBottom: Spacing.gutter,
-  },
-  centered: {
-    alignSelf: 'center',
   },
   cornerKana: {
     position: 'absolute',
@@ -618,21 +591,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 17,
     color: Colors.accent,
-  },
-  brushTile: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.accent,
-    borderRadius: Radius.small,
-    backgroundColor: Colors.accentSoft,
-  },
-  brushGlyph: {
-    fontSize: 22,
-    lineHeight: 28,
-    color: 'rgba(188, 62, 39, 0.45)',
   },
   brushCopy: {
     flex: 1,

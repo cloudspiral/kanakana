@@ -1,6 +1,7 @@
 import type {
   CurriculumManifest,
   CurriculumUnit,
+  DerivedMark,
   LearningItem,
   TeachingModuleDefinition,
 } from './types';
@@ -9,14 +10,22 @@ import {
   validateSupportedModules,
 } from './schemas';
 
+export const BASE_KANA_COUNT = 46;
+export const DAKUTEN_KANA_COUNT = 20;
+export const HANDAKUTEN_KANA_COUNT = 5;
+export const TOTAL_KANA_COUNT =
+  BASE_KANA_COUNT + DAKUTEN_KANA_COUNT + HANDAKUTEN_KANA_COUNT;
+
 interface KanaSeed {
   glyph: string;
   romaji: string;
   aliases?: string[];
   column: number;
+  baseGlyph?: string;
+  mark?: DerivedMark;
 }
 
-interface RowSeed {
+export interface RowSeed {
   id: string;
   title: string;
   shortTitle: string;
@@ -147,6 +156,144 @@ export const GOJUON_ROWS: RowSeed[] = [
   },
 ];
 
+const VOICED_ROWS: RowSeed[] = [
+  {
+    id: 'g',
+    title: 'The G row',
+    shortTitle: 'G row',
+    kana: [
+      { glyph: 'が', romaji: 'ga', column: 0, baseGlyph: 'か', mark: 'dakuten' },
+      { glyph: 'ぎ', romaji: 'gi', column: 1, baseGlyph: 'き', mark: 'dakuten' },
+      { glyph: 'ぐ', romaji: 'gu', column: 2, baseGlyph: 'く', mark: 'dakuten' },
+      { glyph: 'げ', romaji: 'ge', column: 3, baseGlyph: 'け', mark: 'dakuten' },
+      { glyph: 'ご', romaji: 'go', column: 4, baseGlyph: 'こ', mark: 'dakuten' },
+    ],
+  },
+  {
+    id: 'z',
+    title: 'The Z row',
+    shortTitle: 'Z row',
+    kana: [
+      { glyph: 'ざ', romaji: 'za', column: 0, baseGlyph: 'さ', mark: 'dakuten' },
+      {
+        glyph: 'じ',
+        romaji: 'ji',
+        aliases: ['zi'],
+        column: 1,
+        baseGlyph: 'し',
+        mark: 'dakuten',
+      },
+      { glyph: 'ず', romaji: 'zu', column: 2, baseGlyph: 'す', mark: 'dakuten' },
+      { glyph: 'ぜ', romaji: 'ze', column: 3, baseGlyph: 'せ', mark: 'dakuten' },
+      { glyph: 'ぞ', romaji: 'zo', column: 4, baseGlyph: 'そ', mark: 'dakuten' },
+    ],
+  },
+  {
+    id: 'd',
+    title: 'The D row',
+    shortTitle: 'D row',
+    kana: [
+      { glyph: 'だ', romaji: 'da', column: 0, baseGlyph: 'た', mark: 'dakuten' },
+      {
+        glyph: 'ぢ',
+        romaji: 'ji',
+        aliases: ['di'],
+        column: 1,
+        baseGlyph: 'ち',
+        mark: 'dakuten',
+      },
+      {
+        glyph: 'づ',
+        romaji: 'zu',
+        aliases: ['du'],
+        column: 2,
+        baseGlyph: 'つ',
+        mark: 'dakuten',
+      },
+      { glyph: 'で', romaji: 'de', column: 3, baseGlyph: 'て', mark: 'dakuten' },
+      { glyph: 'ど', romaji: 'do', column: 4, baseGlyph: 'と', mark: 'dakuten' },
+    ],
+  },
+  {
+    id: 'b',
+    title: 'The B row',
+    shortTitle: 'B row',
+    kana: [
+      { glyph: 'ば', romaji: 'ba', column: 0, baseGlyph: 'は', mark: 'dakuten' },
+      { glyph: 'び', romaji: 'bi', column: 1, baseGlyph: 'ひ', mark: 'dakuten' },
+      { glyph: 'ぶ', romaji: 'bu', column: 2, baseGlyph: 'ふ', mark: 'dakuten' },
+      { glyph: 'べ', romaji: 'be', column: 3, baseGlyph: 'へ', mark: 'dakuten' },
+      { glyph: 'ぼ', romaji: 'bo', column: 4, baseGlyph: 'ほ', mark: 'dakuten' },
+    ],
+  },
+  {
+    id: 'p',
+    title: 'The P row',
+    shortTitle: 'P row',
+    kana: [
+      {
+        glyph: 'ぱ',
+        romaji: 'pa',
+        column: 0,
+        baseGlyph: 'は',
+        mark: 'handakuten',
+      },
+      {
+        glyph: 'ぴ',
+        romaji: 'pi',
+        column: 1,
+        baseGlyph: 'ひ',
+        mark: 'handakuten',
+      },
+      {
+        glyph: 'ぷ',
+        romaji: 'pu',
+        column: 2,
+        baseGlyph: 'ふ',
+        mark: 'handakuten',
+      },
+      {
+        glyph: 'ぺ',
+        romaji: 'pe',
+        column: 3,
+        baseGlyph: 'へ',
+        mark: 'handakuten',
+      },
+      {
+        glyph: 'ぽ',
+        romaji: 'po',
+        column: 4,
+        baseGlyph: 'ほ',
+        mark: 'handakuten',
+      },
+    ],
+  },
+];
+
+const rowById = new Map(
+  [...GOJUON_ROWS, ...VOICED_ROWS].map((row) => [row.id, row]),
+);
+
+/** Lesson order: each voiced sound rule follows the base row it modifies. */
+export const CURRICULUM_ROWS: RowSeed[] = [
+  rowById.get('vowels')!,
+  rowById.get('k')!,
+  rowById.get('g')!,
+  rowById.get('s')!,
+  rowById.get('z')!,
+  rowById.get('t')!,
+  rowById.get('d')!,
+  rowById.get('n')!,
+  rowById.get('h')!,
+  rowById.get('b')!,
+  rowById.get('p')!,
+  rowById.get('m')!,
+  rowById.get('y')!,
+  rowById.get('r')!,
+  rowById.get('w')!,
+  rowById.get('final-n')!,
+];
+
 function itemId(rowId: string, answer: string) {
   return `hiragana-${rowId}-${answer.replace("'", '')}`;
 }
@@ -170,30 +317,22 @@ function createModule(
   };
 }
 
-/**
- * A lesson meets every kana in the row, then checks the whole row.
- *
- * An earlier shape introduced two, tested those two, then introduced the rest —
- * which asked for か again immediately after meeting き, before the row had
- * settled at all. Meeting the set first gives each one a moment to sit before
- * any of them is asked for.
- */
+/** A lesson meets every kana in the row before checking the whole row. */
 function createUnit(row: RowSeed, order: number): CurriculumUnit {
   const modules: TeachingModuleDefinition[] = [
     createModule(row, 'intro', 'kana-introduction-v1', row.kana),
     createModule(row, 'check-all', 'kana-reading-input-v1', row.kana),
+    {
+      id: `${row.id}-summary`,
+      moduleType: 'session-summary-v1',
+      schemaVersion: 1,
+      content: { heading: `${row.title} complete` },
+      targets: row.kana.map((seed) => ({
+        itemId: itemId(row.id, seed.romaji),
+        skillId: 'kana_reading',
+      })),
+    },
   ];
-
-  modules.push({
-    id: `${row.id}-summary`,
-    moduleType: 'session-summary-v1',
-    schemaVersion: 1,
-    content: { heading: `${row.title} complete` },
-    targets: row.kana.map((seed) => ({
-      itemId: itemId(row.id, seed.romaji),
-      skillId: 'kana_reading',
-    })),
-  });
 
   return {
     id: `unit-${row.id}`,
@@ -204,28 +343,63 @@ function createUnit(row: RowSeed, order: number): CurriculumUnit {
   };
 }
 
-const items: LearningItem[] = GOJUON_ROWS.flatMap((row) =>
-  row.kana.map((seed) => ({
-    id: itemId(row.id, seed.romaji),
-    kind: 'hiragana' as const,
-    schemaVersion: 1,
-    content: {
-      glyph: seed.glyph,
-      primaryAnswer: seed.romaji,
-      acceptedAnswers: [seed.romaji, ...(seed.aliases ?? [])],
-      rowId: row.id,
-      rowLabel: row.shortTitle,
-      column: seed.column,
-    },
+const seedEntries = CURRICULUM_ROWS.flatMap((row, rowOrder) =>
+  row.kana.map((seed, itemOrder) => ({
+    row,
+    seed,
+    curriculumOrder: rowOrder * 10 + itemOrder,
   })),
+);
+
+const idByGlyph = new Map(
+  seedEntries.map(({ row, seed }) => [
+    seed.glyph,
+    itemId(row.id, seed.romaji),
+  ]),
+);
+
+const derivedFormsByBase = new Map<string, string[]>();
+for (const { row, seed } of seedEntries) {
+  if (!seed.baseGlyph) {
+    continue;
+  }
+  const baseId = idByGlyph.get(seed.baseGlyph)!;
+  const forms = derivedFormsByBase.get(baseId) ?? [];
+  forms.push(itemId(row.id, seed.romaji));
+  derivedFormsByBase.set(baseId, forms);
+}
+
+const items: LearningItem[] = seedEntries.map(
+  ({ row, seed, curriculumOrder }) => {
+    const id = itemId(row.id, seed.romaji);
+    const derivedFrom = seed.baseGlyph
+      ? idByGlyph.get(seed.baseGlyph)
+      : undefined;
+    return {
+      id,
+      kind: 'hiragana' as const,
+      schemaVersion: 1,
+      content: {
+        glyph: seed.glyph,
+        primaryAnswer: seed.romaji,
+        acceptedAnswers: [seed.romaji, ...(seed.aliases ?? [])],
+        rowId: row.id,
+        rowLabel: row.shortTitle,
+        column: seed.column,
+        curriculumOrder,
+        ...(derivedFrom ? { derivedFrom, mark: seed.mark } : {}),
+        ...(derivedFormsByBase.has(id)
+          ? { derivedForms: derivedFormsByBase.get(id)! }
+          : {}),
+      },
+    };
+  },
 );
 
 const rawBundledManifest: CurriculumManifest = {
   id: 'kanakana-hiragana-beginner',
-  // Bumped for the lesson reshape: a cached v1 would otherwise keep serving the
-  // old introduce-two-then-test order to anyone who already had one.
-  version: 2,
-  publishedAt: '2026-07-29T00:00:00.000Z',
+  version: 3,
+  publishedAt: '2026-07-30T00:00:00.000Z',
   items,
   skills: [
     {
@@ -240,32 +414,43 @@ const rawBundledManifest: CurriculumManifest = {
       schemaVersion: 1,
       label: 'Kana writing',
       prompt: 'Hear a sound and write its kana.',
-      // Graded from stroke geometry on the client, not from a typed answer.
       answerField: 'content.glyph',
     },
   ],
-  units: GOJUON_ROWS.map(createUnit),
+  units: CURRICULUM_ROWS.map(createUnit),
 };
 
 export const BUNDLED_MANIFEST = validateSupportedModules(
   curriculumManifestSchema.parse(rawBundledManifest),
 ) as CurriculumManifest;
 
-/**
- * The row's name without the word "row" — "K row" becomes "K".
- *
- * Callers put it in copy that already supplies the noun ("the K row"), so the
- * stored label would otherwise double it up. The grid on the Kana page needs
- * the bare form too, where "K row" simply does not fit the column.
- */
+/** The row name without the redundant trailing word "row". */
 export function bareRowLabel(shortTitle: string): string {
-  return shortTitle.replace(/\s+row$/i, '').replace(/^final\s+/i, '');
+  return shortTitle.replace(/\s+row$/i, '');
 }
 
-export function getItem(manifest: CurriculumManifest, id: string): LearningItem {
+export function getItem(
+  manifest: CurriculumManifest,
+  id: string,
+): LearningItem {
   const item = manifest.items.find((candidate) => candidate.id === id);
   if (!item) {
     throw new Error(`Unknown learning item: ${id}`);
   }
   return item;
+}
+
+export function baseItems(manifest: CurriculumManifest): LearningItem[] {
+  return manifest.items.filter((item) => !item.content.derivedFrom);
+}
+
+export function derivedItems(
+  manifest: CurriculumManifest,
+  mark?: DerivedMark,
+): LearningItem[] {
+  return manifest.items.filter(
+    (item) =>
+      Boolean(item.content.derivedFrom) &&
+      (mark === undefined || item.content.mark === mark),
+  );
 }

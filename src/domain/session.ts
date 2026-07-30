@@ -10,6 +10,10 @@ import type {
   SkillId,
 } from './types';
 
+export function unique(values: string[]): string[] {
+  return [...new Set(values)];
+}
+
 export function localDateKey(date = new Date()): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -87,24 +91,47 @@ export function buildLessonSession(
   };
 }
 
-function avoidImmediateRepeats(items: LearningItem[]): LearningItem[] {
-  const result: LearningItem[] = [];
-  const remaining = [...items];
+/** One prompt in a review queue: a character, and which skill is being asked. */
+export interface ReviewTarget {
+  item: LearningItem;
+  skillId: SkillId;
+}
+
+function orderReviewTargets(targets: ReviewTarget[]): ReviewTarget[] {
+  const result: ReviewTarget[] = [];
+  const remaining = [...targets];
   while (remaining.length > 0) {
     const previous = result.at(-1);
-    const index = remaining.findIndex(
-      (item) => item.content.rowId !== previous?.content.rowId,
+    const differentRowIndex = remaining.findIndex(
+      (target) =>
+        target.item.content.rowId !== previous?.item.content.rowId,
     );
-    const chosenIndex = index >= 0 ? index : 0;
+    const differentItemIndex = remaining.findIndex(
+      (target) => target.item.id !== previous?.item.id,
+    );
+    const chosenIndex =
+      differentRowIndex >= 0
+        ? differentRowIndex
+        : differentItemIndex >= 0
+          ? differentItemIndex
+          : 0;
     result.push(remaining.splice(chosenIndex, 1)[0]);
   }
   return result;
 }
 
-/** One prompt in a review queue: a character, and which skill is being asked. */
-export interface ReviewTarget {
-  item: LearningItem;
-  skillId: SkillId;
+/**
+ * Give a review event a server-safe session ID.
+ *
+ * The server requires a UUID, so standalone writing practice — which has no
+ * session of its own — gets a fresh one-event session ID. The explicit
+ * `practice` case repairs events queued by older clients without silently
+ * replacing unrelated malformed values.
+ */
+export function resolveReviewSessionId(sessionId: string | undefined): string {
+  return sessionId && sessionId !== 'practice'
+    ? sessionId
+    : Crypto.randomUUID();
 }
 
 export function buildReviewSession(
@@ -112,11 +139,9 @@ export function buildReviewSession(
   targets: ReviewTarget[],
   now = new Date(),
 ): ActivePracticeSession {
-  // Spread repeats of the same character apart, whichever skill is asked.
-  const byItem = new Map(targets.map((target) => [target.item.id, target]));
-  const ordered = avoidImmediateRepeats(
-    targets.map((target) => target.item),
-  ).map((item) => byItem.get(item.id)!);
+  // Keep reading and writing targets distinct while spreading repeats of the
+  // same character apart whenever another prompt can intervene.
+  const ordered = orderReviewTargets(targets);
   return {
     id: Crypto.randomUUID(),
     kind: 'review',
@@ -157,6 +182,37 @@ export function insertRecheck(
   const steps = [...session.steps];
   steps.splice(insertionIndex, 0, recheck);
   return { ...session, steps };
+}
+
+/**
+ * Advance past a graded prompt: tally the outcome and, on a miss, re-queue the
+ * same prompt for a recheck. Reading and writing are graded from different
+ * evidence but are bookkept identically, so they share this.
+ */
+export function recordAttempt(
+  session: ActivePracticeSession,
+  gradedStep: PracticeStep,
+  correct: boolean,
+  now = new Date(),
+): ActivePracticeSession {
+  const { outcomes } = session;
+  const advanced: ActivePracticeSession = {
+    ...session,
+    currentIndex: session.currentIndex + 1,
+    updatedAt: now.toISOString(),
+    outcomes: {
+      ...outcomes,
+      strengthenedItemIds: correct
+        ? unique([...outcomes.strengthenedItemIds, gradedStep.itemId])
+        : outcomes.strengthenedItemIds,
+      againItemIds: correct
+        ? outcomes.againItemIds
+        : unique([...outcomes.againItemIds, gradedStep.itemId]),
+      correctAttempts: outcomes.correctAttempts + (correct ? 1 : 0),
+      totalAttempts: outcomes.totalAttempts + 1,
+    },
+  };
+  return correct ? advanced : insertRecheck(advanced, gradedStep);
 }
 
 export function currentStep(

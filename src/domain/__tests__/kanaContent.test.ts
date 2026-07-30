@@ -11,6 +11,19 @@ import {
 
 const GLYPHS = BUNDLED_MANIFEST.items.map((item) => String(item.content.glyph));
 const KNOWN = new Set(GLYPHS);
+const DERIVED_WORDS: Record<string, string[]> = {
+  が: ['えいが', 'がっこう'], ぎ: ['ぎんこう', 'かぎ'],
+  ぐ: ['ぐあい', 'かぐ'], げ: ['げんき', 'ひげ'], ご: ['ごはん', 'りんご'],
+  ざ: ['ざっし', 'ざせき'], じ: ['じかん', 'にじ'], ず: ['みず', 'ちず'],
+  ぜ: ['ぜんぶ', 'かぜ'], ぞ: ['ぞう', 'かぞく'],
+  だ: ['だいがく', 'からだ'], ぢ: ['はなぢ', 'ちぢむ'],
+  づ: ['つづく', 'みかづき'], で: ['でんわ', 'うで'], ど: ['どうぶつ', 'まど'],
+  ば: ['かばん', 'そば'], び: ['びょういん', 'ゆび'], ぶ: ['ぶた', 'こんぶ'],
+  べ: ['べんきょう', 'たべる'], ぼ: ['ぼうし', 'とんぼ'],
+  ぱ: ['かんぱい', 'いっぱい'], ぴ: ['えんぴつ', 'ぴったり'],
+  ぷ: ['おんぷ', 'てんぷら'], ぺ: ['ぺこぺこ', 'ぺらぺら'],
+  ぽ: ['さんぽ', 'しっぽ'],
+};
 
 /** Romaji is not needed to look a glyph up, but it makes failures readable. */
 const romajiOf = new Map(
@@ -30,33 +43,29 @@ const KNOWN_UNHIGHLIGHTABLE: readonly (readonly [string, string])[] = [
 ];
 
 describe('kana content tables', () => {
-  it('covers all 46 hiragana', () => {
-    expect(GLYPHS).toHaveLength(46);
-    expect(KNOWN.size).toBe(46);
+  it('covers all 71 base and derived hiragana', () => {
+    expect(GLYPHS).toHaveLength(71);
+    expect(KNOWN.size).toBe(71);
   });
 
-  it('gives every kana a stroke note, falling back where MEET_HINTS stops', () => {
+  it('returns a note only for the kana MEET_HINTS covers', () => {
     for (const glyph of GLYPHS) {
-      const note = strokeNoteFor(glyph, 2);
-      expect(note.length, `no stroke note for ${glyph}`).toBeGreaterThan(0);
+      expect(strokeNoteFor(glyph)).toBe(MEET_HINTS[glyph] ?? null);
     }
+    expect(strokeNoteFor('ん')).toBeNull();
   });
 
-  it('uses the prototype fallback only for kana MEET_HINTS does not cover', () => {
-    for (const glyph of GLYPHS) {
-      const hint = MEET_HINTS[glyph];
-      const resolved = strokeNoteFor(glyph, 3);
-      if (hint) {
-        expect(resolved).toBe(hint);
-      } else {
-        expect(resolved).toBe(
-          '3 strokes. Follow the faint guide, then try it once without.',
-        );
-      }
+  /**
+   * Every screen showing a note already shows the count beside it — the Meet
+   * pill, the trace header, the character page's row line — so a note that
+   * counts strokes says it a second time.
+   */
+  it('never states a stroke count in a note', () => {
+    for (const [glyph, hint] of Object.entries(MEET_HINTS)) {
+      expect(hint, glyph).not.toMatch(
+        /\b(one|two|three|four|five|\d+)\s+strokes?\b/i,
+      );
     }
-    expect(strokeNoteFor('ん', 1)).toBe(
-      'One stroke. Follow the faint guide, then try it once without.',
-    );
   });
 
   it('keys every table by a glyph the curriculum actually teaches', () => {
@@ -85,16 +94,31 @@ describe('kana content tables', () => {
     }
   });
 
-  it('gives every kana at least one example word and one confusion', () => {
+  it('gives every kana at least one example word', () => {
     for (const glyph of GLYPHS) {
       expect(WORDS[glyph]?.length ?? 0, `no words for ${glyph}`).toBeGreaterThan(
         0,
       );
-      expect(
-        CONFUSIONS[glyph]?.length ?? 0,
-        `no confusions for ${glyph}`,
-      ).toBeGreaterThan(0);
     }
+  });
+
+  it('keeps the two fixed examples for every voiced form', () => {
+    expect(Object.keys(DERIVED_WORDS)).toHaveLength(25);
+    for (const [glyph, expected] of Object.entries(DERIVED_WORDS)) {
+      expect(WORDS[glyph]?.map((entry) => entry.word)).toEqual(expected);
+    }
+  });
+
+  it('retains only the meaningful extra confusions for derived kana', () => {
+    const derivedGlyphs = BUNDLED_MANIFEST.items
+      .filter((item) => item.content.derivedFrom)
+      .map((item) => item.content.glyph);
+    const derivedWithConfusions = derivedGlyphs.filter(
+      (glyph) => (CONFUSIONS[glyph]?.length ?? 0) > 0,
+    );
+    expect(derivedWithConfusions.sort()).toEqual(
+      ['じ', 'ず', 'ぢ', 'づ', 'ば', 'ぱ'].sort(),
+    );
   });
 
   it('puts the target character inside its own example words', () => {
