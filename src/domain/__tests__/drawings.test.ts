@@ -98,6 +98,14 @@ describe('visibleDrawingCount', () => {
       first.snapshot.skillStates[learnerStateKey(itemId, 'kana_writing')].reps,
     ).toBe(1);
     expect(first.snapshot.reviewOutbox).toHaveLength(1);
+    expect(first.snapshot.reviewOutbox[0].dayEndsAt).toBeDefined();
+    expect(
+      new Date(
+        first.snapshot.skillStates[learnerStateKey(itemId, 'kana_writing')].due,
+      ).getTime(),
+    ).toBeGreaterThanOrEqual(
+      new Date(first.snapshot.reviewOutbox[0].dayEndsAt!).getTime(),
+    );
     expect(first.snapshot.drawingOutbox).toHaveLength(1);
 
     const replay = completeLessonDrawing(

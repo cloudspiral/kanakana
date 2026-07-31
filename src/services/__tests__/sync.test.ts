@@ -173,6 +173,27 @@ describe('review outbox submission', () => {
     );
   });
 
+  it('forwards new day boundaries while preserving legacy events without one', async () => {
+    acceptAll();
+    const [legacy, current] = outboxOf(2);
+    current.dayEndsAt = '2026-07-30T05:00:00.000Z';
+
+    await syncService.sync(
+      snapshotWith([legacy, current]),
+      BUNDLED_MANIFEST,
+    );
+
+    const reviewCall = invoke.mock.calls.find(
+      (call) => call[0] === 'submit-reviews',
+    )!;
+    const sentEvents = reviewCall[1].body.events as ReviewAttempt[];
+    expect('dayEndsAt' in sentEvents[0]).toBe(false);
+    expect(sentEvents[1]).toMatchObject({
+      eventId: current.eventId,
+      dayEndsAt: current.dayEndsAt,
+    });
+  });
+
   it('batches offline drawing events and returns canonical totals', async () => {
     acceptAll();
     const drawingOutbox: DrawingEvent[] = Array.from(

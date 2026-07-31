@@ -32,6 +32,7 @@ import {
 import {
   applyReview,
   dueTargets,
+  localDayEndsAt,
 } from '@/domain/scheduler';
 import {
   buildLessonSession,
@@ -39,6 +40,7 @@ import {
   currentStep,
   localDateKey,
   recordAttempt,
+  type ReviewTarget,
   unique,
 } from '@/domain/session';
 import { mergeCompletedSync } from '@/domain/syncMerge';
@@ -71,7 +73,8 @@ interface AppContextValue {
   snapshot: LearnerSnapshot;
   manifest: CurriculumManifest;
   activeSession: ActivePracticeSession | null;
-  dueCount: number;
+  dueReviewTargets: ReviewTarget[];
+  dueReviewCount: number;
   nextUnitId?: string;
   repositoryDiagnostics: RepositoryDiagnostics | null;
   completeOnboarding(): Promise<void>;
@@ -121,6 +124,7 @@ export function AppProvider({ children }: PropsWithChildren) {
   const [snapshot, setSnapshot] = useState<LearnerSnapshot>(
     createInitialSnapshot,
   );
+  const [reviewDay, setReviewDay] = useState(() => new Date());
   const snapshotRef = useRef(snapshot);
   const [ready, setReady] = useState(false);
   const [repositoryDiagnostics, setRepositoryDiagnostics] =
@@ -237,16 +241,28 @@ export function AppProvider({ children }: PropsWithChildren) {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'background') {
         void syncNow();
+      } else if (state === 'active') {
+        setReviewDay(new Date());
       }
     });
     return () => subscription.remove();
   }, [syncNow]);
 
+  useEffect(() => {
+    const now = new Date();
+    const delay = Math.max(
+      1_000,
+      localDayEndsAt(now).getTime() - now.getTime() + 50,
+    );
+    const timer = setTimeout(() => setReviewDay(new Date()), delay);
+    return () => clearTimeout(timer);
+  }, [reviewDay]);
+
   const manifest = useMemo(() => getPinnedManifest(snapshot), [snapshot]);
   const activeSession = snapshot.activeSession;
-  const due = useMemo(
-    () => dueTargets(manifest.items, snapshot.skillStates),
-    [manifest.items, snapshot.skillStates],
+  const dueReviews = useMemo(
+    () => dueTargets(manifest.items, snapshot.skillStates, reviewDay),
+    [manifest.items, reviewDay, snapshot.skillStates],
   );
   const nextUnit = manifest.units
     .slice()
@@ -391,6 +407,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         ? Rating.Good
         : Rating.Again;
       const reviewedAt = new Date();
+      const dayEndsAt = localDayEndsAt(reviewedAt);
       const stateKey = learnerStateKey(activeStep.itemId, activeStep.skillId);
       const previousState = current.skillStates[stateKey];
       const nextState = applyReview(
@@ -399,6 +416,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         activeStep.skillId,
         rating,
         reviewedAt,
+        dayEndsAt,
       );
 
       const nextSession = recordAttempt(
@@ -419,6 +437,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         responseMs,
         exerciseVersion: activeStep.moduleSchemaVersion,
         reviewedAt: reviewedAt.toISOString(),
+        dayEndsAt: dayEndsAt.toISOString(),
         expectedStateVersion: previousState?.version ?? 0,
       };
       const next: LearnerSnapshot = {
@@ -463,6 +482,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         ? Rating.Good
         : Rating.Again;
       const reviewedAt = new Date();
+      const dayEndsAt = localDayEndsAt(reviewedAt);
       const stateKey = learnerStateKey(activeStep.itemId, activeStep.skillId);
       const previousState = current.skillStates[stateKey];
       const nextState = applyReview(
@@ -471,6 +491,7 @@ export function AppProvider({ children }: PropsWithChildren) {
         activeStep.skillId,
         rating,
         reviewedAt,
+        dayEndsAt,
       );
 
       const nextSession = recordAttempt(
@@ -498,6 +519,7 @@ export function AppProvider({ children }: PropsWithChildren) {
             responseMs,
             exerciseVersion: activeStep.moduleSchemaVersion,
             reviewedAt: reviewedAt.toISOString(),
+            dayEndsAt: dayEndsAt.toISOString(),
             expectedStateVersion: previousState?.version ?? 0,
           },
         ],
@@ -613,7 +635,8 @@ export function AppProvider({ children }: PropsWithChildren) {
     snapshot,
     manifest,
     activeSession,
-    dueCount: due.length,
+    dueReviewTargets: dueReviews,
+    dueReviewCount: dueReviews.length,
     nextUnitId: nextUnit?.id,
     repositoryDiagnostics,
     completeOnboarding,

@@ -14,7 +14,7 @@ import type {
 import { learnerStateKey } from './types';
 import {
   FSRS_CONFIG,
-  settleEarlyReview,
+  settleSuccessfulReview,
 } from '../../supabase/functions/_shared/review-policy';
 
 const scheduler = fsrs(FSRS_CONFIG);
@@ -49,12 +49,18 @@ export function applyReview(
   skillId: SkillId,
   rating: Rating.Again | Rating.Good,
   reviewedAt: Date,
+  dayEndsAt?: Date,
 ): LearnerSkillState {
   const before = toCard(previous);
   const scheduled = scheduler.next(before, reviewedAt, rating).card;
   const card =
-    previous && rating !== Rating.Again
-      ? settleEarlyReview(before, scheduled, reviewedAt)
+    rating !== Rating.Again
+      ? settleSuccessfulReview(
+          previous ? before : undefined,
+          scheduled,
+          reviewedAt,
+          dayEndsAt,
+        )
       : scheduled;
   return {
     itemId,
@@ -74,16 +80,48 @@ export function applyReview(
   };
 }
 
+/** The exclusive end of the learner's current device-local calendar day. */
+export function localDayEndsAt(now = new Date()): Date {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+}
+
+function isSameLocalDay(left: Date, right: Date): boolean {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
+/** One daily Review queue: due by midnight and not already reviewed today. */
+export function isReviewDue(
+  state: LearnerSkillState | undefined,
+  now = new Date(),
+  dayEndsAt = localDayEndsAt(now),
+): boolean {
+  if (!state || state.reps === 0) {
+    return false;
+  }
+  if (
+    state.last_review &&
+    isSameLocalDay(new Date(state.last_review), now)
+  ) {
+    return false;
+  }
+  return new Date(state.due).getTime() < dayEndsAt.getTime();
+}
+
 export function dueItems(
   items: LearningItem[],
   states: Record<string, LearnerSkillState>,
   now = new Date(),
   skillId: SkillId = REVIEW_SKILL,
+  dayEndsAt = localDayEndsAt(now),
 ): LearningItem[] {
   return items
     .filter((item) => {
       const state = states[learnerStateKey(item.id, skillId)];
-      return Boolean(state && state.reps > 0 && new Date(state.due) <= now);
+      return isReviewDue(state, now, dayEndsAt);
     })
     .sort((left, right) => {
       const leftDue = states[learnerStateKey(left.id, skillId)].due;
@@ -99,7 +137,7 @@ export function stateLabel(
   if (!state || state.reps === 0) {
     return 'Not started';
   }
-  if (new Date(state.due) <= now) {
+  if (isReviewDue(state, now)) {
     return 'Due';
   }
   if (state.state === State.Review && state.stability >= 7) {
@@ -109,7 +147,7 @@ export function stateLabel(
 }
 
 /**
- * Every prompt owed right now, across both skills.
+ * Every review owed by the end of today, across both skills.
  *
  * Reading and writing are scheduled independently, so the same character can be
  * due for one and not the other — that is the whole point of keying progress by
@@ -122,8 +160,9 @@ export function dueTargets(
   now = new Date(),
 ): { item: LearningItem; skillId: SkillId }[] {
   const targets: { item: LearningItem; skillId: SkillId }[] = [];
+  const dayEndsAt = localDayEndsAt(now);
   for (const skillId of [REVIEW_SKILL, WRITING_SKILL]) {
-    for (const item of dueItems(items, states, now, skillId)) {
+    for (const item of dueItems(items, states, now, skillId, dayEndsAt)) {
       targets.push({ item, skillId });
     }
   }

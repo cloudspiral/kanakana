@@ -98,3 +98,48 @@ export function settleEarlyReview<T extends SettleableCard>(
     ),
   };
 }
+
+/**
+ * Settle a successful answer under the daily Review contract.
+ *
+ * A card selected because it is due before the learner's local day ends is a
+ * scheduled review, even when its exact timestamp is still a few hours away,
+ * so it earns the normal FSRS result rather than the reduced early-practice
+ * bump. Successful session work is also kept beyond the current local day so
+ * one completed queue cannot reopen a few minutes later.
+ *
+ * With no day boundary this preserves the legacy/optional-practice behavior.
+ */
+export function settleSuccessfulReview<T extends SettleableCard>(
+  before: { due: Date; stability: number } | undefined,
+  after: T,
+  reviewedAt: Date,
+  dayEndsAt?: Date,
+): T {
+  const hasValidDayEnd = Boolean(
+    dayEndsAt &&
+      !Number.isNaN(dayEndsAt.getTime()) &&
+      dayEndsAt.getTime() > reviewedAt.getTime(),
+  );
+  const wasScheduledForToday = Boolean(
+    before &&
+      hasValidDayEnd &&
+      before.due.getTime() < dayEndsAt!.getTime(),
+  );
+  const settled =
+    before && !wasScheduledForToday
+      ? settleEarlyReview(before, after, reviewedAt)
+      : after;
+  if (!hasValidDayEnd || settled.due.getTime() >= dayEndsAt!.getTime()) {
+    return settled;
+  }
+  const due = new Date(dayEndsAt!);
+  return {
+    ...settled,
+    due,
+    scheduled_days: Math.max(
+      0,
+      Math.round((due.getTime() - reviewedAt.getTime()) / MS_PER_DAY),
+    ),
+  };
+}

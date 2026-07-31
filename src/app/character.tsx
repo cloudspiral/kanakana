@@ -13,28 +13,14 @@ import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { CONFUSIONS, WORDS, strokeNoteFor } from '@/domain/kanaContent';
 import { visibleDrawingCount } from '@/domain/drawings';
-import { bondFor, inkStrength, isIntroduced } from '@/domain/ink';
+import { bondFor, inkStrength } from '@/domain/ink';
+import { reviewScheduleLabel } from '@/domain/reviewDate';
 import { WRITING_SKILL } from '@/domain/scheduler';
 import { strokeCount } from '@/domain/strokes';
-import { learnerStateKey, type LearnerSkillState } from '@/domain/types';
+import { learnerStateKey } from '@/domain/types';
 import { isKanaAudioAvailable, playKana } from '@/services/audio';
 
 const DIAGRAM_SIZE = 150;
-
-function returnsIn(state: LearnerSkillState | undefined): string {
-  if (!isIntroduced(state)) {
-    return '—';
-  }
-  const ms = new Date(state!.due).getTime() - Date.now();
-  if (ms <= 0) {
-    return 'today';
-  }
-  const days = Math.round(ms / (24 * 60 * 60 * 1000));
-  if (days < 1) {
-    return 'today';
-  }
-  return days === 1 ? '1 day' : `${days} days`;
-}
 
 export default function CharacterRoute() {
   const app = useApp();
@@ -175,15 +161,24 @@ export default function CharacterRoute() {
       {/* Reading and writing are separate skills — the app says so plainly
           rather than averaging them into one number. */}
       <View style={styles.card}>
-        <Meter label="Reading it" value={inkStrength(reading)} tone={Colors.ink} />
-        <Meter label="Writing it" value={inkStrength(writing)} tone={Colors.accent} />
+        <Meter
+          label="Reading it"
+          value={inkStrength(reading)}
+          tone={Colors.ink}
+          reviewSchedule={reviewScheduleLabel(reading)}
+        />
+        <Meter
+          label="Writing it"
+          value={inkStrength(writing)}
+          tone={Colors.accent}
+          reviewSchedule={reviewScheduleLabel(writing)}
+        />
         <View style={styles.figures}>
           <Figure label="times seen" value={String(reading?.reps ?? 0)} />
           <Figure
             label="times drawn"
             value={String(visibleDrawingCount(app.snapshot, item.id))}
           />
-          <Figure label="next return" value={returnsIn(reading)} />
         </View>
       </View>
 
@@ -299,7 +294,17 @@ function RelationshipRow({
   );
 }
 
-function Meter({ label, value, tone }: { label: string; value: number; tone: string }) {
+function Meter({
+  label,
+  value,
+  tone,
+  reviewSchedule,
+}: {
+  label: string;
+  value: number;
+  tone: string;
+  reviewSchedule: string | null;
+}) {
   const percent = Math.round(Math.max(0, Math.min(1, value)) * 100);
   return (
     <View style={styles.meter}>
@@ -312,6 +317,11 @@ function Meter({ label, value, tone }: { label: string; value: number; tone: str
           style={[styles.meterFill, { width: `${percent}%`, backgroundColor: tone }]}
         />
       </View>
+      {reviewSchedule ? (
+        <AppText variant="bodySmall" style={styles.reviewDate}>
+          {reviewSchedule}
+        </AppText>
+      ) : null}
     </View>
   );
 }
@@ -401,6 +411,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   meterFill: { height: '100%', borderRadius: Radius.pill },
+  reviewDate: { fontSize: 12, lineHeight: 17 },
   figures: {
     flexDirection: 'row',
     borderTopWidth: 1,

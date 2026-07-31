@@ -11,7 +11,7 @@ import {
   classificationIsCorrect,
   classifyReviewAnswer,
   FSRS_CONFIG,
-  settleEarlyReview,
+  settleSuccessfulReview,
 } from '../_shared/review-policy.ts';
 
 const corsHeaders = {
@@ -35,7 +35,24 @@ const eventSchema = z.object({
   responseMs: z.number().int().min(0).max(60 * 60 * 1000),
   exerciseVersion: z.number().int().positive(),
   reviewedAt: z.string().datetime(),
+  dayEndsAt: z.string().datetime().optional(),
   expectedStateVersion: z.number().int().nonnegative(),
+}).superRefine((event, context) => {
+  if (!event.dayEndsAt) {
+    return;
+  }
+  const reviewedAt = new Date(event.reviewedAt).getTime();
+  const dayEndsAt = new Date(event.dayEndsAt).getTime();
+  if (
+    dayEndsAt <= reviewedAt ||
+    dayEndsAt - reviewedAt > 26 * 60 * 60 * 1000
+  ) {
+    context.addIssue({
+      code: 'custom',
+      path: ['dayEndsAt'],
+      message: 'dayEndsAt must be the next local day boundary',
+    });
+  }
 });
 
 const requestSchema = z.object({
@@ -101,22 +118,28 @@ function toCard(state?: StateRow): Card {
 /**
  * Canonical scheduling for one review.
  *
- * The early-review rule is applied here, not only on the client: this function
- * is the source of truth and its result overwrites whatever the client
- * computed, so leaving it out here would silently undo the rule on every sync.
- * It is shared with src/domain/scheduler.ts so both sides cannot drift.
+ * The daily boundary and early-practice rules are applied here, not only on the
+ * client: this function is the source of truth and its result overwrites
+ * whatever the client computed. The policy is shared with
+ * src/domain/scheduler.ts so both sides cannot drift.
  */
 function schedule(
   previous: StateRow | undefined,
   reviewedAt: Date,
   rating: Rating.Again | Rating.Good,
+  dayEndsAt?: Date,
 ): Card {
   const before = toCard(previous);
   const next = scheduler.next(before, reviewedAt, rating).card;
-  if (!previous || rating === Rating.Again) {
+  if (rating === Rating.Again) {
     return next;
   }
-  return settleEarlyReview(before, next, reviewedAt);
+  return settleSuccessfulReview(
+    previous ? before : undefined,
+    next,
+    reviewedAt,
+    dayEndsAt,
+  );
 }
 
 function statePayload(card: Card) {
@@ -307,6 +330,9 @@ Deno.serve(async (request) => {
       let previous = stateMap.get(key);
       let expectedVersion = previous?.version ?? 0;
       let scheduleAt = new Date(event.reviewedAt);
+      const dayEndsAt = event.dayEndsAt
+        ? new Date(event.dayEndsAt)
+        : undefined;
       if (
         previous?.last_review &&
         new Date(previous.last_review).getTime() > scheduleAt.getTime()
@@ -314,7 +340,7 @@ Deno.serve(async (request) => {
         scheduleAt = new Date(previous.last_review);
       }
 
-      let nextCard = schedule(previous, scheduleAt, rating);
+      let nextCard = schedule(previous, scheduleAt, rating, dayEndsAt);
       const safeEvent = {
         eventId: event.eventId,
         sessionId: event.sessionId,
@@ -356,7 +382,7 @@ Deno.serve(async (request) => {
           new Date(previous.last_review).getTime() > scheduleAt.getTime()
             ? new Date(previous.last_review)
             : scheduleAt;
-        nextCard = schedule(previous, rebasedAt, rating);
+        nextCard = schedule(previous, rebasedAt, rating, dayEndsAt);
         commit = await client.rpc('commit_review_event', {
           p_event: safeEvent,
           p_state: statePayload(nextCard),

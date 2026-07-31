@@ -116,7 +116,7 @@ cards, `20–22px` between sections. Borders are `1px` (`rule`) or `1px` `ink` f
 the emphasised primary card. **No shadows anywhere** — separation is by border
 and paper tone only.
 
-Bottom nav: three text-only tabs (`TODAY` / `INK` / `SETTINGS`), active marked by a
+Bottom nav: three text-only tabs (`REVIEW` / `KANA` / `SETTINGS`), active marked by a
 `16×2px` `accent` underline. Min 44px touch targets throughout.
 
 ---
@@ -158,20 +158,26 @@ this is the differentiator and the layout should say so. Copy:
 Then the five vowels in a row (32px glyphs + romaji), then "Begin with the five
 vowels" (primary).
 
-### 3. Home / Today — `app/index.tsx`
+### 3. Home / Review — `app/index.tsx`
 
-Wordmark + a right-aligned chip: `TUE · {n} DUE` or `TUE · ALL CLEAR`.
+Wordmark + a right-aligned chip: `TUE · {n} REVIEWS` (singular when needed) or
+`TUE · ALL CLEAR`.
 
-Kicker "TODAY", then a display heading that states the situation in words, not
-numbers: *"{n} sounds are ready to come back."* / *"Ready for the {row} row."* /
-*"Every shape is in your ink."*
+Kicker "REVIEW", then a display heading that states the situation directly:
+*"{n} reviews are ready."* / *"You're all caught up for today."* /
+*"Every kana is in your ink."* A reading and writing prompt for the same kana
+count as two reviews because they are independently scheduled skills.
+
+When Review is clear but another curriculum row remains, the primary card stays
+available as an optional **STUDY AHEAD** path to meet that next row. The daily
+stopping point remains the prominent message; no extra queue is implied.
 
 **Primary card** (`1px ink`): a left column with kicker + 25px serif title
-("{n} characters, about {m} minutes"), a right 90px column showing up to 4 due
+("{n} reviews, about {m} minutes"), a right 90px column showing up to 4 due
 glyphs in a 2×2 grid at their current ink opacity, and a full-width `ink` footer
 button.
 
-There is no secondary queue builder on Today. The SRS card owns the next
+There is no secondary queue builder on Review. The SRS card owns the next
 scheduled action; optional drawing of one specific kana lives on its profile.
 
 **Your ink strip**: all 46 glyphs in a 10-column grid at 17px, each at its own
@@ -284,8 +290,10 @@ four strokes").
 
 Metric card: **Reading it** and **Writing it** as two independent meters (`ink`
 and `accent` fills) — the app explicitly admits you can read ら long before you
-can write it. Then a "Reading speed" row in plain language, then three serif
-figures: seconds to read it / times drawn / next return.
+can write it. Each started skill carries its own device-local scheduled date
+(`NEXT REVIEW · TUE, AUG 4`, or `DUE · THU, JUL 23` for overdue work) directly
+beneath its meter. Unstarted skills omit the date. Two serif figures show times
+seen and times drawn.
 
 "The shape" — the stroke note. **"Where you'll meet it"** — 2 real words with the
 target character picked out in `accent` (あ**め** rain, **あ**さ morning); this is
@@ -386,14 +394,20 @@ Verdicts: `clean` / `loose` / `order` / `partial` — copy in
 
 ### Early reviews
 
-In `settle()`:
+Review is one device-local daily queue. Starting it captures every independently
+scheduled reading and writing target due before the next local midnight. A
+successful answer from that queue is treated as scheduled work and cannot remain
+due during the same local day; misses return through the active session's recheck
+steps instead of opening a second queue.
+
+Outside that daily queue, the early-practice rule still applies:
 
 > Answering a card **before it is due** earns a smaller strength bump
 > (**+0.08** vs +0.22) and **cannot push the next review further out**.
 > A miss always counts in full.
 
-This protects immediate rechecks and exact typo replays from inflating the
-schedule. It does not create a learner-selectable early-review queue.
+This keeps optional practice from inflating the schedule. It does not create a
+learner-selectable early-review queue.
 
 ### Typo override
 

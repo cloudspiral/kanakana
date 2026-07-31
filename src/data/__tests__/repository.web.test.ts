@@ -49,6 +49,7 @@ describe('browser learning repository', () => {
       responseMs: 900,
       exerciseVersion: 1,
       reviewedAt: '2026-07-28T12:00:00.000Z',
+      dayEndsAt: '2026-07-29T05:00:00.000Z',
       expectedStateVersion: 0,
     });
     await repository.saveSnapshot(snapshot);
@@ -58,6 +59,9 @@ describe('browser learning repository', () => {
     expect(loaded.onboardingComplete).toBe(true);
     expect(loaded.reviewOutbox).toHaveLength(1);
     expect(loaded.reviewOutbox[0].eventId).toBe('event-1');
+    expect(loaded.reviewOutbox[0].dayEndsAt).toBe(
+      '2026-07-29T05:00:00.000Z',
+    );
   });
 
   it('returns a clean durable default after reset', async () => {

@@ -2,7 +2,13 @@ import { Rating, State } from 'ts-fsrs';
 import { describe, expect, it } from 'vitest';
 
 import { BUNDLED_MANIFEST } from '../curriculum';
-import { applyReview, dueItems, stateLabel } from '../scheduler';
+import {
+  applyReview,
+  dueItems,
+  dueTargets,
+  localDayEndsAt,
+  stateLabel,
+} from '../scheduler';
 import { learnerStateKey, type LearnerSkillState } from '../types';
 
 describe('independent item × skill scheduling', () => {
@@ -47,23 +53,22 @@ describe('independent item × skill scheduling', () => {
     );
   });
 
-  it('selects only states due at the requested time', () => {
-    const now = new Date('2026-07-28T12:00:00.000Z');
+  it('selects reviews due through today but not tomorrow', () => {
+    const now = new Date(2026, 6, 28, 9);
     const [a, i] = BUNDLED_MANIFEST.items;
-    const due = applyReview(
+    const base = applyReview(
       undefined,
       a.id,
       'kana_reading',
-      Rating.Again,
-      new Date('2026-07-28T11:00:00.000Z'),
-    );
-    const future = applyReview(
-      undefined,
-      i.id,
-      'kana_reading',
       Rating.Good,
-      now,
+      new Date(2026, 6, 27, 9),
     );
+    const due = { ...base, due: new Date(2026, 6, 28, 21).toISOString() };
+    const future = {
+      ...base,
+      itemId: i.id,
+      due: new Date(2026, 6, 29, 9).toISOString(),
+    };
     const items = dueItems(
       [a, i],
       {
@@ -75,6 +80,227 @@ describe('independent item × skill scheduling', () => {
     expect(items.map((item) => item.id)).toEqual([a.id]);
     expect(stateLabel(due, now)).toBe('Due');
     expect(stateLabel(future, now)).toBe('Learning');
+  });
+
+  it('does not reopen a review already answered on the same local day', () => {
+    const now = new Date(2026, 6, 28, 17);
+    const item = BUNDLED_MANIFEST.items[0];
+    const reviewedToday = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      new Date(2026, 6, 28, 9),
+    );
+    const artificiallyDue = {
+      ...reviewedToday,
+      due: new Date(2026, 6, 28, 9, 10).toISOString(),
+    };
+
+    expect(dueItems([item], {
+      [learnerStateKey(item.id, 'kana_reading')]: artificiallyDue,
+    }, now)).toEqual([]);
+    expect(stateLabel(artificiallyDue, now)).toBe('Learning');
+  });
+
+  it('counts reading and writing for one kana as two reviews', () => {
+    const now = new Date(2026, 6, 28, 9);
+    const item = BUNDLED_MANIFEST.items[0];
+    const reviewedYesterday = new Date(2026, 6, 27, 9);
+    const reading = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      reviewedYesterday,
+    );
+    const writing = applyReview(
+      undefined,
+      item.id,
+      'kana_writing',
+      Rating.Good,
+      reviewedYesterday,
+    );
+    const targets = dueTargets(
+      [item],
+      {
+        [learnerStateKey(item.id, 'kana_reading')]: {
+          ...reading,
+          due: new Date(2026, 6, 28, 12).toISOString(),
+        },
+        [learnerStateKey(item.id, 'kana_writing')]: {
+          ...writing,
+          due: new Date(2026, 6, 28, 13).toISOString(),
+        },
+      },
+      now,
+    );
+
+    expect(targets.map((target) => target.skillId)).toEqual([
+      'kana_reading',
+      'kana_writing',
+    ]);
+  });
+
+  it('uses the next device-local midnight as an exclusive queue boundary', () => {
+    const now = new Date(2026, 6, 31, 23, 30, 15, 200);
+    const boundary = localDayEndsAt(now);
+
+    expect(boundary.getFullYear()).toBe(2026);
+    expect(boundary.getMonth()).toBe(7);
+    expect(boundary.getDate()).toBe(1);
+    expect(boundary.getHours()).toBe(0);
+    expect(boundary.getMinutes()).toBe(0);
+    expect(boundary.getSeconds()).toBe(0);
+    expect(boundary.getMilliseconds()).toBe(0);
+  });
+});
+
+describe('daily review settlement', () => {
+  const item = BUNDLED_MANIFEST.items[0];
+
+  it('keeps a first successful lesson review beyond the current day', () => {
+    const reviewedAt = new Date(2026, 6, 28, 9);
+    const dayEndsAt = localDayEndsAt(reviewedAt);
+    const state = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      reviewedAt,
+      dayEndsAt,
+    );
+
+    expect(new Date(state.due).getTime()).toBeGreaterThanOrEqual(
+      dayEndsAt.getTime(),
+    );
+    expect(dueTargets([item], {
+      [learnerStateKey(item.id, 'kana_reading')]: state,
+    }, new Date(2026, 6, 28, 23))).toEqual([]);
+  });
+
+  it('fully settles a review scheduled for later today', () => {
+    const reviewedAt = new Date(2026, 6, 28, 9);
+    const dayEndsAt = localDayEndsAt(reviewedAt);
+    const prior = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      new Date(2026, 6, 27, 9),
+    );
+    const dueLaterToday = {
+      ...prior,
+      due: new Date(2026, 6, 28, 17).toISOString(),
+    };
+    const settled = applyReview(
+      dueLaterToday,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      reviewedAt,
+      dayEndsAt,
+    );
+
+    expect(new Date(settled.due).getTime()).toBeGreaterThanOrEqual(
+      dayEndsAt.getTime(),
+    );
+    expect(dueTargets([item], {
+      [learnerStateKey(item.id, 'kana_reading')]: settled,
+    }, new Date(2026, 6, 28, 17))).toEqual([]);
+  });
+
+  it('clears a completed mixed-skill daily queue', () => {
+    const reviewedAt = new Date(2026, 6, 28, 9);
+    const dayEndsAt = localDayEndsAt(reviewedAt);
+    const priorReview = (skillId: 'kana_reading' | 'kana_writing') => ({
+      ...applyReview(
+        undefined,
+        item.id,
+        skillId,
+        Rating.Good,
+        new Date(2026, 6, 27, 9),
+      ),
+      due: new Date(2026, 6, 28, 18).toISOString(),
+    });
+    const reading = applyReview(
+      priorReview('kana_reading'),
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      reviewedAt,
+      dayEndsAt,
+    );
+    const writing = applyReview(
+      priorReview('kana_writing'),
+      item.id,
+      'kana_writing',
+      Rating.Good,
+      new Date(2026, 6, 28, 9, 1),
+      dayEndsAt,
+    );
+
+    expect(dueTargets(
+      [item],
+      {
+        [learnerStateKey(item.id, 'kana_reading')]: reading,
+        [learnerStateKey(item.id, 'kana_writing')]: writing,
+      },
+      new Date(2026, 6, 28, 20),
+    )).toEqual([]);
+  });
+
+  it('keeps misses short-term but clears the day after the in-session recheck', () => {
+    const reviewedAt = new Date(2026, 6, 28, 9);
+    const dayEndsAt = localDayEndsAt(reviewedAt);
+    const prior = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      new Date(2026, 6, 27, 9),
+    );
+    const missed = applyReview(
+      { ...prior, due: reviewedAt.toISOString() },
+      item.id,
+      'kana_reading',
+      Rating.Again,
+      reviewedAt,
+      dayEndsAt,
+    );
+    expect(new Date(missed.due).getTime()).toBeLessThan(dayEndsAt.getTime());
+
+    const recovered = applyReview(
+      missed,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      new Date(2026, 6, 28, 9, 5),
+      dayEndsAt,
+    );
+    expect(new Date(recovered.due).getTime()).toBeGreaterThanOrEqual(
+      dayEndsAt.getTime(),
+    );
+    expect(dueTargets([item], {
+      [learnerStateKey(item.id, 'kana_reading')]: recovered,
+    }, new Date(2026, 6, 28, 20))).toEqual([]);
+  });
+
+  it('allows a completed review to return on the next local day', () => {
+    const reviewedAt = new Date(2026, 6, 28, 9);
+    const dayEndsAt = localDayEndsAt(reviewedAt);
+    const state = applyReview(
+      undefined,
+      item.id,
+      'kana_reading',
+      Rating.Good,
+      reviewedAt,
+      dayEndsAt,
+    );
+
+    expect(dueTargets([item], {
+      [learnerStateKey(item.id, 'kana_reading')]: state,
+    }, new Date(2026, 6, 29, 9))).toHaveLength(1);
   });
 });
 

@@ -37,7 +37,7 @@ export default function SummaryRoute() {
     router.replace('/');
   }
 
-  const moreAvailable = Boolean(app.nextUnitId) || app.dueCount > 0;
+  const moreAvailable = Boolean(app.nextUnitId) || app.dueReviewCount > 0;
 
   return (
     <AppScreen scroll={false}>

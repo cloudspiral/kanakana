@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
@@ -12,7 +12,7 @@ import { Wordmark } from '@/components/Wordmark';
 import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
 import { useApp } from '@/context/AppContext';
 import { bareRowLabel } from '@/domain/curriculum';
-import { dueTargets } from '@/domain/scheduler';
+import { reviewTargetKey } from '@/domain/session';
 import { type CurriculumUnit, type LearningItem } from '@/domain/types';
 
 export default function HomeRoute() {
@@ -86,16 +86,14 @@ function Onboarding() {
               symbols. Thousands upon thousands of them. The acquisition and
               retention of these symbols is, for those of us in the
               English-speaking world, not something our ABCs prepared us for.
-              <br />
-              <br />
+              {'\n\n'}
               But every journey through these symbols begins with the kana, a
               set of 46 glyphs that represent 46 basic sounds. Though this
               syllabary is not much bigger than the English alphabet, the relationship you develop with them is quite
               different. Like any bonds, these are stronger through
               adversity, and they will be your anchors in the
               vast sea of complex symbols that further awaits.
-              <br />
-              <br />
+              {'\n\n'}
               Most of us don&rsquo;t remember what it felt like to learn our ABCs
               for the first time. With Kanakana, I hope you too can experience
               the magic of getting to know a group of symbols for the first time
@@ -186,11 +184,13 @@ function Home() {
 
   // Both skills: the count, the preview and the queue "Begin review" builds
   // must agree, and a character can be due for writing but not reading.
-  const dueTargetList = useMemo(
-    () => dueTargets(app.manifest.items, app.snapshot.skillStates),
-    [app.manifest.items, app.snapshot.skillStates],
-  );
-  const due = dueTargetList.map((target) => target.item);
+  const dueReviewTargets = app.dueReviewTargets;
+  const dueReviewPreview = dueReviewTargets.map((target) => ({
+    key: reviewTargetKey(target),
+    item: target.item,
+  }));
+  const dueReviewCount = dueReviewTargets.length;
+  const reviewNoun = dueReviewCount === 1 ? 'review' : 'reviews';
 
   const nextUnit = app.manifest.units.find((unit) => unit.id === app.nextUnitId);
   const nextRowItems = nextUnit ? unitItems(nextUnit, app.manifest.items) : [];
@@ -203,19 +203,18 @@ function Home() {
   const weekday = new Date()
     .toLocaleDateString(undefined, { weekday: 'short' })
     .toUpperCase();
-  const todayChip = due.length
-    ? `${weekday} · ${due.length} due`
+  const reviewChip = dueReviewCount
+    ? `${weekday} · ${dueReviewCount} ${reviewNoun}`
     : `${weekday} · all clear`;
 
   // An unfinished session is what the card offers, so the headline says so too
   // rather than inviting a row the tap will not open.
   const headline = hasActiveSession
     ? 'Right where you left off.'
-    : due.length
-      // "kana" is invariant in Japanese, so only the verb agrees.
-      ? `${due.length} kana ${due.length === 1 ? 'is' : 'are'} up for review`
+    : dueReviewCount
+      ? `${dueReviewCount} ${reviewNoun} ${dueReviewCount === 1 ? 'is' : 'are'} ready.`
       : nextUnit
-        ? `Ready for the ${nextRowLabel} row.`
+        ? `You're all caught up for today.`
         : 'Every kana is in your ink.';
 
   // Mirrors startContinue(): due reviews first, then the next row.
@@ -224,30 +223,34 @@ function Home() {
         kicker: 'In progress',
         title: 'Pick up where you stopped',
         cta: 'Resume practice',
-        preview: due.length ? due : nextRowItems,
+        preview: dueReviewCount
+          ? dueReviewPreview
+          : nextRowItems.map((item) => ({ key: item.id, item })),
       }
-    : due.length
+    : dueReviewCount
       ? {
           kicker: 'Review first',
-          title: `${due.length} kana, about ${Math.max(2, Math.round(due.length * 0.6))} minutes`,
+          title: `${dueReviewCount} ${reviewNoun}, about ${Math.max(2, Math.round(dueReviewCount * 0.6))} minutes`,
           cta: 'Begin review',
-          preview: due,
+          preview: dueReviewPreview,
         }
       : nextUnit
         ? {
-            kicker: 'Next row',
+            kicker: 'Study ahead',
             title: `Meet ${nextRowItems.length} new kana in the ${nextRowLabel} row`,
-            cta: 'Start the lesson',
-            preview: nextRowItems,
+            cta: 'Meet the next row',
+            preview: nextRowItems.map((item) => ({ key: item.id, item })),
           }
         : {
             kicker: 'All met',
             title: 'Every kana is in your ink',
             cta: 'Review when something returns',
-            preview: app.manifest.items.slice(0, 4),
+            preview: app.manifest.items
+              .slice(0, 4)
+              .map((item) => ({ key: item.id, item })),
           };
 
-  const caughtUp = !hasActiveSession && !due.length && !nextUnit;
+  const caughtUp = !hasActiveSession && !dueReviewCount && !nextUnit;
 
   async function startPrimary() {
     const result = await app.startContinue();
@@ -260,11 +263,11 @@ function Home() {
     <AppScreen bottomNav={<BottomNav />}>
       <View style={styles.headerRow}>
         <Wordmark />
-        <AppText variant="meterLabel">{todayChip}</AppText>
+        <AppText variant="meterLabel">{reviewChip}</AppText>
       </View>
 
       <View style={styles.homeHeading}>
-        <AppText variant="kicker">Today</AppText>
+        <AppText variant="kicker">Review</AppText>
         <AppText variant="screenTitle">{headline}</AppText>
       </View>
 
@@ -275,9 +278,9 @@ function Home() {
             <AppText style={styles.primaryTitle}>{primary.title}</AppText>
           </View>
           <View style={styles.primaryPreview}>
-            {primary.preview.slice(0, 4).map((item) => (
-              <Kana key={item.id} style={styles.previewGlyph}>
-                {item.content.glyph}
+            {primary.preview.slice(0, 4).map((preview) => (
+              <Kana key={preview.key} style={styles.previewGlyph}>
+                {preview.item.content.glyph}
               </Kana>
             ))}
           </View>
@@ -306,7 +309,7 @@ function Home() {
       </View>
 
       {/* The scheduler owns what comes next. Drawing a specific character is
-          still available from its kana-chart profile, but Today does not ask
+          still available from its kana-chart profile, but Review does not ask
           the learner to construct a second queue. */}
     </AppScreen>
   );

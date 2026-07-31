@@ -97,6 +97,11 @@ export interface ReviewTarget {
   skillId: SkillId;
 }
 
+/** Stable UI/session identity for one independently scheduled review task. */
+export function reviewTargetKey(target: ReviewTarget): string {
+  return `${target.item.id}:${target.skillId}`;
+}
+
 function orderReviewTargets(targets: ReviewTarget[]): ReviewTarget[] {
   const result: ReviewTarget[] = [];
   const remaining = [...targets];

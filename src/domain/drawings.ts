@@ -1,7 +1,7 @@
 import { Rating } from 'ts-fsrs';
 
 import { getItem } from './curriculum';
-import { applyReview, WRITING_SKILL } from './scheduler';
+import { applyReview, localDayEndsAt, WRITING_SKILL } from './scheduler';
 import { currentStep, unique } from './session';
 import {
   learnerStateKey,
@@ -106,6 +106,7 @@ export function completeLessonDrawing(
   if (Number.isNaN(reviewedAt.getTime())) {
     throw new Error('The drawing completion time is invalid.');
   }
+  const dayEndsAt = localDayEndsAt(reviewedAt);
   const stateKey = learnerStateKey(event.itemId, WRITING_SKILL);
   const previousState = snapshot.skillStates[stateKey];
   const nextSession: ActivePracticeSession = {
@@ -139,6 +140,7 @@ export function completeLessonDrawing(
               WRITING_SKILL,
               Rating.Good,
               reviewedAt,
+              dayEndsAt,
             ),
           },
       reviewOutbox: previousState
@@ -156,6 +158,7 @@ export function completeLessonDrawing(
               responseMs: 0,
               exerciseVersion: activeStep.moduleSchemaVersion,
               reviewedAt: event.occurredAt,
+              dayEndsAt: dayEndsAt.toISOString(),
               expectedStateVersion: 0,
             },
           ],

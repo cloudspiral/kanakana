@@ -11,6 +11,7 @@ import { strokeNoteFor } from '@/domain/kanaContent';
 import { strokeCount } from '@/domain/strokes';
 import type { LearningItem, ModuleType, SessionOutcomes } from '@/domain/types';
 import type { TextStyle } from 'react-native';
+import { practiceKanaTextStyle } from './practiceLayout';
 
 /**
  * The field is a serif line on a rule, so the browser's default focus ring
@@ -65,7 +66,10 @@ export function KanaIntroductionRenderer({
             mark={item.content.mark}
           />
         ) : (
-          <Kana size="hero" style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+          <Kana
+            allowFontScaling={false}
+            size="hero"
+            style={practiceKanaTextStyle(square)}>
             {glyph}
           </Kana>
         )}
@@ -131,8 +135,9 @@ export const KanaReadingInputRenderer = forwardRef<TextInput, ReadingProps>(
             It appears on the feedback screen instead. */}
         <GuideSquare size={square} style={styles.center}>
           <Kana
+            allowFontScaling={false}
             size="hero"
-            style={{ fontSize: square * 0.64, lineHeight: square * 0.64 }}>
+            style={practiceKanaTextStyle(square)}>
             {item.content.glyph}
           </Kana>
         </GuideSquare>

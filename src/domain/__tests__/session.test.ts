@@ -7,6 +7,7 @@ import {
   insertRecheck,
   recordAttempt,
   resolveReviewSessionId,
+  reviewTargetKey,
 } from '../session';
 
 vi.mock('expo-crypto', () => {
@@ -121,6 +122,20 @@ describe('practice queue construction', () => {
         moduleType: 'kana-writing-input-v1',
       },
     ]);
+  });
+
+  it('gives reading and writing previews distinct React keys', () => {
+    const item = BUNDLED_MANIFEST.items[5];
+    const targets = [
+      { item, skillId: 'kana_reading' as const },
+      { item, skillId: 'kana_writing' as const },
+    ];
+
+    expect(targets.map(reviewTargetKey)).toEqual([
+      `${item.id}:kana_reading`,
+      `${item.id}:kana_writing`,
+    ]);
+    expect(new Set(targets.map(reviewTargetKey))).toHaveLength(2);
   });
 });
 

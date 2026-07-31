@@ -6,7 +6,7 @@ import { AppText } from './Typography';
 import { Colors, MaxContentWidth, MinTouch, Spacing } from '@/constants/theme';
 
 const destinations = [
-  { path: '/', label: 'Today' },
+  { path: '/', label: 'Review' },
   { path: '/progress', label: 'Kana' },
   { path: '/settings', label: 'Settings' },
 ] as const;

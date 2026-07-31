@@ -20,14 +20,22 @@ import { Colors, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/the
 import { useApp } from '@/context/AppContext';
 import { getItem } from '@/domain/curriculum';
 import { isNearMiss } from '@/domain/answers';
+import { practiceExitPath } from '@/domain/practiceNavigation';
 import { currentStep } from '@/domain/session';
 import { isKanaAudioAvailable, playKana, preloadKana } from '@/services/audio';
-import type { AnswerClassification, LearningItem } from '@/domain/types';
+import type {
+  ActivePracticeSession,
+  AnswerClassification,
+  LearningItem,
+  PracticeStep,
+  TeachingModuleDefinition,
+} from '@/domain/types';
 import {
   KanaIntroductionRenderer,
   KanaReadingInputRenderer,
   PRACTICE_SQUARE,
 } from '@/modules/registry';
+import { practiceKanaTextStyle } from '@/modules/practiceLayout';
 
 interface Feedback {
   correct: boolean;
@@ -40,6 +48,13 @@ interface Feedback {
   answer: string;
 }
 
+interface HeldReadingPrompt {
+  session: ActivePracticeSession;
+  step: PracticeStep;
+  item: LearningItem;
+  module?: TeachingModuleDefinition;
+}
+
 export default function PracticeRoute() {
   const app = useApp();
   const router = useRouter();
@@ -49,6 +64,13 @@ export default function PracticeRoute() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  /**
+   * answerCurrent() advances the persisted session before its promise resolves.
+   * Hold the submitted prompt across that await so the next kana cannot render
+   * in the narrow beat before the feedback overlay is committed.
+   */
+  const [heldReadingPrompt, setHeldReadingPrompt] =
+    useState<HeldReadingPrompt | null>(null);
   /**
    * The character to keep showing while the drawing screen slides in.
    *
@@ -76,6 +98,22 @@ export default function PracticeRoute() {
         .find((candidate) => candidate.id === step?.moduleId),
     [app.manifest.units, step?.moduleId],
   );
+  const presentedSession = heldReadingPrompt?.session ?? session;
+  const presentedStep = heldReadingPrompt?.step ?? step;
+  const presentedItem = heldReadingPrompt?.item ?? item;
+  const presentedModule = heldReadingPrompt?.module ?? module;
+  const square = Math.min(
+    PRACTICE_SQUARE,
+    Math.min(width, MaxContentWidth) - Spacing.gutter * 2,
+  );
+  const exitPath = practiceExitPath({
+    hasActivePrompt: Boolean(
+      presentedSession && presentedStep && presentedItem,
+    ),
+    isSubmittingAnswer: submitting,
+    isShowingCompletedFeedback: Boolean(feedback?.sessionComplete),
+    hasSummary: Boolean(app.snapshot.lastSummary),
+  });
 
   useEffect(
     () => () => {
@@ -120,31 +158,41 @@ export default function PracticeRoute() {
   );
 
   useEffect(() => {
-    if (step?.kind === 'assessment' && !feedback) {
+    if (presentedStep?.kind === 'assessment' && !feedback) {
       questionStartedAt.current = Date.now();
       const timer = setTimeout(() => inputRef.current?.focus(), 120);
       return () => clearTimeout(timer);
     }
-  }, [step?.id, step?.kind, feedback]);
+  }, [presentedStep?.id, presentedStep?.kind, feedback]);
 
   if (!app.ready) {
     return <LoadingScreen />;
   }
 
-  if (!session || !step || !item) {
-    return <Redirect href={app.snapshot.lastSummary ? '/summary' : '/'} />;
+  if (!presentedSession || !presentedStep || !presentedItem) {
+    if (feedback?.sessionComplete) {
+      return (
+        <AppScreen keyboardAvoiding scroll={false} contentStyle={styles.content}>
+          {renderFeedback(feedback)}
+        </AppScreen>
+      );
+    }
+    return exitPath ? <Redirect href={exitPath} /> : <LoadingScreen />;
   }
 
-  const square = Math.min(
-    PRACTICE_SQUARE,
-    Math.min(width, MaxContentWidth) - Spacing.gutter * 2,
-  );
-
   async function submit(revealed = false) {
-    if (submitting || (!revealed && !answer.trim()) || !item || !step) {
+    if (
+      submitting ||
+      (!revealed && !answer.trim()) ||
+      !session ||
+      !item ||
+      !step
+    ) {
       return;
     }
+    setHeldReadingPrompt({ session, step, item, module });
     setSubmitting(true);
+    let feedbackReady = false;
     try {
       const responseMs = Math.max(
         0,
@@ -159,6 +207,7 @@ export default function PracticeRoute() {
         answer,
       };
       setFeedback(nextFeedback);
+      feedbackReady = true;
       // A correct answer needs no decision, so it clears itself. A miss waits
       // for Keep going or the narrow typo override.
       if (result.correct) {
@@ -168,6 +217,9 @@ export default function PracticeRoute() {
         );
       }
     } finally {
+      if (!feedbackReady) {
+        setHeldReadingPrompt(null);
+      }
       setSubmitting(false);
     }
   }
@@ -204,14 +256,11 @@ export default function PracticeRoute() {
         0,
         Date.now() - (questionStartedAt.current ?? Date.now()),
       );
-      const result = await app.answerWriting(correct, responseMs);
+      await app.answerWriting(correct, responseMs);
       // The drawing screen already showed the model, grades and final verdict.
       // Recording that decision advances directly instead of repeating it in
       // the reading-answer feedback overlay.
       questionStartedAt.current = Date.now();
-      if (result.sessionComplete) {
-        router.replace('/summary');
-      }
     } finally {
       setSubmitting(false);
     }
@@ -219,25 +268,46 @@ export default function PracticeRoute() {
 
   /** "I typed it wrong — I knew this." Reverts the miss exactly. */
   async function undoTypo() {
-    const result = await app.undoLastMiss();
+    await app.undoLastMiss();
+    setHeldReadingPrompt(null);
     setFeedback(null);
     setAnswer('');
     questionStartedAt.current = Date.now();
-    if (result?.sessionComplete) {
-      router.replace('/summary');
-    }
   }
 
   function advanceAfterFeedback(currentFeedback = feedback) {
     if (!currentFeedback) {
       return;
     }
+    setHeldReadingPrompt(null);
+    if (currentFeedback.sessionComplete) {
+      advanceTimer.current = null;
+      router.replace('/summary');
+      return;
+    }
     setFeedback(null);
     setAnswer('');
     questionStartedAt.current = Date.now();
-    if (currentFeedback.sessionComplete) {
-      router.replace('/summary');
-    }
+  }
+
+  function renderFeedback(currentFeedback: Feedback) {
+    return (
+      <FeedbackOverlay
+        feedback={currentFeedback}
+        square={square}
+        canHear={
+          soundOn && isKanaAudioAvailable(currentFeedback.item.content.glyph)
+        }
+        onHear={() => void playKana(currentFeedback.item.content.glyph)}
+        canUndoTypo={
+          !currentFeedback.correct &&
+          !currentFeedback.revealed &&
+          isNearMiss(currentFeedback.item, currentFeedback.answer)
+        }
+        onUndoTypo={() => void undoTypo()}
+        onContinue={() => advanceAfterFeedback(currentFeedback)}
+      />
+    );
   }
 
   return (
@@ -252,17 +322,17 @@ export default function PracticeRoute() {
         </Pressable>
         {/* One segment per session step: past ink, current accent, future pale. */}
         <View
-          accessibilityLabel={`Step ${session.currentIndex + 1} of ${session.steps.length}`}
+          accessibilityLabel={`Step ${presentedSession.currentIndex + 1} of ${presentedSession.steps.length}`}
           accessibilityRole="progressbar"
           style={styles.ticks}>
-          {session.steps.map((sessionStep, index) => (
+          {presentedSession.steps.map((sessionStep, index) => (
             <View
               key={sessionStep.id}
               style={[
                 styles.tick,
-                index < session.currentIndex
+                index < presentedSession.currentIndex
                   ? styles.tickPast
-                  : index === session.currentIndex
+                  : index === presentedSession.currentIndex
                     ? styles.tickCurrent
                     : styles.tickFuture,
               ]}
@@ -281,26 +351,30 @@ export default function PracticeRoute() {
           canHear={false}
           onContinue={() => {}}
         />
-      ) : step.kind === 'introduction' ? (
+      ) : presentedStep.kind === 'introduction' ? (
         <KanaIntroductionRenderer
           heading={
-            typeof module?.content.heading === 'string'
-              ? module.content.heading
+            typeof presentedModule?.content.heading === 'string'
+              ? presentedModule.content.heading
               : 'Meet this kana'
           }
-          item={item}
+          item={presentedItem}
           square={square}
-          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
-          onHear={() => void playKana(item.content.glyph)}
+          canHear={
+            soundOn && isKanaAudioAvailable(presentedItem.content.glyph)
+          }
+          onHear={() => void playKana(presentedItem.content.glyph)}
           onContinue={() => void meetThenDraw()}
         />
-      ) : step.moduleType === 'kana-writing-input-v1' ? (
+      ) : presentedStep.moduleType === 'kana-writing-input-v1' ? (
         <KanaWritingInput
-          key={step.id}
-          item={item}
+          key={presentedStep.id}
+          item={presentedItem}
           square={square}
-          canHear={soundOn && isKanaAudioAvailable(item.content.glyph)}
-          onHear={() => void playKana(item.content.glyph)}
+          canHear={
+            soundOn && isKanaAudioAvailable(presentedItem.content.glyph)
+          }
+          onHear={() => void playKana(presentedItem.content.glyph)}
           onDecide={(correct) => void submitWriting(correct)}
         />
       ) : (
@@ -308,36 +382,22 @@ export default function PracticeRoute() {
           ref={inputRef}
           answer={answer}
           disabled={submitting}
-          item={item}
+          item={presentedItem}
           square={square}
           onAnswerChange={setAnswer}
           onReveal={() => void submit(true)}
           onSubmit={() => void submit(false)}
           prompt={
-            step.isRecheck
+            presentedStep.isRecheck
               ? 'One more time'
-              : typeof module?.content.prompt === 'string'
-                ? module.content.prompt
+              : typeof presentedModule?.content.prompt === 'string'
+                ? presentedModule.content.prompt
                 : 'What sound is this?'
           }
         />
       )}
 
-      {feedback ? (
-        <FeedbackOverlay
-          feedback={feedback}
-          square={square}
-          canHear={soundOn && isKanaAudioAvailable(feedback.item.content.glyph)}
-          onHear={() => void playKana(feedback.item.content.glyph)}
-          canUndoTypo={
-            !feedback.correct &&
-            !feedback.revealed &&
-            isNearMiss(feedback.item, feedback.answer)
-          }
-          onUndoTypo={() => void undoTypo()}
-          onContinue={() => advanceAfterFeedback()}
-        />
-      ) : null}
+      {feedback ? renderFeedback(feedback) : null}
     </AppScreen>
   );
 }
@@ -374,7 +434,12 @@ function FeedbackOverlay({
         borderColor={accent}
         borderWidth={1.5}
         style={styles.overlaySquare}>
-        <Kana style={{ fontFamily: Fonts.kanaThin, fontSize: square * 0.57, lineHeight: square * 0.62 }}>
+        <Kana
+          allowFontScaling={false}
+          style={[
+            { fontFamily: Fonts.kanaThin },
+            practiceKanaTextStyle(square, 'feedback'),
+          ]}>
           {feedback.item.content.glyph}
         </Kana>
         <AppText style={[styles.overlayRomaji, { color: accent }]}>

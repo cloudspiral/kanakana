@@ -6,5 +6,15 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ["dist/*"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXOpeningElement > JSXIdentifier[name=/^[a-z]/]",
+          message:
+            "Use a React Native component instead of a lowercase HTML element so this JSX works on iOS and Android.",
+        },
+      ],
+    },
   }
 ]);

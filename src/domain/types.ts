@@ -88,6 +88,11 @@ export interface ReviewAttempt {
   responseMs: number;
   exerciseVersion: number;
   reviewedAt: string;
+  /**
+   * Exclusive end of the learner's device-local review day. Optional so
+   * already-persisted outbox events retain their legacy scheduling behavior.
+   */
+  dayEndsAt?: string;
   expectedStateVersion: number;
 }
 
